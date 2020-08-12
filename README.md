@@ -23,7 +23,7 @@ code
 # DEVELOPMENT NOTES # 
 This section is dedicated to people who may working on the development 
 and progression of the application. It describes how to set up the coding
-environment properly. A user of the application should follow the above 
+environment properly. A **user** of the application should follow the above 
 section. 
 
 At times, setting up Kivy for the first time can be challenging. For
