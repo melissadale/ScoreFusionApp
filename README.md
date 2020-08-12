@@ -15,6 +15,7 @@ code
 2. Run `pip install -r requirements.txt`
 3. Launch the GUI with `python GUI.py`
 
+More detailed installation directions can be read [here](https://github.com/melissadale/ScoreFusionApp/blob/master/Documentations/installation.md)
 
 **Assumptions**:
 - all scores are in one directly (no sub directories)
