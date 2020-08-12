@@ -21,6 +21,12 @@ More detailed installation directions can be read [here](https://github.com/meli
 - all scores are in one directly (no sub directories)
 
 
+# Documentation #
+1. [Input File Formats](https://github.com/melissadale/ScoreFusionApp/blob/master/Wikis/FileFormats.md)
+This describes the formats and files allowed by the application. 
+2. [Errors, debugging, and feature requests](https://github.com/melissadale/ScoreFusionApp/issues/new)   
+
+
 # DEVELOPMENT NOTES # 
 This section is dedicated to people who may working on the development 
 and progression of the application. It describes how to set up the coding
@@ -53,7 +59,3 @@ kivy.deps.glew==0.2.0
 Note on version numbers, these were taken from a currently working system. If needed to determine which version is installed, use `pip show package` to see information. 
 
 
-# Documentation #
-1. [Input File Formats](https://github.com/melissadale/ScoreFusionApp/blob/master/Wikis/FileFormats.md)
-This describes the formats and files allowed by the application. 
-2. [Errors, debugging, and feature requests](https://github.com/melissadale/ScoreFusionApp/issues/new)   
