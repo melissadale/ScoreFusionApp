@@ -10,6 +10,11 @@ be a subject id. IF IDs are strictly numeric, that makes detection more
 challenging. *If* Subject IDs are included as column or row headers, 
 ensure they are not strictly numeric.
 
+* **Test / Train detection**: The application checks filenames for 
+"test" and "train" to determine if the data is already split into
+training and testing samples. Please be sure to have train and test
+anywhere in the filename where appropriate. 
+
 ## Matrix Form ##
 
 This score format contains subjects along the rows and columns such that 
@@ -57,4 +62,4 @@ genuine) **OR** the first 2 columns must be subject ids - in which case,
     modality titles.
 * The label for this last column should be titled label 
 or class (capitalization does not matter)
-*
+
