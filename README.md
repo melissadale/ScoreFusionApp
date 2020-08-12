@@ -53,6 +53,6 @@ Note on version numbers, these were taken from a currently working system. If ne
 
 
 # Documentation #
-1. [Input File Formats]()
+1. [Input File Formats](https://github.com/melissadale/ScoreFusionApp/blob/master/Wikis/FileFormats.md)
 This describes the formats and files allowed by the application. 
-2. [Errors, debugging, and feature requests]()   
+2. [Errors, debugging, and feature requests](https://github.com/melissadale/ScoreFusionApp/issues/new)   
