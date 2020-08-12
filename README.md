@@ -31,7 +31,7 @@ At times, setting up Kivy for the first time can be challenging. For
 instance on Windows, the order that packages are installed matters. 
 
 Installing Kivy to python environment the first time, it is a good idea
-to follow:(StackOverflow Post)[https://stackoverflow.com/questions/49482753/sdl2-importerror-dll-load-failed-the-specified-module-could-not-be-found-and]
+to follow:  [StackOverflow Post](https://stackoverflow.com/questions/49482753/sdl2-importerror-dll-load-failed-the-specified-module-could-not-be-found-and)
 
 **In summary**, run the following
 ```
