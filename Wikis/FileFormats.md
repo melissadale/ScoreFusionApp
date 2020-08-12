@@ -26,7 +26,8 @@ the modality is referred to as in the application.
 A pictorial example of this format for the NIST Biometric Score Dataset 
 (Face x Finger) at [NIST BSSR1](https://www.nist.gov/itl/iad/image-group/nist-biometric-scores-set-bssr1),
  with subject IDs as row and column headers.
-![BSSR1 Score Format]()
+ 
+![BSSR1 Score Format](https://github.com/melissadale/ScoreFusionApp/blob/master/graphics/Wikis/matrixWheaders.png)
 
 
 
