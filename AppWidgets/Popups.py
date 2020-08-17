@@ -15,9 +15,8 @@ from collections import defaultdict
 from functools import partial
 from skimage import io
 import skimage
-import format_data as fm
-import Fuse
-import Popups
+import Analytics.format_data as fm
+import Analytics.Fuse as Fuse
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
 import kivy

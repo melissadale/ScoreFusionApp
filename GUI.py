@@ -15,9 +15,9 @@ from collections import defaultdict
 from functools import partial
 from skimage import io
 import skimage
-import format_data as fm
-import Fuse
-import Popups
+import Analytics.format_data as fm
+import Analytics.Fuse as Fuse
+import AppWidgets.Popups as Popups
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
 import kivy
@@ -39,7 +39,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.progressbar import ProgressBar
-from MyProgressBar import MyProgressBar
+from AppWidgets.MyProgressBar import MyProgressBar
 
 from kivy.uix.slider import Slider
 

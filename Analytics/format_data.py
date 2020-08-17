@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import seaborn as sns
-import Norms as nms
+import Analytics.Norms as nms
 from kivy.uix.progressbar import ProgressBar
 
 import warnings
