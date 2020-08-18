@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import seaborn as sns
 import Analytics.Norms as nms
-from kivy.uix.progressbar import ProgressBar
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -52,7 +51,7 @@ def reverse_gen_imp(dat, y):
     return gen, imp
 
 
-def make_density_plots(gen, imp, label='Test', norm_type='None', modality='', exp='', pb=None, pb_increment=None):
+def make_density_plots(gen, imp, label='Test', norm_type='None', modality='', exp=''):
     print('Plotting Density Estimates ... ')
 
     if not os.path.exists('./generated/density/' + label + '/PDF/'):
@@ -153,11 +152,8 @@ def make_density_plots(gen, imp, label='Test', norm_type='None', modality='', ex
     plt.savefig('./generated/density/' + label + '/hist/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
     plt.clf()
 
-    print('should have updated by: ' + str(pb_increment))
-    print(pb.value)
-    pb.update_bar(pb_increment)
 
-def get_data(pth, test_perc=0.2, normalize=None, norm_params=[], progress_bar=None):
+def get_data(pth, test_perc=0.2):
     """
     Assumptions: Each file has the same number of samples
     """
@@ -183,6 +179,9 @@ def get_data(pth, test_perc=0.2, normalize=None, norm_params=[], progress_bar=No
             data = pd.read_csv(filename, sep='\t', header=None)
         elif filename.endswith('.csv'):
             data = pd.read_csv(filename, index_col=0)
+
+        else: # not a score file
+            continue
 
         # determine if data is a matrix with gen across the diagonal, or column with labels based
         if data.shape[0] == data.shape[1]:
@@ -238,8 +237,6 @@ def get_data(pth, test_perc=0.2, normalize=None, norm_params=[], progress_bar=No
                     modalities[mods[k]]['train_x'] = train_x[:, k]
                     modalities[mods[k]]['train_y'] = train_y
 
-
-
         if test_loaded:
             if len(modality_keys) == 0:
                 modalities[key]['test_x'] = test_x
@@ -249,59 +246,55 @@ def get_data(pth, test_perc=0.2, normalize=None, norm_params=[], progress_bar=No
                     modalities[mods[k]]['test_x'] = test_x[:, k]
                     modalities[mods[k]]['test_y'] = test_y
 
+    return modalities, matrix_form, exp_id
 
-    ##########
-    ##  ok, now normalize and plot density plots
-    #########
+def split_data(dicts, normalize='MinMax', norm_params=[], key='', exp_id=''):
+    ret_dict = defaultdict(list)
 
-    # Calculate progress bar things
-    tasks = len(modalities.keys())*3
-    pb_incremental = 100/tasks
+    train_x = dicts['train_x']
+    train_y = dicts['train_y']
+    test_x = dicts['test_x']
+    test_y = dicts['test_y']
 
-    for key, items in modalities.items():
-        train_x = items['train_x']
-        train_y = items['train_y']
-        test_x = items['test_x']
-        test_y = items['test_y']
+    if normalize == 'MinMax':
+        transformed_train_x, transformed_test_x = nms.my_minmax(train_x, test_x)
 
-        if normalize == 'MinMax':
-            transformed_train_x, transformed_test_x = nms.my_minmax(train_x, test_x)
+    elif normalize == 'ZScore':
+        transformed_train_x, transformed_test_x = nms.my_zscore(train_x, test_x)
 
-        elif normalize == 'ZScore':
-            transformed_train_x, transformed_test_x = nms.my_zscore(train_x, test_x)
+    elif normalize == 'Decimal':
+        transformed_train_x, transformed_test_x = nms.my_decimal(train_x, test_x)
 
-        elif normalize == 'Decimal':
-            transformed_train_x, transformed_test_x = nms.my_decimal(train_x, test_x)
+    elif normalize == 'Median':
+        transformed_train_x, transformed_test_x = nms.my_med_mad(train_x, test_x)
 
-        elif normalize == 'Median':
-            transformed_train_x, transformed_test_x = nms.my_med_mad(train_x, test_x)
+    # elif normalize=='DSigmoid':
+    #     train_x, test_x = nms.my_double_sigmoid(train_x, test_x)
 
-        # elif normalize=='DSigmoid':
-        #     train_x, test_x = nms.my_double_sigmoid(train_x, test_x)
+    elif normalize == 'BiweightEstimator':
+        transformed_train_x, transformed_test_x = nms.my_biweight(train_x, test_x)
 
-        elif normalize == 'BiweightEstimator':
-            transformed_train_x, transformed_test_x = nms.my_biweight(train_x, test_x)
+    elif normalize == 'TanhEstimator':
+        transformed_train_x, transformed_test_x = nms.my_tanh(train_x, test_x, norm_params[0], norm_params[1], norm_params[2])
 
-        elif normalize == 'TanhEstimator':
-            transformed_train_x, transformed_test_x = nms.my_tanh(train_x, test_x, norm_params[0], norm_params[1], norm_params[2])
+    else:
+        transformed_train_x = train_x
+        transformed_test_x = test_x
 
-        else:
-            transformed_train_x = train_x
-            transformed_test_x = test_x
+    ret_dict['train_x'] = transformed_train_x
+    ret_dict['train_y'] = train_y
+    ret_dict['test_x'] = transformed_test_x
+    ret_dict['test_y'] = test_y
 
-        modalities[key]['train_x'] = transformed_train_x
-        modalities[key]['train_y'] = train_y
-        modalities[key]['test_x'] = transformed_test_x
-        modalities[key]['test_y'] = test_y
+    gen, imp = reverse_gen_imp(transformed_train_x, train_y)
+    make_density_plots(gen, imp, label='Training', norm_type=normalize, modality=key, exp=exp_id)
 
-        gen, imp = reverse_gen_imp(transformed_train_x, train_y)
-        make_density_plots(gen, imp, label='Training', norm_type=normalize, modality=key, exp=exp_id, pb=progress_bar, pb_increment=pb_incremental)
+    gen, imp = reverse_gen_imp(transformed_test_x, test_y)
+    make_density_plots(gen, imp, label='Testing', norm_type=normalize, modality=key, exp=exp_id)
 
-        gen, imp = reverse_gen_imp(transformed_test_x, test_y)
-        make_density_plots(gen, imp, label='Testing', norm_type=normalize, modality=key, exp=exp_id, pb = progress_bar, pb_increment=pb_incremental)
+    gen, imp = reverse_gen_imp(np.append(transformed_train_x, transformed_test_x), np.append(train_y, test_y))
+    make_density_plots(gen, imp, label='Entire', norm_type=normalize, modality=key, exp=exp_id)
 
-        gen, imp = reverse_gen_imp(np.append(transformed_train_x, transformed_test_x), np.append(train_y, test_y))
-        make_density_plots(gen, imp, label='Entire', norm_type=normalize, modality=key, exp=exp_id, pb = progress_bar, pb_increment=pb_incremental)
-    print('returning modalities')
-    return modalities, exp_id, matrix_form
+    print('returning modality')
+    return ret_dict
 

@@ -521,6 +521,10 @@ ScreenManagement:
     modalities_lbl: modalities_lbl
 
     d_slide: density_slider_id
+    loading_pb: load_pb
+
+
+
 
     TabbedPanel:
         size_hint: 1, 1
@@ -790,9 +794,8 @@ ScreenManagement:
                             text_size: self.size
                             bold: True
 
-                        MyProgressBar:
+                        ProgressBar:
                             id: load_pb
-                            value: 60
                             min: 0
                             max: 100
 
@@ -867,7 +870,7 @@ ScreenManagement:
                         bold: True
                         on_press:
                             root.set_normalization()
-                            root.setup(root.location)
+                            root.setup_2(root.location)
                             # Main.tabby_tab.switch_to(Main.tab_list[2])
                             # https://stackoverflow.com/questions/38883763/kivy-button-on-press-switch-to-next-tab-using-kivy-builder
                 ##################

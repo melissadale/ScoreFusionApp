@@ -2,12 +2,14 @@
 Created on 1/29/2020
 By Melissa Dale
 """
+import functools
 import glob
 import os
 import pickle
 import shutil
 
 # os.environ['KIVY_GL_BACKEND'] = 'angle_sdl2'
+import threading
 
 import numpy as np
 import pandas as pd
@@ -39,7 +41,6 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.progressbar import ProgressBar
-from AppWidgets.MyProgressBar import MyProgressBar
 
 from kivy.uix.slider import Slider
 
@@ -93,17 +94,15 @@ class SaveLoc(Screen):
         self.save_location = str(path)
 
 
-
-
-#
-# class CustomDropDown(DropDown):
-#     pass
-
 class Main(Screen):
     # def __init__(self):
     #     self.reset()
     #
     # def reset(self):
+    def __init__(self, **kwargs):
+        super(Main, self).__init__(**kwargs)
+        # self.update_bar_trigger = Clock.create_trigger(self.update_bar, -1)
+
     location = StringProperty('')
     save_location = StringProperty('')
     experiment_id = ''  # identify by directory containing scores
@@ -123,7 +122,7 @@ class Main(Screen):
     modalities_lbl = ObjectProperty('')
 
     returned_modalities = StringProperty('')
-    modalities = None
+    modalities = defaultdict(dict)
     num_mods = NumericProperty(0)
     num_rocs = NumericProperty(0)
 
@@ -145,26 +144,15 @@ class Main(Screen):
 
     #popups
     save_popup = ObjectProperty(Popup)
-    show_save = None
-
     reset_popup = ObjectProperty(Popup)
-    reset_save = None
-
     tanh_popup = ObjectProperty(Popup)
-    show_tanh = None
-
     dsig_popup = ObjectProperty(Popup)
-    show_dsig = None
-
     fusion_selection_popup = ObjectProperty(Popup)
-    show_fusion_selection = None
-    select_fusion_settings = None
-
     modality_list = ObjectProperty(None)
 
-
     # Progress bars
-    loading_pb = MyProgressBar()
+    loading_pb = ProgressBar()
+    increase_amount = NumericProperty(0)
 
     # messages
     msg_impgen_test = StringProperty('Imposter Samples: {} \n Genuine Samples: {}'.format(0, 0))
@@ -179,17 +167,27 @@ class Main(Screen):
     msg_f1 = StringProperty('')
     eval = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
 
-    ##### dataset metrics
-    num_gen_train = 0
-    num_gen_test = 0
-    num_imp_train = 0
-    num_imp_test = 0
+    ### Progress Bar Things
+    def update_bar(self, mod_key, dt):
+        print('Updating ' + str(self.loading_pb.value))
+        if self.loading_pb.value <= 100:
+            self.loading_pb.value += self.increase_amount
+            self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
 
+    def setup_2(self, path):
+        self.load_path = path
+        threading.Thread(target=self.setup, args=()).start()
 
-    def setup(self, path):
+    def setup(self):
         print('setup data stuff')
+        temp_modalities, self.matrix_form, e_id = fm.get_data(self.load_path, test_perc=self.test_perc)
 
-        self.modalities, self.experiment_id, self.matrix_form = fm.get_data(path, test_perc=self.test_perc, normalize=self.normalize, norm_params=self.norm_params, progress_bar=self.loading_pb)
+        self.increase_amount = 100/len(temp_modalities)
+
+        for key, items in temp_modalities.items():
+            mod_dict = fm.split_data(items, normalize=self.normalize, norm_params=self.norm_params, key=key, exp_id=e_id)
+            self.modalities[key] = mod_dict
+            Clock.schedule_once(functools.partial(self.update_bar, key))
         self.modality_list = list(self.modalities)
 
         self.detected_lbl.opacity = 1.0
@@ -208,12 +206,6 @@ class Main(Screen):
         self.msg_train = '[b]TRAINING: [/b] {} Subjects'.format(self.num_imp_train)
         self.num_mods = len(self.modalities.keys())
         self.msg_modalities = '[b]MODALITIES DETECTED: [/b] {}'.format(self.num_mods)
-
-        tmp = ''
-        for key, item in self.modalities.items():
-            tmp = tmp + key + '\n\n'
-        self.ids.modalities_lbl.text = tmp
-
 
         self.dens_set = self.get_right_densityplots()
         self.display_path_density = self.dens_set[self.density_modality_pointer]
