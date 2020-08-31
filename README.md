@@ -1,5 +1,5 @@
 # Status: *INPROGRESS* #
-This application is in active development. There are known bugs and more 
+This application is in active development. There are known bugs and additional 
 functionality in the works. 
 
 # USAGE #
@@ -18,7 +18,7 @@ code
 More detailed installation directions can be read [here](https://github.com/melissadale/ScoreFusionApp/wiki/Installing-via-Code)
 
 **Assumptions**:
-- all scores are in one directly (no sub directories)
+- all score files are in one directory (no sub directories)
 
 
 # DOCUMENTATION #
@@ -28,15 +28,14 @@ This describes the formats and files allowed by the application.
 
 
 # DEVELOPMENT NOTES # 
-This section is dedicated to people who may working on the development 
-and progression of the application. It describes how to set up the coding
+This section is dedicated to developers who may be working on the development of the application. It describes how to set up the coding
 environment properly. A **user** of the application should follow the above 
-section. 
+section: Setup to run on your machine. 
 
 At times, setting up Kivy for the first time can be challenging. For
 instance on Windows, the order that packages are installed matters. 
 
-Installing Kivy to python environment the first time, it is a good idea
+When installing Kivy to python environment the first time, it is a good idea
 to follow:  [StackOverflow Post](https://stackoverflow.com/questions/49482753/sdl2-importerror-dll-load-failed-the-specified-module-could-not-be-found-and)
 
 **In summary**, run the following
@@ -56,6 +55,6 @@ kivy.deps.glew==0.2.0
 --extra-index-url https://kivy.org/downloads/packages/simple/
 ```
 
-Note on version numbers, these were taken from a currently working system. If needed to determine which version is installed, use `pip show package` to see information. 
+Note on version numbers: these were taken from a currently working system. If needed to determine which version is installed, use `pip show package` to see information. 
 
 
