@@ -21,6 +21,8 @@ from scipy.interpolate import interp1d
 from sklearn.svm import SVC
 from scipy.stats import gaussian_kde
 import warnings
+import time
+
 warnings.filterwarnings('ignore', category=FutureWarning)
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -134,7 +136,8 @@ class FuseRule:
 
         return min(potential_x), max(potential_x)
 
-    def selective_rule(self):
+    def serial_rule(self):
+        start_time = time.time()
         train_y = self.modal_info[list(self.modal_info)[0]]['train_y']
         test_y = self.modal_info[list(self.modal_info)[0]]['test_y']
 
@@ -199,13 +202,15 @@ class FuseRule:
             # print('Imposter Fused: ' + str(precentage_tracker_imp/precentage_tracker))
             # print('Genuine Fused: ' + str(precentage_tracker_gen/precentage_tracker))
 
+        print("SERIAL RULE TOOK: " + str(time.time()-start_time) + ' seconds')
         self.title = self.title + 'Auto__'+ baseline + '-' +  str(int(alpha*100)) + '-' + str(int(beta*100))
-        self.return_modals['SelectiveRule'] = {'train_x': train_x,
+        self.return_modals['SerialRule'] = {'train_x': train_x,
                                        'train_y': train_y,
                                        'test_x': test_x,
                                        'test_y': test_y}
 
     def sum_rule(self):
+        start_time = time.time()
         train_y = self.modal_info[list(self.modal_info)[0]]['train_y']
         test_y = self.modal_info[list(self.modal_info)[0]]['test_y']
         summed_train_x = None
@@ -222,7 +227,7 @@ class FuseRule:
         self.title = self.title + '-Sum-'
         self.return_modals['SumRule'] = {'train_x': summed_train_x.sum(axis=0), 'train_y': train_y,
                                  'test_x': summed_test_x.sum(axis=0), 'test_y': test_y}
-
+        print("SUM RULE TOOK: " + str(time.time()-start_time) + ' seconds')
 
 
     def svm_rule(self):
@@ -267,8 +272,8 @@ class FuseRule:
         """
         sorted_rules = sorted(list(set(self.list_o_rules)))
 
-        if 'SelectiveRule' in sorted_rules:
-            self.selective_rule()
+        if 'SerialRule' in sorted_rules:
+            self.serial_rule()
 
         if 'SumRule' in sorted_rules:
             self.sum_rule()

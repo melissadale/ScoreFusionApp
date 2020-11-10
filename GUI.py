@@ -131,17 +131,18 @@ class Main(Screen):
     dens_set = ObjectProperty()
     set_type = 'Entire'
     d_slide = Slider(min=0, max=1, value=0)
+    r_slide = Slider(min=0, max=1, value=0)
 
     display_path_roc = StringProperty(None)
-    current_roc_nums = 0
     roc_set = ObjectProperty()
     roc_index = NumericProperty(0)
+    current_roc_nums = 0
 
     density_type = [ 'hist','PDF', 'overlap']
     density_type_pointer = 2
     current_density = density_type[density_type_pointer]
     density_modality_pointer = 0
-
+    roc_modality_pointer = 0
     #popups
     save_popup = ObjectProperty(Popup)
     reset_popup = ObjectProperty(Popup)
@@ -303,17 +304,16 @@ class Main(Screen):
             self.dens_set = self.get_right_densityplots()
             self.display_path_density = self.dens_set[self.density_modality_pointer]
 
-    def set_roc_set(self): # TODO
+    def set_roc_set(self):
         files = []
         for filename in glob.glob('./generated/ROC/*'):
             files.append(filename)
 
-        self.dens_set = files
+        self.roc_set = files
+        self.r_slide.max = len(files)
         self.current_roc_nums = len(files)
 
-
-    def get_right_densityplots(self): # TODO
-
+    def get_right_densityplots(self):
         files = []
         pointer = './generated/density/' + self.set_type+'/' + self.current_density
 
@@ -322,7 +322,6 @@ class Main(Screen):
                 files.append(filename)
 
         return files
-
 
     def update_density_type(self):
         self.density_type_pointer = (self.density_type_pointer + 1) % 3
@@ -334,6 +333,7 @@ class Main(Screen):
             self.display_path_density = self.dens_set[value]
 
     def roc_slider(self, value):
+        self.set_roc_set()
         try:
             self.display_path_roc = self.roc_set[value]
         except:
@@ -352,6 +352,17 @@ class Main(Screen):
                     if self.density_modality_pointer < self.d_slide.max:
                         self.display_path_density = self.dens_set[value + 1]
                         self.density_modality_pointer = self.density_modality_pointer + 1
+
+            if img_set == 'roc':
+                if direction == 'left':
+                    if self.roc_modality_pointer > 0:
+                        self.display_path_roc = self.roc_set[value - 1]
+                        self.roc_modality_pointer = self.roc_modality_pointer - 1
+
+                if direction == 'right':
+                    if self.roc_modality_pointer < self.r_slide.max:
+                        self.display_path_roc = self.roc_set[value + 1]
+                        self.roc_modality_pointer = self.roc_modality_pointer + 1
 
         except Exception as c:
             print(c)
@@ -436,15 +447,17 @@ class Main(Screen):
 
     def fuse(self):
         fusion_list = []
+        self.serial_fusion_settings = None
         if self.chk_selective.active:
-            fusion_list.append('SelectiveRule')
-            self.select_fusion_settings = self.show_fusion_selection.get_parms()
+            fusion_list.append('SerialRule')
+            self.serial_fusion_settings = self.show_fusion_selection.get_parms()
         if self.chk_sum.active:
             fusion_list.append('SumRule')
         if self.chk_svm.active:
             fusion_list.append('SVMRule')
 
-        fusion_mod = Fuse.FuseRule(fusion_list, self.modalities, self.normalize, self.select_fusion_settings, self.matrix_form)
+        fusion_mod = Fuse.FuseRule(fusion_list, self.modalities, self.normalize, self.serial_fusion_settings, self.matrix_form)
+
         mets, disp_pth = fusion_mod.fuse_all()
         self.set_roc_set()
 

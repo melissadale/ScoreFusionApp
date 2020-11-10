@@ -74,10 +74,10 @@ def make_density_plots(gen, imp, label='Test', norm_type='None', modality='', ex
     ax2 = plt.twinx()
     sns.distplot(imp, hist=True, kde=False,
                  kde_kws={'shade': False, 'linewidth': 6},
-                 label='Imposter', color='#FF1493', ax=ax2)
+                 label='Imposter', color='#FF1493')
     sns.distplot(gen, hist=True, kde=False,
                  kde_kws={'shade': False, 'linewidth': 6},
-                 label='Genuine', color='#7B68EE', ax=ax2)
+                 label='Genuine', color='#7B68EE')
 
     p = 'Density Estimates for '+modality+'\n' + label + '\n ' + str(len(gen)) + ' Subjects '
 

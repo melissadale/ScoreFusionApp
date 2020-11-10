@@ -521,6 +521,8 @@ ScreenManagement:
     modalities_lbl: modalities_lbl
 
     d_slide: density_slider_id
+    r_slide: roc_slider_id
+
     loading_pb: load_pb
 
 
@@ -1281,22 +1283,61 @@ ScreenManagement:
                         markup: True
                         text: root.msg_eer
                         color: 0, 0, 0, 1
+                    # TODO
+                    # TODO
+                    # TODO
+                    # TODO
+                    # TODO
+                    # TODO
+                    GridLayout:
+                        rows: 3
+                        size_hint_y: 0.4
 
-                    Label:
-                        size_hint_y: 0.1
-                        halign: 'left'
-                        text_size: self.size
-                        markup: True
-                        text: '[b]F1-Score[/b]'
-                        color: hex('#0DB14B')
-                    Label:
-                        size_hint_y: 0.3
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        markup: True
-                        text: root.msg_f1
-                        color: 0, 0, 0, 1
+                        Label:
+                            size_hint_y: 0.2
+                            halign: 'left'
+                            text_size: self.size
+                            markup: True
+                            text: '[b]Estimated TMR[/b]'
+                            color: hex('#0DB14B')
+
+                        GridLayout:
+                            cols: 3
+                            size_hint_y: 0.2
+
+                            Label:
+                                text: '@'
+                                color: 0, 0, 0, 1
+                                bold: True
+
+                            TextInput:
+                                id: fixed_fmr
+                                text: '0.01'
+                                multiline: False
+
+                                halign: 'right'
+                                valign: 'middle'
+                                text_size: self.width, None
+                                size_hint: (.65, None)
+                                height: 30
+                                multiline: False
+                                # on_text_validate: root.update_test((int(input_test.text)))
+
+                            Label:
+                                text: 'FMR'
+                                color: 0, 0, 0, 1
+                                bold: True
+
+
+
+                        Label:
+                            size_hint_y: 0.6
+                            halign: 'left'
+                            valign: 'top'
+                            text_size: self.size
+                            markup: True
+                            text: root.msg_f1
+                            color: 0, 0, 0, 1
 
                 ##################
                 ################## left - bottom
