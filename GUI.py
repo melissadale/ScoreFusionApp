@@ -448,6 +448,10 @@ class Main(Screen):
             eval_metrics.to_csv(save_location+'/FusionReport/EvaluationMetrics.csv', index=False)
 
     def fuse(self):
+        self.msg_accuracy = ''
+        self.msg_eer = ''
+        self.msg_fixed_tmr = ''
+
         fusion_list = []
         self.serial_fusion_settings = None
         if self.chk_selective.active:
@@ -468,17 +472,19 @@ class Main(Screen):
         # build strings
         for key, mods in mets.items():
             if 'Rule' in key:
-                self.eval[key]['AUC'] = mets[key]['AUC']
-                self.eval[key]['EER'] = mets[key]['EER']
+                self.eval[key]['AUC'] = mods['AUC']
+                self.eval[key]['EER'] = mods['EER']
 
-                self.eval[key]['fprs']=mets[key]['fprs']
-                self.eval[key]['tprs'] = mets[key]['tprs']
-                estimated_tmr = self.get_TMR(mets[key]['fprs'], mets[key]['tprs'],
+                self.eval[key]['fprs'] = mods['fprs']
+                self.eval[key]['tprs'] = mods['tprs']
+                estimated_tmr = self.get_TMR(mods['fprs'], mods['tprs'],
                                                      float(self.fixed_FMR_val.text))
                 self.eval[key]['TMR'] = estimated_tmr
-                accuracy = '[b]'+key+': [/b] {}'.format(0) + self.truncate(mets[key]['AUC'], 6) + '\n'
-                eer = '[b]'+key+': [/b] {}'.format(0) + self.truncate(mets[key]['EER'], 6) + '\n'
-                tmr = '[b]'+key+': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
+
+        for key, vals in self.eval.items():
+                accuracy = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['AUC'], 6) + '\n'
+                eer = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['EER'], 6) + '\n'
+                tmr = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['TMR'], 6) + '\n'
 
                 self.msg_accuracy = self.msg_accuracy + accuracy
                 self.msg_eer = self.msg_eer + eer
