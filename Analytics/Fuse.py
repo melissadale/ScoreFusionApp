@@ -20,6 +20,8 @@ from scipy.optimize import brentq
 from scipy.interpolate import interp1d
 from sklearn.svm import SVC
 from scipy.stats import gaussian_kde
+# from sklearn.metrics import det_curve
+
 import warnings
 import time
 
@@ -263,7 +265,7 @@ class FuseRule:
     ################################################################################################################
     ################################################################################################################
 
-    def fuse_all(self):
+    def fuse_all(self, fixed_fmr=0.01):
         """
 
         :param list_o_rules:

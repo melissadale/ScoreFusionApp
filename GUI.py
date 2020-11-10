@@ -17,6 +17,9 @@ from collections import defaultdict
 from functools import partial
 from skimage import io
 import skimage
+from numpy import ones, vstack
+from numpy.linalg import lstsq
+
 import Analytics.format_data as fm
 import Analytics.Fuse as Fuse
 import AppWidgets.Popups as Popups
@@ -41,7 +44,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.progressbar import ProgressBar
-
+from kivy.uix.textinput import TextInput
 from kivy.uix.slider import Slider
 
 kivy.require('1.9.0')
@@ -165,8 +168,10 @@ class Main(Screen):
 
     msg_accuracy = StringProperty('')
     msg_eer = StringProperty('')
-    msg_f1 = StringProperty('')
+    msg_fixed_tmr = StringProperty('') #TODO
     eval = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
+    fixed_FMR_val = TextInput()
+
 
     ### Progress Bar Things
     def update_bar(self, mod_key, dt):
@@ -468,16 +473,76 @@ class Main(Screen):
             if 'Rule' in key:
                 self.eval[key]['AUC'] = mets[key]['AUC']
                 self.eval[key]['EER'] = mets[key]['EER']
-                self.eval[key]['F1'] = mets[key]['F1']
 
-                accuracy = '[b]'+key+': [/b] {}'.format(0) + str(format(mets[key]['AUC'], '1.4f')) + '\n'
-                eer = '[b]'+key+': [/b] {}'.format(0) + str(format(mets[key]['EER'], '1.4f')) + '\n'
-                f1 = '[b]'+key+': [/b] {}'.format(0) + str(format(mets[key]['F1'], '1.4f')) + '\n'
+                self.eval[key]['fprs']=mets[key]['fprs']
+                self.eval[key]['tprs'] = mets[key]['tprs']
+                estimated_tmr = self.get_TMR(mets[key]['fprs'], mets[key]['tprs'],
+                                                     float(self.fixed_FMR_val.text))
+                self.eval[key]['TMR'] = estimated_tmr
+                accuracy = '[b]'+key+': [/b] {}'.format(0) + self.truncate(mets[key]['AUC'], 6) + '\n'
+                eer = '[b]'+key+': [/b] {}'.format(0) + self.truncate(mets[key]['EER'], 6) + '\n'
+                tmr = '[b]'+key+': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
 
                 self.msg_accuracy = self.msg_accuracy + accuracy
                 self.msg_eer = self.msg_eer + eer
-                self.msg_f1 = self.msg_f1 + f1
+                self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
 
+    def update_evals(self):
+        self.msg_fixed_tmr = ''
+        for key, mods in self.eval.items():
+            if 'Rule' in key:
+                estimated_tmr = self.get_TMR(self.eval[key]['fprs'], self.eval[key]['tprs'],
+                                             float(self.fixed_FMR_val.text))
+                self.eval[key]['TMR'] = estimated_tmr
+                tmr = '[b]' + key + ': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
+
+                self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
+
+    def truncate(self, f, n):
+        '''Truncates/pads a float f to n decimal places without rounding'''
+        s = '{}'.format(f)
+        if 'e' in s or 'E' in s:
+            return '{0:.{1}f}'.format(f, n)
+        i, p, d = s.partition('.')
+        return '.'.join([i, (d + '0' * n)[:n]])
+
+    def get_TMR(self, fmr, tmr, fixed_FMR):
+        df = pd.DataFrame({'FMR': fmr, 'TMR': tmr})
+        df = df.sort_values('FMR')
+
+        for idx, row in df.iterrows():
+            if row['FMR'] < fixed_FMR:
+                continue
+            else:
+                break
+
+        if idx != 0:
+            p1_FMR = df.iloc[idx - 1]['FMR']
+            p1_TMR = df.iloc[idx - 1]['TMR']
+
+            p2_FMR = df.iloc[idx]['FMR']
+            p2_TMR = df.iloc[idx]['TMR']
+
+        else:
+            p1_FMR = df.iloc[idx]['FMR']
+            p1_TMR = df.iloc[idx]['TMR']
+
+            p2_FMR = df.iloc[idx+1]['FMR']
+            p2_TMR = df.iloc[idx+1]['TMR']
+
+        m, b = self.get_line([(p1_FMR, p1_TMR), (p2_FMR, p2_TMR)])
+        estimated_tmr = m * fixed_FMR + b
+        print(estimated_tmr)
+        return estimated_tmr
+
+    def get_line(self, points):
+        """
+        https://stackoverflow.com/questions/21565994/method-to-return-the-equation-of-a-straight-line-given-two-points
+        """
+        x_coords, y_coords = zip(*points)
+        A = vstack([x_coords, ones(len(x_coords))]).T
+        m, c = lstsq(A, y_coords)[0]
+        return m, c
 
 # class E(ExceptionHandler):
 #     def handle_exception(self, inst):
