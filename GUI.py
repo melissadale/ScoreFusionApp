@@ -168,10 +168,9 @@ class Main(Screen):
 
     msg_accuracy = StringProperty('')
     msg_eer = StringProperty('')
-    msg_fixed_tmr = StringProperty('') #TODO
+    msg_fixed_tmr = StringProperty('')
     eval = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
     fixed_FMR_val = TextInput()
-
 
     ### Progress Bar Things
     def update_bar(self, mod_key, dt):
@@ -315,7 +314,7 @@ class Main(Screen):
             files.append(filename)
 
         self.roc_set = files
-        self.r_slide.max = len(files)
+        self.r_slide.max = len(files)-1
         self.current_roc_nums = len(files)
 
     def get_right_densityplots(self):
@@ -339,11 +338,9 @@ class Main(Screen):
 
     def roc_slider(self, value):
         self.set_roc_set()
-        try:
-            self.display_path_roc = self.roc_set[value]
-        except:
-            print('whoops, slider did not work')
 
+        if 0 <= value < self.r_slide.max+1:
+            self.display_path_roc = self.roc_set[value]
 
     def slider_button(self, direction, img_set, value):
         try:

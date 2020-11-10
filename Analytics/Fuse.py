@@ -83,9 +83,12 @@ class FuseRule:
         plt.xlabel('False Match Rate (FMR)',  fontsize=15)
         plt.ylabel('True Match Rate (TMR)', fontsize=15)
 
-        plt.title(self.norm + ' Normalization', fontsize=15)
+        # plt.title(self.norm + ' Normalization', fontsize=15)
+        fusion_rules = [x.split('_')[0] for x in rulz if 'Rule' in x]
+        plt.title('' + ' '.join(fusion_rules), fontsize=15)
+        plt.suptitle(self.norm + ' Normalization', fontsize=10, y=1)
 
-        plot_name = './generated/ROC/' + self.title + '.png'
+        plot_name = './generated/ROC/' + ''.join(fusion_rules) + '-' + self.title + '.png'
         plotz.append(plot_name)
         plt.savefig(plot_name, bbox_inches='tight')
 
@@ -226,7 +229,7 @@ class FuseRule:
                 summed_train_x = np.vstack((summed_train_x, scores['train_x']))
                 summed_test_x = np.vstack((summed_test_x, scores['test_x']))
 
-        self.title = self.title + '-Sum-'
+        self.title = self.title + 'Sum-'
         self.return_modals['SumRule'] = {'train_x': summed_train_x.sum(axis=0), 'train_y': train_y,
                                  'test_x': summed_test_x.sum(axis=0), 'test_y': test_y}
         print("SUM RULE TOOK: " + str(time.time()-start_time) + ' seconds')
@@ -257,7 +260,7 @@ class FuseRule:
             tmp.append(y_score[i][int(test_y[i])])
         y_score = tmp
 
-        self.title = self.title + '-SVM-'
+        self.title = self.title + 'SVM-'
         self.return_modals['SVMRule'] = {'train_x': train_x, 'train_y': train_y,
                                  'test_x': y_score, 'test_y': test_y}
 

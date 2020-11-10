@@ -1355,8 +1355,8 @@ ScreenManagement:
                             size_hint_x: 0.1
                             background_color: 0, 0, 0, 0
                             on_press:
-                                root.slider_button('left','roc', roc_slider_id.value)
-                                if roc_slider_id.value >0: roc_slider_id.value = roc_slider_id.value - 1
+                                root.slider_button('left','roc', int(roc_slider_id.value))
+                                if roc_slider_id.value > 0: roc_slider_id.value = roc_slider_id.value - 1
                             Image:
                                 source: './graphics/left.png'
                                 center_x: self.parent.center_x
@@ -1382,7 +1382,7 @@ ScreenManagement:
                             background_color: 0, 0, 0, 0
                             on_press:
                                 root.slider_button('right','roc', density_slider_id.value)
-                                if roc_slider_id.value < root.num_mods: roc_slider_id.value = roc_slider_id.value + 1
+                                if roc_slider_id.value < root.current_roc_nums - 1: roc_slider_id.value = roc_slider_id.value + 1
                             Image:
                                 source: './graphics/right.png'
                                 center_x: self.parent.center_x
