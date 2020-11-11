@@ -23,6 +23,7 @@ from numpy.linalg import lstsq
 import Analytics.format_data as fm
 import Analytics.Fuse as Fuse
 import AppWidgets.Popups as Popups
+from AppWidgets.ReportPDFs import generate_summary
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
 import kivy
@@ -174,7 +175,6 @@ class Main(Screen):
 
     ### Progress Bar Things
     def update_bar(self, mod_key, dt):
-        print('Updating ' + str(self.loading_pb.value))
         if self.loading_pb.value <= 100:
             self.loading_pb.value += self.increase_amount
             self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
@@ -184,7 +184,6 @@ class Main(Screen):
         threading.Thread(target=self.setup, args=()).start()
 
     def setup(self):
-        print('setup data stuff')
         temp_modalities, self.matrix_form, e_id = fm.get_data(self.load_path, test_perc=self.test_perc)
 
         self.increase_amount = 100/len(temp_modalities)
@@ -343,31 +342,28 @@ class Main(Screen):
             self.display_path_roc = self.roc_set[value]
 
     def slider_button(self, direction, img_set, value):
-        try:
-            if img_set == 'density':
-                if direction == 'left':
-                    if self.density_modality_pointer > 0:
-                        self.display_path_density = self.dens_set[value - 1]
-                        self.density_modality_pointer = self.density_modality_pointer - 1
+        if img_set == 'density':
+            if direction == 'left':
+                if self.density_modality_pointer > 0:
+                    self.display_path_density = self.dens_set[value - 1]
+                    self.density_modality_pointer = self.density_modality_pointer - 1
 
-                if direction == 'right':
-                    if self.density_modality_pointer < self.d_slide.max:
-                        self.display_path_density = self.dens_set[value + 1]
-                        self.density_modality_pointer = self.density_modality_pointer + 1
+            if direction == 'right':
+                if self.density_modality_pointer < self.d_slide.max:
+                    self.display_path_density = self.dens_set[value + 1]
+                    self.density_modality_pointer = self.density_modality_pointer + 1
 
-            if img_set == 'roc':
-                if direction == 'left':
-                    if self.roc_modality_pointer > 0:
-                        self.display_path_roc = self.roc_set[value - 1]
-                        self.roc_modality_pointer = self.roc_modality_pointer - 1
+        if img_set == 'roc':
+            if direction == 'left':
+                if self.roc_modality_pointer > 0:
+                    self.display_path_roc = self.roc_set[value - 1]
+                    self.roc_modality_pointer = self.roc_modality_pointer - 1
 
-                if direction == 'right':
-                    if self.roc_modality_pointer < self.r_slide.max:
-                        self.display_path_roc = self.roc_set[value + 1]
-                        self.roc_modality_pointer = self.roc_modality_pointer + 1
+            if direction == 'right':
+                if self.roc_modality_pointer < self.r_slide.max:
+                    self.display_path_roc = self.roc_set[value + 1]
+                    self.roc_modality_pointer = self.roc_modality_pointer + 1
 
-        except Exception as c:
-            print(c)
 
     def checkbox_click(self, instance, value):
         if value is True:
@@ -490,6 +486,10 @@ class Main(Screen):
                 self.msg_eer = self.msg_eer + eer
                 self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
 
+        generate_summary(modalities=mets, results=self.eval,
+                         roc_plt=self.display_path_roc,
+                         fmr_rate=float(self.fixed_FMR_val.text))
+
     def update_evals(self):
         self.msg_fixed_tmr = ''
         for key, mods in self.eval.items():
@@ -535,7 +535,6 @@ class Main(Screen):
 
         m, b = self.get_line([(p1_FMR, p1_TMR), (p2_FMR, p2_TMR)])
         estimated_tmr = m * fixed_FMR + b
-        print(estimated_tmr)
         return estimated_tmr
 
     def get_line(self, points):

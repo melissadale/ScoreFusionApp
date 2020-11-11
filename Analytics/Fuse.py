@@ -159,8 +159,7 @@ class FuseRule:
             gen_scores = test_x[test_y == 1.0]
             imp_scores = test_x[test_y == 0.0]
             alpha, beta = self.extract_alpha_beta(gen_scores, imp_scores)
-            print("Alpha: " + str(alpha))
-            print("Beta: " + str(beta))
+
         else:
             alpha = self.fusion_settings['alpha']
             beta = self.fusion_settings['beta']
@@ -207,7 +206,7 @@ class FuseRule:
             # print('Imposter Fused: ' + str(precentage_tracker_imp/precentage_tracker))
             # print('Genuine Fused: ' + str(precentage_tracker_gen/precentage_tracker))
 
-        print("SERIAL RULE TOOK: " + str(time.time()-start_time) + ' seconds')
+        # print("SERIAL RULE TOOK: " + str(time.time()-start_time) + ' seconds')
         self.title = self.title + 'Auto__'+ baseline + '-' +  str(int(alpha*100)) + '-' + str(int(beta*100))
         self.return_modals['SerialRule'] = {'train_x': train_x,
                                        'train_y': train_y,
@@ -232,7 +231,7 @@ class FuseRule:
         self.title = self.title + 'Sum-'
         self.return_modals['SumRule'] = {'train_x': summed_train_x.sum(axis=0), 'train_y': train_y,
                                  'test_x': summed_test_x.sum(axis=0), 'test_y': test_y}
-        print("SUM RULE TOOK: " + str(time.time()-start_time) + ' seconds')
+        # print("SUM RULE TOOK: " + str(time.time()-start_time) + ' seconds')
 
 
     def svm_rule(self):
