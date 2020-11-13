@@ -9,6 +9,9 @@ class SavePopup(GridLayout):
     def get_save_reports(self):
         things_to_save = []
 
+        if self.chk_save_report.active:
+            things_to_save.append('report')
+
         if self.chk_save_estimates.active:
             things_to_save.append('estimates')
 

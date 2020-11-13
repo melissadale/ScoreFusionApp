@@ -34,13 +34,14 @@ ScreenManagement:
     separator_color: hex('#0DB14B')
     title_color: hex('#0DB14B')
 
-
+    chk_save_report: chk_save_report
     chk_save_estimates: chk_save_estimates
     chk_save_ROC: chk_save_ROC
     chk_save_testtrain: chk_save_testtrain
     chk_save_datamets: chk_save_datamets
     chk_save_analysis: chk_save_analysis
     chk_save_project: chk_save_project
+
 
     GridLayout:
         size_hint_y: 0.3
@@ -79,7 +80,7 @@ ScreenManagement:
                 size_hint_x: 0.9
                 valign: 'middle'
                 text_size: self.size
-                text: 'FMNR vs FMR (ROC)'
+                text: 'TMR vs FMR (ROC)'
                 color: 1,1,1,1
 
     GridLayout:
@@ -144,6 +145,20 @@ ScreenManagement:
         GridLayout:
             rows: 3
             cols: 2
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_report
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Save Report Summary (PDF)'
+                color: 1,1,1,1
+
 
             CheckBox:
                 halign: 'right'

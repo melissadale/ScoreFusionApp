@@ -386,6 +386,11 @@ class Main(Screen):
             os.makedirs(save_location + '/FusionReport/')
 
         things_to_save = self.save_settings.get_save_reports()
+        if 'report' in things_to_save:
+            generate_summary(modalities=self.modality_list, results=self.eval,
+                             roc_plt=self.display_path_roc,
+                             fmr_rate=float(self.fixed_FMR_val.text),
+                             save_to_path=save_location+ '/FusionReport/')
 
         if 'estimates' in things_to_save:
             if not os.path.exists(save_location + '/FusionReport/DensityEstimates/'):
@@ -480,7 +485,7 @@ class Main(Screen):
                 self.msg_eer = self.msg_eer + eer
                 self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
 
-        generate_summary(modalities=mets, results=self.eval,
+        generate_summary(modalities=self.modality_list, results=self.eval,
                          roc_plt=self.display_path_roc,
                          fmr_rate=float(self.fixed_FMR_val.text))
 

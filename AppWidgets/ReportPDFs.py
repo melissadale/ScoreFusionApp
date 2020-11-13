@@ -37,7 +37,7 @@ def generate_summary(modalities=None, results=None, roc_plt=None, fmr_rate=0.01,
 
     rules = [x for x in results.keys() if 'Rule' in x]
 
-    modalities = [x for x in modalities.keys() if 'Rule' not in x]
+    modalities = [x for x in modalities if 'Rule' not in x]
     if len(modalities) < 10:
         modalities_string = ', '.join(modalities)
     else:
