@@ -15,35 +15,29 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from functools import partial
-from skimage import io
-import skimage
 from numpy import ones, vstack
 from numpy.linalg import lstsq
 
 import Analytics.format_data as fm
 import Analytics.Fuse as Fuse
-import AppWidgets.Popups as Popups
+import AppWidgets.SavePopup as SavePop
+import AppWidgets.ResetPopup as ResetPopup
+import AppWidgets.TanhPopup as TanhPopup
+import AppWidgets.DSigPopup as DSigPopup
+import AppWidgets.SelectiveFusionPopup as SelectiveFusionPopup
+
 from AppWidgets.ReportPDFs import generate_summary
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
 import kivy
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.tabbedpanel import TabbedPanel
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.stacklayout import StackLayout
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.base import ExceptionManager, ExceptionHandler
-from kivy.graphics.transformation import Matrix
 from kivy.clock import Clock
 from kivy.uix.popup import Popup
-from kivy.uix.dropdown import DropDown
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.button import Button
-from kivy.uix.widget import Widget
 from kivy.uix.progressbar import ProgressBar
 from kivy.uix.textinput import TextInput
 from kivy.uix.slider import Slider
@@ -218,14 +212,14 @@ class Main(Screen):
 #############################################################
 #############################################################
     def save_popup(self):
-        self.save_settings = Popups.SavePopup()
+        self.save_settings = SavePop.SavePopup()
         self.popup_popup = Popup(title="Save ", content=self.save_settings, size_hint=(None, None),
                                 size=(600, 600))
         self.save_settings.set_pop(self.popup_popup)
         self.popup_popup.open()  # show the popup
 
     def reset_popup(self):
-        self.reset = Popups.ResetPopup()
+        self.reset = ResetPopup.ResetPopup()
         self.reset_popup = Popup(title="RESET WARNING ", content=self.reset, size_hint=(None, None),
                                 size=(400, 400))
         self.reset.set_pop(self.reset_popup)
@@ -238,21 +232,21 @@ class Main(Screen):
             self.ids.modalities_lbl.text = ''
 
     def Tanh_popup(self):
-        self.show_tanh = Popups.TanhPopup()
+        self.show_tanh = TanhPopup.TanhPopup()
         self.tanh_popup = Popup(title="Tanh Estimator ", content=self.show_tanh, size_hint=(None, None),
                                 size=(400, 400))
         self.tanh_popup.open()  # show the popup
         self.show_tanh.set_pop(self.tanh_popup)
 
     def DSig_popup(self):
-        self.show_dsig = Popups.DSigPopup()
+        self.show_dsig = DSigPopup.DSigPopup()
         self.dsig_popup = Popup(title="Double Sigmoid Estimator ", content=self.show_dsig, size_hint=(None, None),
                                 size=(400, 400))
         self.dsig_popup.open()  # show the popup
         self.show_dsig.set_pop(self.dsig_popup)
 
     def fusion_selective_popup(self):
-        self.show_fusion_selection = Popups.SelectiveFusionPopup()
+        self.show_fusion_selection = SelectiveFusionPopup.SelectiveFusionPopup()
         self.fusion_selection_popup = Popup(title="Selective Fusion", content=self.show_fusion_selection, size_hint=(None, None),
                                 size=(600, 600))
         self.show_fusion_selection.set_pop(self.fusion_selection_popup, self.modality_list)
