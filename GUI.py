@@ -20,11 +20,11 @@ from numpy.linalg import lstsq
 
 import Analytics.format_data as fm
 import Analytics.Fuse as Fuse
-import AppWidgets.SavePopup as SavePop
-import AppWidgets.ResetPopup as ResetPopup
-import AppWidgets.TanhPopup as TanhPopup
-import AppWidgets.DSigPopup as DSigPopup
-import AppWidgets.SelectiveFusionPopup as SelectiveFusionPopup
+import AppWidgets.PopupSave as SavePop
+import AppWidgets.PopupReset as ResetPopup
+import AppWidgets.PopupTanh as TanhPopup
+import AppWidgets.PopupDSig as DSigPopup
+import AppWidgets.PopupSelectiveFusion as SelectiveFusionPopup
 
 from AppWidgets.ReportPDFs import generate_summary
 
@@ -178,7 +178,7 @@ class Main(Screen):
         threading.Thread(target=self.setup, args=()).start()
 
     def setup(self):
-        temp_modalities, self.matrix_form, e_id = fm.get_data(self.load_path, test_perc=self.test_perc)
+        temp_modalities, self.matrix_form, e_id = fm.get_data(self.load_path, test_perc=self.test_perc, dissimilar=self.chk_dissimilar)
 
         self.increase_amount = 100/len(temp_modalities)
 

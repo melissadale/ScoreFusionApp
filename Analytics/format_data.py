@@ -4,10 +4,8 @@ import pandas as pd
 from collections import defaultdict
 from functools import partial
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
 import seaborn as sns
 import Analytics.Norms as nms
 
@@ -153,7 +151,7 @@ def make_density_plots(gen, imp, label='Test', norm_type='None', modality='', ex
     plt.clf()
 
 
-def get_data(pth, test_perc=0.2):
+def get_data(pth, test_perc=0.2, dissimilar=True):
     """
     Assumptions: Each file has the same number of samples
     """
@@ -192,6 +190,9 @@ def get_data(pth, test_perc=0.2):
             modality_keys = list(data.columns)
 
         data_x, data_y = split_gen_imp(data, matrix_form)
+
+        if dissimilar.active:
+            data_x = 1-data_x
 
         ######### PULL DATA
         if 'train' in filename.lower():
