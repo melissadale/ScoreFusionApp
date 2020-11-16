@@ -25,7 +25,7 @@ import AppWidgets.PopupReset as ResetPopup
 import AppWidgets.PopupTanh as TanhPopup
 import AppWidgets.PopupDSig as DSigPopup
 import AppWidgets.PopupSelectiveFusion as SelectiveFusionPopup
-
+import AppWidgets.PopupModalityEdit as PopupModalityEdit
 from AppWidgets.ReportPDFs import generate_summary
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
@@ -217,6 +217,14 @@ class Main(Screen):
                                 size=(600, 600))
         self.save_settings.set_pop(self.popup_popup)
         self.popup_popup.open()  # show the popup
+
+    def modality_edit_popup(self):
+        edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.modality_list)
+        self.popup_popup = Popup(title="Edit Modalities", content=edit_mods, size_hint=(None, None),
+                                size=(600, 600))
+        edit_mods.set_pop(self.popup_popup)
+        self.popup_popup.open()  # show the popup
+
 
     def reset_popup(self):
         self.reset = ResetPopup.ResetPopup()

@@ -840,27 +840,53 @@ ScreenManagement:
                     size_hint_y: 0.9
                     rows: 2
 
-                    Label:
-                        id: detected_lbl
+                    GridLayout:
+                        cols: 2
                         size_hint_y: 0.2
-                        size_hint_x: 1
-                        halign: 'center'
-                        valign: 'top'
-                        text_size: self.size
 
-                        opacity: 1.0
-                        text: '\n\nDetected Modalities'
-                        bold: True
-                        underline: True
-                        color: hex('#18453B')
 
-                        canvas.before:
-                            Color:
-                                rgba: 0.91, 0.93, 0.96, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
+                        Label:
+                            id: detected_lbl
+                            size_hint_x: 0.8
+                            #size_hint_y: None
+                            halign: 'center'
+                            valign: 'top'
+                            text_size: self.size
 
+                            opacity: 1.0
+                            text: '\n\nDetected Modalities'
+                            bold: True
+                            underline: True
+                            color: hex('#18453B')
+
+                            canvas.before:
+                                Color:
+                                    rgba: 0.91, 0.93, 0.96, 1
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
+
+                        Button:
+                            size_hint_x: 0.2
+                            size_hint_y: None
+                            height: dp(20)
+                            valign: 'top'
+                            on_press:
+                                root.modality_edit_popup()
+                            Image:
+                                source: './graphics/edit_pencil.png'
+                                allow_stretch: True
+                                center_x: self.parent.center_x
+                                center_y: self.parent.center_y
+                                size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
+                                height: dp(20)  # The fixed height you want
+
+                                canvas.before:
+                                    Color:
+                                        rgba: 0.91, 0.93, 0.96, 1
+                                    Rectangle:
+                                        pos: self.pos
+                                        size: self.size
 
                     Label:
                         id: modalities_lbl
