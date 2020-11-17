@@ -37,10 +37,10 @@ class ModeEditPopup(GridLayout):
                                      height=30, valign='top')
                 row.add_widget(mod_name)
 
-                similarity_chk = CheckBox(size_hint_x=0.25, size_hint_y=None, active=True)
+                similarity_chk = CheckBox(size_hint_x=0.25, size_hint_y=None, active=True, group=mod)
                 row.add_widget(similarity_chk)
 
-                dissimilarity_chk = CheckBox(size_hint_x=0.25, size_hint_y=None)
+                dissimilarity_chk = CheckBox(size_hint_x=0.25, size_hint_y=None, group=mod)
                 row.add_widget(dissimilarity_chk)
 
                 layout.add_widget(row)
