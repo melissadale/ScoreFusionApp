@@ -5,7 +5,6 @@ By Melissa Dale
 import functools
 import glob
 import os
-import pickle
 import shutil
 
 # os.environ['KIVY_GL_BACKEND'] = 'angle_sdl2'
@@ -74,7 +73,6 @@ class SaveLoc(Screen):
     save_location = StringProperty('')
     data = ObjectProperty(None)
 
-
     def __init__(self, **args):
         Clock.schedule_once(self.init_widget, 0)
         return super(SaveLoc, self).__init__(**args)
@@ -141,9 +139,7 @@ class Main(Screen):
     current_density = density_type[density_type_pointer]
     density_modality_pointer = 0
     roc_modality_pointer = 0
-    #popups
-    save_popup = ObjectProperty(Popup)
-    reset_popup = ObjectProperty(Popup)
+    # popups
     tanh_popup = ObjectProperty(Popup)
     dsig_popup = ObjectProperty(Popup)
     fusion_selection_popup = ObjectProperty(Popup)
@@ -178,7 +174,8 @@ class Main(Screen):
         threading.Thread(target=self.setup, args=()).start()
 
     def setup(self):
-        temp_modalities, self.matrix_form, e_id = fm.get_data(self.load_path, test_perc=self.test_perc, dissimilar=self.chk_dissimilar)
+        temp_modalities, self.matrix_form, e_id = fm.get_data(self.load_path, test_perc=self.test_perc,
+                                                              dissimilar=self.chk_dissimilar)
 
         self.increase_amount = 100/len(temp_modalities)
 
@@ -200,7 +197,7 @@ class Main(Screen):
         self.num_imp_test = np.count_nonzero(self.modalities[list(self.modalities)[0]]['test_y'] == 1)
 
         # messages
-        self.msg_impgen_test ='[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(self.num_gen_test, self.num_imp_test)
+        self.msg_impgen_test = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(self.num_gen_test, self.num_imp_test)
         self.msg_impgen_train = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(self.num_gen_train, self.num_imp_train)
         self.msg_test = '[b]TESTING: [/b] {} Subjects'.format(self.num_imp_test)
         self.msg_train = '[b]TRAINING: [/b] {} Subjects'.format(self.num_imp_train)
@@ -232,9 +229,6 @@ class Main(Screen):
             self.modality_list = [mod[0] for key, mod in user_vals.items() if mod[3]]
             self.update_modality_label()
 
-
-
-
     def update_modality_label(self):
         self.ids.modalities_lbl.text = ''
         for mod_key in self.modality_list:
@@ -244,10 +238,10 @@ class Main(Screen):
 #############################################################
     def save_popup(self):
         self.save_settings = SavePop.SavePopup()
-        self.popup_popup = Popup(title="Save ", content=self.save_settings, size_hint=(None, None),
-                                size=(600, 600))
-        self.save_settings.set_pop(self.popup_popup)
-        self.popup_popup.open()  # show the popup
+        popup = Popup(title="Save ", content=self.save_settings, size_hint=(None, None),
+                            size=(600, 600))
+        self.save_settings.set_pop(popup)
+        popup.open()
 
     def modality_edit_popup(self):
         self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.original_modality_list)
