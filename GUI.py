@@ -209,6 +209,16 @@ class Main(Screen):
         self.display_path_density = self.dens_set[self.density_modality_pointer]
         self.d_slide.max = len(self.modality_list)-1
 
+    def modality_update_helper(self, args):
+        user_vals = self.edit_mods.get_updates()
+        self.modality_list = [mod[0] for key, mod in user_vals.items()]
+        self.update_modality_label()
+
+    def update_modality_label(self):
+        self.ids.modalities_lbl.text = ''
+        for mod_key in self.modality_list:
+            self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
+
 #############################################################
 #############################################################
     def save_popup(self):
@@ -219,12 +229,13 @@ class Main(Screen):
         self.popup_popup.open()  # show the popup
 
     def modality_edit_popup(self):
-        edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.modality_list)
-        self.popup_popup = Popup(title="Edit Modalities", content=edit_mods, size_hint=(None, None),
+        self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.modality_list)
+        self.popup_popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
                                 size=(600, 600))
-        edit_mods.set_pop(self.popup_popup)
-        self.popup_popup.open()  # show the popup
+        self.edit_mods.set_pop(self.popup_popup)
+        self.popup_popup.bind(on_dismiss=self.modality_update_helper)
 
+        self.popup_popup.open()
 
     def reset_popup(self):
         self.reset = ResetPopup.ResetPopup()

@@ -296,6 +296,5 @@ def split_data(dicts, normalize='MinMax', norm_params=[], key='', exp_id=''):
     gen, imp = reverse_gen_imp(np.append(transformed_train_x, transformed_test_x), np.append(train_y, test_y))
     make_density_plots(gen, imp, label='Entire', norm_type=normalize, modality=key, exp=exp_id)
 
-    print('returning modality')
     return ret_dict
 
