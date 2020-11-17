@@ -844,11 +844,10 @@ ScreenManagement:
                         cols: 2
                         size_hint_y: 0.2
 
-
                         Label:
                             id: detected_lbl
                             size_hint_x: 0.8
-                            #size_hint_y: None
+                            size_hint_y: 1.0
                             halign: 'center'
                             valign: 'top'
                             text_size: self.size
@@ -868,9 +867,11 @@ ScreenManagement:
 
                         Button:
                             size_hint_x: 0.2
-                            size_hint_y: None
+                            size_hint_y: 1.0
                             height: dp(20)
                             valign: 'top'
+                            background_normal: ''
+                            background_color: 0.91, 0.93, 0.96, 1
                             on_press:
                                 root.modality_edit_popup()
 
@@ -879,9 +880,8 @@ ScreenManagement:
                                 allow_stretch: True
                                 center_x: self.parent.center_x
                                 center_y: self.parent.center_y
-                                size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
-                                height: dp(20)  # The fixed height you want
-
+                                size_hint_y: None
+                                height: dp(20)
                                 canvas.before:
                                     Color:
                                         rgba: 0.91, 0.93, 0.96, 1

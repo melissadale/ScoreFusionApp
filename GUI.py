@@ -108,7 +108,6 @@ class Main(Screen):
 
     input_test = ObjectProperty(None)
     test_label = ObjectProperty(None)
-    detected_lbl = ObjectProperty()
     train_perc = StringProperty('% Testing - 80 % Training')
 
     test_perc = NumericProperty(20)
@@ -136,7 +135,7 @@ class Main(Screen):
     roc_index = NumericProperty(0)
     current_roc_nums = 0
 
-    density_type = [ 'hist','PDF', 'overlap']
+    density_type = ['hist', 'PDF', 'overlap']
     density_type_pointer = 2
     current_density = density_type[density_type_pointer]
     density_modality_pointer = 0
@@ -211,8 +210,9 @@ class Main(Screen):
 
     def modality_update_helper(self, args):
         user_vals = self.edit_mods.get_updates()
-        self.modality_list = [mod[0] for key, mod in user_vals.items()]
-        self.update_modality_label()
+        if user_vals:
+            self.modality_list = [mod[0] for key, mod in user_vals.items()]
+            self.update_modality_label()
 
     def update_modality_label(self):
         self.ids.modalities_lbl.text = ''
