@@ -120,6 +120,7 @@ class Main(Screen):
 
     returned_modalities = StringProperty('')
     modalities = defaultdict(dict)
+    modalities_original = defaultdict(dict)
     num_mods = NumericProperty(0)
     num_rocs = NumericProperty(0)
 
@@ -147,7 +148,7 @@ class Main(Screen):
     dsig_popup = ObjectProperty(Popup)
     fusion_selection_popup = ObjectProperty(Popup)
     modality_list = ObjectProperty(None)
-
+    original_modality_list = []
     # Progress bars
     loading_pb = ProgressBar()
     increase_amount = NumericProperty(0)
@@ -186,6 +187,8 @@ class Main(Screen):
             self.modalities[key] = mod_dict
             Clock.schedule_once(functools.partial(self.update_bar, key))
         self.modality_list = list(self.modalities)
+        self.original_modality_list = list(self.modalities)
+        self.modalities_original = self.modalities
 
         self.detected_lbl.opacity = 1.0
         self.roc_index = 0
@@ -210,9 +213,27 @@ class Main(Screen):
 
     def modality_update_helper(self, args):
         user_vals = self.edit_mods.get_updates()
+
         if user_vals:
-            self.modality_list = [mod[0] for key, mod in user_vals.items()]
+            # update modalities dict
+            self.modalities = self.modalities_original
+
+            for orig_key, items in user_vals.items():
+                if items[3]:  # modalities to fuse
+                    new_key = items[0]
+                    if new_key != orig_key:  # update modalities key
+                        self.modalities[new_key] = self.modalities[orig_key]
+                        del self.modalities[orig_key]
+
+                else:  # remove
+                    del self.modalities[orig_key]
+
+            # update modality list
+            self.modality_list = [mod[0] for key, mod in user_vals.items() if mod[3]]
             self.update_modality_label()
+
+
+
 
     def update_modality_label(self):
         self.ids.modalities_lbl.text = ''
@@ -229,7 +250,7 @@ class Main(Screen):
         self.popup_popup.open()  # show the popup
 
     def modality_edit_popup(self):
-        self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.modality_list)
+        self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.original_modality_list)
         self.popup_popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
                                 size=(600, 600))
         self.edit_mods.set_pop(self.popup_popup)
@@ -444,7 +465,7 @@ class Main(Screen):
 
 
         if 'datamets' in things_to_save:
-            dataset_metrics = pd.DataFrame(data={'Modalities': list(self.modalities),
+            dataset_metrics = pd.DataFrame(data={'Modalities': self.modality_list,
                                                  'Train_Split': str(100-self.test_perc)+'%',
                                                  'Test_Split': str(self.test_perc)+'%',
                                                  'Total_Training': self.num_gen_train+self.num_imp_train,

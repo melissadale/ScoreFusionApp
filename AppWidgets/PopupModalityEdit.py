@@ -23,28 +23,34 @@ class ModeEditPopup(GridLayout):
             self.changes = dict.fromkeys(set(self.modality_list), [])
 
             header = GridLayout(cols=4, size_hint_y=0.1)
-            header.add_widget(Label(text='Modality Name', size_hint_x=0.25, bold=True,
+
+            header.add_widget(Label(text='Fuse', size_hint_x=0.2, bold=True))
+            header.add_widget(Label(text='Modality Name', size_hint_x=0.4, bold=True,
                                     color=(0.05, 0.69, 0.29, 1.0)))
-            header.add_widget(Label(text='', size_hint_x=0.25))
-            header.add_widget(Label(text='Similarity ', size_hint_x=0.25, bold=True))
-            header.add_widget(Label(text='Dissimilarity ', size_hint_x=0.25, bold=True))
+            header.add_widget(Label(text='Similarity ', size_hint_x=0.2, bold=True))
+            header.add_widget(Label(text='Dissimilarity ', size_hint_x=0.2, bold=True))
+
             self.add_widget(header)
 
             layout = GridLayout(cols=1, size_hint_y=0.8)
             for mod in self.modality_list:
                 row = GridLayout(cols=4)
-                mod_name = TextInput(text=mod, size_hint_x=0.5, size_hint_y=None, multiline=False,
+
+                fuse_chk = CheckBox(size_hint_x=0.2, size_hint_y=None, active=True)
+                row.add_widget(fuse_chk)
+
+                mod_name = TextInput(text=mod, size_hint_x=0.4, size_hint_y=None, multiline=False,
                                      height=30, valign='top')
                 row.add_widget(mod_name)
 
-                similarity_chk = CheckBox(size_hint_x=0.25, size_hint_y=None, active=True, group=mod)
+                similarity_chk = CheckBox(size_hint_x=0.2, size_hint_y=None, active=True, group=mod)
                 row.add_widget(similarity_chk)
 
-                dissimilarity_chk = CheckBox(size_hint_x=0.25, size_hint_y=None, group=mod)
+                dissimilarity_chk = CheckBox(size_hint_x=0.2, size_hint_y=None, group=mod)
                 row.add_widget(dissimilarity_chk)
 
                 layout.add_widget(row)
-                self.changes[mod] = [mod_name, similarity_chk, dissimilarity_chk]
+                self.changes[mod] = [mod_name, similarity_chk, dissimilarity_chk, fuse_chk]
             layout.add_widget(Label(text=''))
 
             self.add_widget(layout)
@@ -68,7 +74,8 @@ class ModeEditPopup(GridLayout):
             mod_lbl = self.changes[mod][0].text
             mod_sim = self.changes[mod][1].active
             mod_dis = self.changes[mod][2].active
-            tmp[mod] = [mod_lbl, mod_sim, mod_dis]
+            use_mod = self.changes[mod][3].active
+            tmp[mod] = [mod_lbl, mod_sim, mod_dis, use_mod]
 
         self.return_vals = tmp
         self.close()
