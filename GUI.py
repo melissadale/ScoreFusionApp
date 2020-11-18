@@ -180,9 +180,9 @@ class Main(Screen):
         self.increase_amount = 100/len(temp_modalities)
 
         for key, items in temp_modalities.items():
+            Clock.schedule_once(functools.partial(self.update_bar, key))
             mod_dict = fm.split_data(items, normalize=self.normalize, norm_params=self.norm_params, key=key, exp_id=e_id)
             self.modalities[key] = mod_dict
-            Clock.schedule_once(functools.partial(self.update_bar, key))
         self.modality_list = list(self.modalities)
         self.original_modality_list = list(self.modalities)
         self.modalities_original = self.modalities

@@ -28,6 +28,7 @@ import time
 warnings.filterwarnings('ignore', category=FutureWarning)
 np.seterr(divide='ignore', invalid='ignore')
 
+
 class FuseRule:
     def __init__(self, list_o_rules, modal_infos, norm=None, fusion_settings=None, matrix_form=False):
         self.list_o_rules = sorted(list(set(list_o_rules)))
