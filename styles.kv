@@ -580,7 +580,7 @@ ScreenManagement:
                     ################## Load Scores
                     GridLayout:
                         cols: 2
-                        orientation: "vertical"
+                        orientation: "tb-lr"
                         size_hint_y: 0.2
 
                         Button:
@@ -918,7 +918,7 @@ ScreenManagement:
                         bold: True
                         on_press:
                             root.set_normalization()
-                            root.setup_2(root.location)
+                            root.setup(root.location)
                             # Main.tabby_tab.switch_to(Main.tab_list[2])
                             # https://stackoverflow.com/questions/38883763/kivy-button-on-press-switch-to-next-tab-using-kivy-builder
                 ##################
@@ -1125,8 +1125,7 @@ ScreenManagement:
                             step: 1
 
                             size_hint_x: 0.6
-                            on_value:
-                                root.density_slider(int(density_slider_id.value))
+                            on_value: root.density_slider(int(density_slider_id.value))
 
 
                         Button:
@@ -1286,7 +1285,7 @@ ScreenManagement:
 
                     Image:
                         id: display_image_roc
-                        source: root.display_path_roc
+                        source:  root.display_path_roc
 
 
                 ##################

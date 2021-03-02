@@ -1,300 +1,364 @@
 import glob
+import math
 import os
 import pandas as pd
-from collections import defaultdict
-from functools import partial
 from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import Analytics.Norms as nms
+import statsmodels.api as sm
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-colors = ["windows blue", "amber", "greyish", "faded green", "dusty purple"]
 
-def split_gen_imp(scores, matrix_form=False):
-    scores = scores.values
-    genuine = []
-    imposter = []
+class Score_data:
+    def __init__(self, **kwargs):
+        self.path = kwargs.get('path')
+        self.test_perc = kwargs.get('test_perc')
+        self.normalize = kwargs.get('normalize')
+        self.norm_param = kwargs.get('norm_param')
 
-    # MATRIX Loading
-    if matrix_form:
-        for i in range(len(scores)-1):
-            genuine.append(scores[i][i])
-
-            for j in range(len(scores)-1):
-                if j != i:
-                    imposter.append(scores[i][j])
-
-    # COLUMN LOADING
-    else:
-        for i in range(len(scores)):
-            if scores[i][-1] == 1:
-                genuine.append(scores[i][0:-1])
-            elif scores[i][-1] == 0:
-                imposter.append(scores[i][0:-1])
-
-    groomed_data = np.array(genuine + imposter)
-    lbl = np.array([1.0 for i in range(len(genuine))] + [0.0 for i in range(len(imposter))])
-
-    return groomed_data, lbl
+        self.colors = ["windows blue", "amber", "greyish", "faded green", "dusty purple"]
+        self.score_data = pd.DataFrame(columns=['Probe_Ids', 'Gallery_Ids', 'Train_Test'])
+        self.score_data_inactive = pd.DataFrame()
+        self.modalities = []
+        self.lbl = kwargs.get('lbl')
 
 
-def reverse_gen_imp(dat, y):
-    gen = dat[y == 1.0]
-    imp = dat[y == 0.0]
+    def make_density_plots(self, gen, imp, label='', norm_type='None', modality='', exp=''):
+        print('Plotting Density Estimates ... ')
 
-    return gen, imp
+        if not os.path.exists('./generated/density/' + label + '/PDF/'):
+            os.makedirs('./generated/density/' + label + '/PDF/')
+        if not os.path.exists('./generated/density/' + label + '/hist/'):
+            os.makedirs('./generated/density/' + label + '/hist/')
+        if not os.path.exists('./generated/density/' + label + '/overlap/'):
+            os.makedirs('./generated/density/' + label + '/overlap/')
 
+        #################################################################
+        # Overlaid
+        #################################################################
+        sns.distplot(imp, hist=False, kde=True,
+                     kde_kws={'shade': True, 'linewidth': 3},
+                     label='Imposter', color='#C89A58')
+        sns.distplot(gen, hist=False, kde=True,
+                     kde_kws={'shade': True, 'linewidth': 3},
+                     label='Genuine', color='#0DB14B')
+        ax = plt.gca()
+        ax2 = plt.twinx()
+        sns.distplot(imp, hist=True, kde=False,
+                     kde_kws={'shade': False, 'linewidth': 6},
+                     label='Imposter', color='#FF1493')
+        sns.distplot(gen, hist=True, kde=False,
+                     kde_kws={'shade': False, 'linewidth': 6},
+                     label='Genuine', color='#7B68EE')
 
-def make_density_plots(gen, imp, label='Test', norm_type='None', modality='', exp=''):
-    print('Plotting Density Estimates ... ')
+        p = 'Density Estimates and Score Counts for '+modality+'\n' + label + '\n ' + str(len(gen)) + ' Subjects '
 
-    if not os.path.exists('./generated/density/' + label + '/PDF/'):
-        os.makedirs('./generated/density/' + label + '/PDF/')
-    if not os.path.exists('./generated/density/' + label + '/hist/'):
-        os.makedirs('./generated/density/' + label + '/hist/')
-    if not os.path.exists('./generated/density/' + label + '/overlap/'):
-        os.makedirs('./generated/density/' + label + '/overlap/')
+        ax2.legend(bbox_to_anchor=(1, 1), loc='upper center')
+        plt.legend(bbox_to_anchor=(1, 1), loc=2)
+        lims = ax.get_xlim()
+        y_ticks = ax.get_yticks()
+        ax.set_ylabel(r"Density Estimate")
+        ax2.set_ylabel(r"Sample Counts")
+        plt.title(p)
 
-    #################################################################
-    # Overlaid
-    #################################################################
-    sns.distplot(imp, hist=False, kde=True,
-                 kde_kws={'shade': True, 'linewidth': 3},
-                 label='Imposter', color='#C89A58')
-    sns.distplot(gen, hist=False, kde=True,
-                 kde_kws={'shade': True, 'linewidth': 3},
-                 label='Genuine', color='#0DB14B')
-    ax = plt.gca()
-    ax2 = plt.twinx()
-    sns.distplot(imp, hist=True, kde=False,
-                 kde_kws={'shade': False, 'linewidth': 6},
-                 label='Imposter', color='#FF1493')
-    sns.distplot(gen, hist=True, kde=False,
-                 kde_kws={'shade': False, 'linewidth': 6},
-                 label='Genuine', color='#7B68EE')
+        plt.savefig('./generated/density/' + label + '/overlap/' + norm_type + '_' + exp + '_' + label + '-' + modality
+                    + '.png', bbox_inches='tight')
+        plt.clf()
 
-    p = 'Density Estimates for '+modality+'\n' + label + '\n ' + str(len(gen)) + ' Subjects '
+        #################################################################
+        # pdf
+        #################################################################
+        sns.distplot(imp, hist=False, kde=True,
+                     kde_kws={'shade': True, 'linewidth': 3},
+                     label='Imposter', color='#C89A58')
+        sns.distplot(gen, hist=False, kde=True,
+                     kde_kws={'shade': True, 'linewidth': 3},
+                     label='Genuine', color='#0DB14B')
 
-    ax2.legend(bbox_to_anchor=(1, 1), loc='upper center')
-    plt.legend(bbox_to_anchor=(1, 1), loc=2)
-    lims = ax.get_xlim()
-    y_ticks = ax.get_yticks()
-    ax.set_ylabel(r"Density Estimate")
-    # ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-    ax2.set_ylabel(r"Sample Counts")
-    plt.title(p)
-    # ax.tick_params(axis="y", direction="in", pad=-22)
+        p = 'Density Estimates for '+modality+'\n' + label + '\n ' + str(len(gen)) + ' Subjects '
+        plt.legend(bbox_to_anchor=(1, 1), loc=2)
+        plt.ylabel(r"Density Estimate")
+        ax = plt.gca()
+        # ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        # ax.tick_params(axis="y", direction="in", pad=-22)
 
-    plt.savefig('./generated/density/' + label + '/overlap/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
-    plt.clf()
+        plt.title(p)
+        ax = plt.gca()
+        ax.set_xlim(lims)
+        plt.savefig('./generated/density/' + label + '/PDF/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
+        plt.clf()
 
-    #################################################################
-    # pdf
-    #################################################################
-    sns.distplot(imp, hist=False, kde=True,
-                 kde_kws={'shade': True, 'linewidth': 3},
-                 label='Imposter', color='#C89A58')
-    sns.distplot(gen, hist=False, kde=True,
-                 kde_kws={'shade': True, 'linewidth': 3},
-                 label='Genuine', color='#0DB14B')
+        #################################################################
+        # histogram
+        #################################################################
+        sns.distplot(imp, hist=True, kde=False,
+                     kde_kws={'shade': False, 'linewidth': 6},
+                     label='Imposter', color='#FF1493')
+        sns.distplot(gen, hist=True, kde=False,
+                     kde_kws={'shade': False, 'linewidth': 6},
+                     label='Genuine', color='#7B68EE')
 
-    p = 'Density Estimates for '+modality+'\n' + label + '\n ' + str(len(gen)) + ' Subjects '
-    plt.legend(bbox_to_anchor=(1, 1), loc=2)
-    plt.ylabel(r"Density Estimate")
-    ax = plt.gca()
-    # ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-    # ax.tick_params(axis="y", direction="in", pad=-22)
+        ax = plt.gca()
+        ax2 = plt.twinx()
+        sns.distplot(imp, hist=True, kde=False,
+                     kde_kws={'shade': False, 'linewidth': 6},
+                     label='Imposter', color='#FF1493')
+        sns.distplot(gen, hist=True, kde=False,
+                     kde_kws={'shade': False, 'linewidth': 6},
+                     label='Genuine', color='#7B68EE')
 
-    plt.title(p)
-    ax = plt.gca()
-    ax.set_xlim(lims)
-    plt.savefig('./generated/density/' + label + '/PDF/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
-    plt.clf()
+        plt.legend(bbox_to_anchor=(1, 1), loc=2)
+        p = 'Score counts for ' + modality+ '\n' + label + '\n ' + str(len(gen)) + ' Subjects '
 
-    #################################################################
-    # histogram
-    #################################################################
-    sns.distplot(imp, hist=True, kde=False,
-                 kde_kws={'shade': False, 'linewidth': 6},
-                 label='Imposter', color='#FF1493')
-    sns.distplot(gen, hist=True, kde=False,
-                 kde_kws={'shade': False, 'linewidth': 6},
-                 label='Genuine', color='#7B68EE')
+        ax.set_xlim(lims)
+        ax.set_yticks(y_ticks)
 
-    ax = plt.gca()
-    ax2 = plt.twinx()
-    sns.distplot(imp, hist=True, kde=False,
-                 kde_kws={'shade': False, 'linewidth': 6},
-                 label='Imposter', color='#FF1493')
-    sns.distplot(gen, hist=True, kde=False,
-                 kde_kws={'shade': False, 'linewidth': 6},
-                 label='Genuine', color='#7B68EE')
+        plt.title(p)
+        ax.set_ylabel(r"Density Estimate")
+        ax2.set_ylabel(r"Sample Counts")
 
-    plt.legend(bbox_to_anchor=(1, 1), loc=2)
-    p = 'Density Estimates for ' + modality+ '\n' + label + '\n ' + str(len(gen)) + ' Subjects '
+        ax.yaxis.label.set_color('white')
+        ax.tick_params(axis='y', colors='white')
 
-    ax.set_xlim(lims)
-    ax.set_yticks(y_ticks)
+        plt.savefig('./generated/density/' + label + '/hist/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
+        plt.clf()
 
-    plt.title(p)
-    ax.set_ylabel(r"Density Estimate")
-    ax2.set_ylabel(r"Sample Counts")
+    def load_data(self):
+        """
+        Assumptions: Each file has the same number of samples
+        """
 
-    ax.yaxis.label.set_color('white')
-    ax.tick_params(axis='y', colors='white')
+        exp_id = self.path.split('\\')[-1]
 
-    plt.savefig('./generated/density/' + label + '/hist/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
-    plt.clf()
+        if not os.path.exists('./generated/'):
+            os.makedirs('./generated/')
 
+        ###########################################################
+        #########       Build Data Frame
+        ###########################################################
+        file_data = pd.DataFrame(columns=['Probe_ID', 'Gallery_ID', 'Label', 'Train_Test'])
+        for filename in glob.glob(str(self.path) + '/*'):
+            key = filename.split('\\')[-1].split('.')[0]
 
-def get_data(pth, test_perc=0.2, dissimilar=True):
-    """
-    Assumptions: Each file has the same number of samples
-    """
-    modalities = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
-    idx_train = None
-    exp_id = pth.split('\\')[-1]
+            # handle csv, or txt files
+            if filename.endswith('.txt'):
+                data = pd.read_csv(filename, sep='\t', header=None)
+            elif filename.endswith('.csv'):
+                data = pd.read_csv(filename, index_col=0)
+            else: # not a score file
+                continue
 
-    if not os.path.exists('./generated/'):
-        os.makedirs('./generated/')
+            if 'train' in filename.lower():
+                file_data['Train_Test'] = 'TRAIN'
+                key = key.replace('-TRAIN', '')
 
+            elif 'test' in filename.lower():
+                file_data['Train_Test'] = 'TEST'
+                key = key.replace('-TEST', '')
 
-    ###########################################################
-    #########       Build Data Dictionaries
-    ###########################################################
-    for filename in glob.glob(str(pth) + '/*'):
-        key = filename.split('\\')[-1].split('.')[0]
-        modality_keys = []
+            if data.shape[0] == data.shape[1]: # TODO
+                ## take triangle and flatten into row - column - value format
+                tmp_scores = data.where(np.triu(np.ones(data.shape)).astype(np.bool))
+                tmp_scores = tmp_scores.stack().reset_index()
+                tmp_scores.columns = ['Probe_Ids', 'Gallery_ID', 'Value']
 
-        train_loaded, test_loaded = False, False
+                gens = tmp_scores[tmp_scores['Probe_Ids'] == tmp_scores['Gallery_ID']]
+                imps = tmp_scores[tmp_scores['Probe_Ids'] != tmp_scores['Gallery_ID']]
 
-        # handle csv, or txt files
-        if filename.endswith('.txt'):
-            data = pd.read_csv(filename, sep='\t', header=None)
-        elif filename.endswith('.csv'):
-            data = pd.read_csv(filename, index_col=0)
+                # if there are alphanumeric values, assume these are id's
+                # if is_string_dtype(gens['Row']) and is_string_dtype(gens['Column']):
 
-        else: # not a score file
-            continue
+                gen_datas = pd.DataFrame()
+                gen_datas['Probe_ID'] = gens['Probe_Ids']
+                gen_datas['Gallery_ID'] = gens['Gallery_ID']
+                gen_datas['Label'] = 1.0
+                gen_datas[key] = gens['Value']
 
-        # determine if data is a matrix with gen across the diagonal, or column with labels based
-        if data.shape[0] == data.shape[1]:
-            matrix_form = True
-            data = data.drop(data.columns[-1], axis=1)
-        else:
-            matrix_form = False
-            modality_keys = list(data.columns)
+                imp_datas = pd.DataFrame()
+                imp_datas['Probe_ID'] = imps['Probe_Ids']
+                imp_datas['Gallery_ID'] = imps['Gallery_ID']
+                imp_datas['Label'] = 0.0
+                imp_datas[key] = imps['Value']
 
-        data_x, data_y = split_gen_imp(data, matrix_form)
-
-        if dissimilar.active:
-            data_x = 1-data_x
-
-        ######### PULL DATA
-        if 'train' in filename.lower():
-            train_x = data_x
-            train_y = data_y
-            train_loaded = True
-
-            key = key.replace('-TRAIN', '')
-
-        elif 'test' in filename.lower():
-            test_x = data_x
-            test_y = data_y
-            test_loaded = True
-
-            key = key.replace('-TEST', '')
-
-        else:
-            train_loaded, test_loaded = True, True
-            if idx_train is None:
-                indices = np.arange(len(data_y))
-                _, _, _, _, idx_train, idx_test = train_test_split(
-                    data_x, data_y, indices, stratify=data_y, test_size=test_perc*.01)
-
-            train_x = data_x[idx_train]
-            train_y = data_y[idx_train]
-            test_x = data_x[idx_test]
-            test_y = data_y[idx_test]
-
-        mods = []
-        for m in modality_keys:
-            if m.lower() != 'label' and m.lower() != 'class':
-                # mods.append(key + '___' + m)
-                mods.append(m)
+                tmp_file_data = pd.concat([gen_datas, imp_datas], ignore_index=True)
 
 
-        if train_loaded:
-            if len(modality_keys) == 0:
-                modalities[key]['train_x'] = train_x
-                modalities[key]['train_y'] = train_y
+            # Otherwise, data is in column format
+            else:
+                # This is MITRE data
+                if all(x in data.columns for x in ['probe_file_id', 'probe_subject_id',
+                                                   'candidate_file_id', 'candidate_subject_id', 'genuine_flag']):
+
+                    tmp_file_data = pd.DataFrame()
+                    tmp_file_data['Probe_Ids'] = data['probe_subject_id']
+                    tmp_file_data['Probe_File'] = data['probe_file_id']
+                    tmp_file_data['Gallery_Ids'] = data['candidate_subject_id']
+                    tmp_file_data['Gallery_File'] = data['candidate_file_id']
+                    tmp_file_data['Label'] = data['genuine_flag']
+                    tmp_file_data[key] = data['score']
+
+                else: # TODO
+                    self.score_data[key] = data['score']
+
+            file_data = file_data.merge(tmp_file_data, how='outer')
+        modality_list = [x for x in file_data if x not in ['Label', 'Probe_ID', 'Gallery_ID', 'Train_Test']]
+
+        # IF there are any NANs in the Train_Test column, redivide the data
+        # TODO: ensure subject disjoint
+        if file_data['Train_Test'].isnull().values.any():
+            indices = np.arange(len(file_data.index))
+            _, _, _, _, idx_train, idx_test = train_test_split(
+                file_data[modality_list], file_data['Label'], indices, stratify=file_data['Label'],
+                test_size=self.test_perc * .01)
+
+            file_data['Train_Test'].iloc[idx_train] = 'TRAIN'
+            file_data['Train_Test'].iloc[idx_test] = 'TEST'
+
+        self.score_data = file_data
+        self.modalities = modality_list
+        return
+
+
+    def normalize_data(self):
+        for mod in self.score_data[self.modalities]:
+            key = 'NORMALIZED_' + mod
+            self.score_data[key] = self.score_data[mod]
+
+            if self.normalize == 'MinMax':
+                min_x = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].min()
+                max_x = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].max()
+
+                # trim test data to training's min and max values.
+                self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') &
+                                    (self.score_data[key] > max_x), key] = max_x
+                self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') &
+                                    (self.score_data[key] < min_x), key] = min_x
+
+                self.score_data[key] = (self.score_data[key] - min_x) / (max_x - min_x)
+
+            elif self.normalize == 'ZScore':
+                u = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].mean()
+                s = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].std()
+                self.score_data[key] = (self.score_data[key] - u) / (s)
+
+            elif self.normalize == 'Decimal':
+                max_x = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].max()
+                n = math.log10(max_x)
+                self.score_data[key] = (self.score_data[key]) / (10**n)
+
+
+            elif self.normalize == 'Median':
+                mad = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].mad()
+                med = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].median()
+                self.score_data[key] = (self.score_data[key]-med) / (mad)
+
+            elif self.normalize=='DSigmoid': # TODO
+                # r1 = self.norm_params['r1']
+                # r2 = self.norm_params['r2']
+                # t = self.norm_params['t']
+                #
+                # self.score_data[self.score_data[key]< t] = 1 / (1 + np.exp(-2((self.score_data[key]-t) / r1)))
+                # self.score_data[self.score_data[key] >= t] = 1 / (1 + np.exp(-2((self.score_data[key] - t) / r2)))
+                pass
+
+            elif self.normalize == 'BiweightEstimator':
+                print("Biweight Estimator is not implemented yet")
+
+            elif self.normalize == 'TanhEstimator':
+                psi = sm.robust.norms.TukeyBiweight(c=4.685).psi(self.score_data[self.score_data['Train_Test']
+                                                                                 == 'TRAIN'][mod])
+                MUgh = psi.mean()
+                SIGgh = psi.std()
+
+                self.score_data[key] = 0.5 * (np.tan(0.01 * ((self.score_data[key] - MUgh) / SIGgh)) + 1)
 
             else:
-                for k in range(len(mods)):
-                    modalities[mods[k]]['train_x'] = train_x[:, k]
-                    modalities[mods[k]]['train_y'] = train_y
+                print("ERROR: unrecognized normalization technique requested")
 
-        if test_loaded:
-            if len(modality_keys) == 0:
-                modalities[key]['test_x'] = test_x
-                modalities[key]['test_y'] = test_y
-            else:
-                for k in range(len(mods)):
-                    modalities[mods[k]]['test_x'] = test_x[:, k]
-                    modalities[mods[k]]['test_y'] = test_y
 
-    return modalities, matrix_form, exp_id
+    def plot_distributions(self):
+        # DIST PLOTS
+        exp_id = ''
+        for mod in self.modalities:
+            key = 'NORMALIZED_' + mod
+            # Clock.schedule_once(partial(self.update_bar, ''))
 
-def split_data(dicts, normalize='MinMax', norm_params=[], key='', exp_id=''):
-    ret_dict = defaultdict(list)
+            # Training Data
+            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 1.0), key].tolist()
+            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 0.0), key].tolist()
 
-    train_x = dicts['train_x']
-    train_y = dicts['train_y']
-    test_x = dicts['test_x']
-    test_y = dicts['test_y']
+            self.make_density_plots(gen=gens, imp=imps,
+                                    label='Training', norm_type=self.normalize, modality=mod, exp=exp_id)
 
-    if normalize == 'MinMax':
-        transformed_train_x, transformed_test_x = nms.my_minmax(train_x, test_x)
+            # Testing Data
+            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 1.0), key].tolist()
+            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0), key].tolist()
 
-    elif normalize == 'ZScore':
-        transformed_train_x, transformed_test_x = nms.my_zscore(train_x, test_x)
+            self.make_density_plots(gen=gens, imp=imps,
+                                    label='Testing', norm_type=self.normalize, modality=mod, exp=exp_id)
 
-    elif normalize == 'Decimal':
-        transformed_train_x, transformed_test_x = nms.my_decimal(train_x, test_x)
+            # All Data
+            self.make_density_plots(gen=self.score_data.loc[self.score_data['Label'] == 1.0, key],
+                                    imp=self.score_data.loc[self.score_data['Label'] == 0.0, key],
+                                    label='Entire', norm_type=self.normalize, modality=mod, exp=exp_id)
 
-    elif normalize == 'Median':
-        transformed_train_x, transformed_test_x = nms.my_med_mad(train_x, test_x)
+    def get_modalities(self):
+        return self.modalities
 
-    # elif normalize=='DSigmoid':
-    #     train_x, test_x = nms.my_double_sigmoid(train_x, test_x)
+    def get_score_data(self):
+        return self.score_data
 
-    elif normalize == 'BiweightEstimator':
-        transformed_train_x, transformed_test_x = nms.my_biweight(train_x, test_x)
+    def get_beans(self):
+        imps_train = len(self.score_data[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 0.0)].index)
+        imps_test = len(self.score_data[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0)].index)
 
-    elif normalize == 'TanhEstimator':
-        transformed_train_x, transformed_test_x = nms.my_tanh(train_x, test_x, norm_params[0], norm_params[1], norm_params[2])
+        gen_train = len(self.score_data[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 1.0)].index)
+        gen_test = len(self.score_data[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 1.0)].index)
 
-    else:
-        transformed_train_x = train_x
-        transformed_test_x = test_x
+        return {'imp_train': imps_train, 'imp_test': imps_test,
+                'gen_train': gen_train, 'gen_test': gen_test,}
 
-    ret_dict['train_x'] = transformed_train_x
-    ret_dict['train_y'] = train_y
-    ret_dict['test_x'] = transformed_test_x
-    ret_dict['test_y'] = test_y
 
-    gen, imp = reverse_gen_imp(transformed_train_x, train_y)
-    make_density_plots(gen, imp, label='Training', norm_type=normalize, modality=key, exp=exp_id)
+    def update_datas(self, change_dics):
+        original = list(change_dics.keys())
 
-    gen, imp = reverse_gen_imp(transformed_test_x, test_y)
-    make_density_plots(gen, imp, label='Testing', norm_type=normalize, modality=key, exp=exp_id)
+        # Name Changes
+        updated_names = []
+        dissimilarity = []
+        similarity = []
+        dont_use = []
 
-    gen, imp = reverse_gen_imp(np.append(transformed_train_x, transformed_test_x), np.append(train_y, test_y))
-    make_density_plots(gen, imp, label='Entire', norm_type=normalize, modality=key, exp=exp_id)
+        for key, value in change_dics.items():
+            updated_names.append(value[0])
+            if value[1]:
+                similarity.append(value[0])
 
-    return ret_dict
+            if value[2]:
+                dissimilarity.append(value[0])
 
+            if not value[3]:
+                dont_use.append(value[0])
+
+        # Name Changes
+        for i in range(len(updated_names)):
+            key = original[i]
+            new_name = updated_names[i]
+
+            self.score_data.rename(columns={key: new_name}, inplace=True)
+            self.score_data.rename(columns={key + '_normalized': new_name + '_normalized'}, inplace=True)
+
+        self.modalities = [x for x in self.score_data.columns if x not in ['Label', 'Probe_ID', 'Gallery_ID', 'Train_Test'] and  'NORMALIZED_' not in x]
+
+        # Dissimilarity Changes
+        for mod in dissimilarity:
+            self.score_data[mod] = 1 - self.score_data[mod]
+
+        # Remove modalitiy
+        for mod in dont_use:
+            self.score_data_inactive[mod + '_normalized'] = self.score_data[mod + '_normalized']
+            self.score_data_inactive[mod] = self.score_data[mod]
+            self.score_data.drop(mod, inplace=True)
+            self.score_data.drop(mod + '_normalized', inplace=True)

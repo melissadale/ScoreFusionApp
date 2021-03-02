@@ -78,7 +78,8 @@ class FuseRule:
             tmp_scores[tmp_scores > 0.5] = 1
 
             result_dict[key]['F1'] = f1_score(Y_test, tmp_scores.astype(int), average='binary')
-            plt.semilogx(fprs, tprs, label=key.replace('-TEST', ''), marker='+')
+            plt.plot(fprs, tprs, label=key.replace('-TEST', ''), marker='+')
+            # plt.semilogx(fprs, tprs, label=key.replace('-TEST', ''), marker='+')
 
         plt.legend(bbox_to_anchor=(0.5, -0.02), loc="lower left", borderaxespad=0)
         plt.xlabel('False Match Rate (FMR)',  fontsize=15)
@@ -142,7 +143,7 @@ class FuseRule:
 
         return min(potential_x), max(potential_x)
 
-    def serial_rule(self):
+    def sequential_rule(self):
         start_time = time.time()
         train_y = self.modal_info[list(self.modal_info)[0]]['train_y']
         test_y = self.modal_info[list(self.modal_info)[0]]['test_y']
@@ -207,9 +208,9 @@ class FuseRule:
             # print('Imposter Fused: ' + str(precentage_tracker_imp/precentage_tracker))
             # print('Genuine Fused: ' + str(precentage_tracker_gen/precentage_tracker))
 
-        # print("SERIAL RULE TOOK: " + str(time.time()-start_time) + ' seconds')
+        # print("sequential RULE TOOK: " + str(time.time()-start_time) + ' seconds')
         self.title = self.title + 'Auto__'+ baseline + '-' +  str(int(alpha*100)) + '-' + str(int(beta*100))
-        self.return_modals['SerialRule'] = {'train_x': train_x,
+        self.return_modals['SequentialRule'] = {'train_x': train_x,
                                        'train_y': train_y,
                                        'test_x': test_x,
                                        'test_y': test_y}
@@ -230,8 +231,11 @@ class FuseRule:
                 summed_test_x = np.vstack((summed_test_x, scores['test_x']))
 
         self.title = self.title + 'Sum-'
-        self.return_modals['SumRule'] = {'train_x': summed_train_x.sum(axis=0), 'train_y': train_y,
-                                 'test_x': summed_test_x.sum(axis=0), 'test_y': test_y}
+        # self.return_modals['SumRule'] = {'train_x': summed_train_x.sum(axis=0), 'train_y': train_y,
+        #                          'test_x': summed_test_x.sum(axis=0), 'test_y': test_y}
+
+        self.return_modals['SumRule'] = {'train_x': np.mean(summed_train_x, axis=0), 'train_y': train_y,
+                                 'test_x': np.mean(summed_test_x, axis=0), 'test_y': test_y}
         # print("SUM RULE TOOK: " + str(time.time()-start_time) + ' seconds')
 
 
@@ -277,8 +281,8 @@ class FuseRule:
         """
         sorted_rules = sorted(list(set(self.list_o_rules)))
 
-        if 'SerialRule' in sorted_rules:
-            self.serial_rule()
+        if 'SequentialRule' in sorted_rules:
+            self.sequential_rule()
 
         if 'SumRule' in sorted_rules:
             self.sum_rule()

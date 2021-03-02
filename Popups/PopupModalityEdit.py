@@ -59,6 +59,7 @@ class ModeEditPopup(GridLayout):
             update_btn.bind(on_press=self.update_dicts)
             self.add_widget(update_btn)
 
+
     def set_pop(self, pwin):
         self.fpop = pwin
 
