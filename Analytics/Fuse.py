@@ -115,7 +115,7 @@ class FuseRule:
 
             fused_fprs =  self.results.loc[fused]['FPRS']
             fused_tprs =  self.results.loc[fused]['TPRS']
-            plt.semilogx(fused_fprs, fused_tprs, label=modality, marker='X')
+            plt.semilogx(fused_fprs, fused_tprs, label=fused, marker='X')
 
             plt.legend(bbox_to_anchor=(0.5, -0.02), loc="lower left", borderaxespad=0)
             plt.xlabel('False Match Rate (FMR)',  fontsize=15)
@@ -123,21 +123,21 @@ class FuseRule:
 
             plt.title(fused + 'Fusion', fontsize=15)
 
-            plot_name = './generated/ROC/' + experiment_dir + '/' + fused + '.png'
+            plot_name = './generated/ROC/' + experiment_dir + '/' + fused.replace(':', '') + '.png'
             plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
             plt.clf()
 
 
         ############## ALL Plots
-        for fused in self.fused_modalities:
-            for baseline in self.modalities:
-                fprs = self.results.loc[baseline]['FPRS']
-                tprs = self.results.loc[baseline]['TPRS']
-                plt.semilogx(fprs, tprs, label=baseline, marker='+')
+        for baseline in self.modalities:
+            fprs = self.results.loc[baseline]['FPRS']
+            tprs = self.results.loc[baseline]['TPRS']
+            plt.semilogx(fprs, tprs, label=baseline, marker='+')
 
+        for fused in self.fused_modalities:
             fused_fprs =  self.results.loc[fused]['FPRS']
             fused_tprs =  self.results.loc[fused]['TPRS']
-            plt.semilogx(fused_fprs, fused_tprs, label=modality, marker='X')
+            plt.semilogx(fused_fprs, fused_tprs, label=fused, marker='X')
 
             plt.legend(bbox_to_anchor=(0.5, -0.02), loc="lower left", borderaxespad=0)
             plt.xlabel('False Match Rate (FMR)',  fontsize=15)
@@ -273,28 +273,40 @@ class FuseRule:
         self.score_data.insert(len(self.modalities), sum_title, self.score_data[self.modalities].mean(axis=1))
 
     def svm_rule(self):
-        baseline_modalities = [x for x in self.modalities if '_NORMALIZED' in x]
-        svm_title = 'SVM:' + '-'.join(baseline_modalities)
+        svm_title = 'SVM:'
+        self.fused_modalities.append(svm_title)
 
-        train_y = self.score_data[self.score_data['Train_Test'] == 'TRAIN']['Label']
+        train_indices = self.score_data.index[self.score_data['Train_Test'] == 'TRAIN']
+        test_indices = self.score_data.index[self.score_data['Train_Test'] == 'TEST']
 
-        train = self.score_data[self.score_data['Train_Test'] == 'TRAIN']
+        train = self.score_data.iloc[train_indices]
+        train_y = self.score_data.iloc[train_indices]['Label']
         train_x = train[self.modalities]
 
-        test = self.score_data[self.score_data['Train_Test'] == 'TEST']
+        test = self.score_data.iloc[test_indices]
         test_x = test[self.modalities]
 
         clf = SVC(gamma='auto', probability=True)
         clf.fit(train_x, train_y)
-        y_score = clf.predict_proba(self.score_data[self.modalities])
 
-        self.score_data[svm_title] = y_score
+        ## Get the scores for the predicted test labels
+        preds = clf.predict(test_x).astype(int)
+        test_scores_all = clf.predict_proba(test_x)
+        rows = [i for i in range(len(preds))]
+        test_scores = pd.DataFrame(test_scores_all[rows, preds], index=test_indices)
+
+        train_scores_all = clf.predict_proba(train_x)
+        rows = [i for i in range(len(train_x.index))]
+        train_scores = pd.DataFrame(train_scores_all[rows, train_y.astype(int)], index=train_indices)
+
+        scores = pd.concat([train_scores, test_scores])
+        self.score_data[svm_title] = scores
 
 
     ################################################################################################################
     ################################################################################################################
 
-    def fuse_all(self, fixed_fmr=0.01):
+    def fuse_all(self):
         """
 
         :param list_o_rules:

@@ -356,7 +356,7 @@ class Main(Screen):
 
         if img_set == 'roc':
             if direction == 'left':
-                if 0 <= value:
+                if 0 < value:
                     self.display_path_roc = self.roc_object.move_left()
 
             if direction == 'right':
