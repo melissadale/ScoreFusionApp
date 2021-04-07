@@ -27,8 +27,6 @@ class Score_data:
 
 
     def make_density_plots(self, gen, imp, label='', norm_type='None', modality='', exp=''):
-        print('Plotting Density Estimates ... ')
-
         if not os.path.exists('./generated/density/' + label + '/PDF/'):
             os.makedirs('./generated/density/' + label + '/PDF/')
         if not os.path.exists('./generated/density/' + label + '/hist/'):
@@ -267,8 +265,8 @@ class Score_data:
                 # self.score_data[self.score_data[key] >= t] = 1 / (1 + np.exp(-2((self.score_data[key] - t) / r2)))
                 pass
 
-            elif self.normalize == 'BiweightEstimator':
-                print("Biweight Estimator is not implemented yet")
+            elif self.normalize == 'BiweightEstimator': # TODO
+                pass
 
             elif self.normalize == 'TanhEstimator':
                 psi = sm.robust.norms.TukeyBiweight(c=4.685).psi(self.score_data[self.score_data['Train_Test']

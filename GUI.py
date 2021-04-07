@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from functools import partial
-from numpy import ones, vstack
-from numpy.linalg import lstsq
+import functools
+import threading
 
 import Analytics.format_data as fm2
 import Analytics.Fuse as Fuse
@@ -72,9 +72,9 @@ class SaveLoc(Screen):
     save_location = StringProperty('')
     data = ObjectProperty(None)
 
-    def __init__(self, **args):
-        Clock.schedule_once(self.init_widget, 0)
-        return super(SaveLoc, self).__init__(**args)
+    # def __init__(self, **args):
+    #     Clock.schedule_once(self.init_widget, 0)
+    #     return super(SaveLoc, self).__init__(**args)
 
     def init_widget(self, *args):
         fc = self.ids['filechooser_save']
@@ -153,14 +153,42 @@ class Main(Screen):
 
     data_object = None
 
-    def setup(self, path):
+    def set_progressbar(self, path):
         self.load_path = path
+        threading.Thread(target=self.setup, args=()).start()
+
+    def setup(self):
         self.data_object = fm2.Score_data(path=self.load_path, test_perc=self.test_perc,
                              normalize=self.normalize, norm_params=self.norm_params,
                              lbl=self.ids.modalities_lbl)
         self.data_object.load_data()
         self.data_object.normalize_data()
-        self.data_object.plot_distributions()
+        self.score_data = self.data_object.get_score_data()
+        self.increase_amount = 100/(len(self.data_object.get_modalities())*3)
+
+        ###############
+        for mod in self.data_object.modalities:
+            Clock.schedule_once(functools.partial(self.update_bar, mod))
+
+            train_gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 1.0), mod].tolist()
+            train_imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 0.0), mod].tolist()
+            self.data_object.make_density_plots(gen=train_gens, imp=train_imps,
+                                    label='Training', norm_type=self.normalize, modality=mod)
+
+            Clock.schedule_once(functools.partial(self.update_bar, mod))
+            test_gens = self.score_data.loc[
+                (self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 1.0), mod].tolist()
+            test_imps = self.score_data.loc[
+                (self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0), mod].tolist()
+            self.data_object.make_density_plots(gen=test_gens, imp=test_imps,
+                                   label='Training', norm_type=self.normalize, modality=mod)
+
+            Clock.schedule_once(functools.partial(self.update_bar, mod))
+            self.data_object.make_density_plots(gen=self.score_data.loc[self.score_data['Label'] == 1.0, mod],
+                                                imp=self.score_data.loc[self.score_data['Label'] == 0.0, mod],
+                                                label='Entire', norm_type=self.normalize, modality=mod)
+
+
 
         self.densities = DensityPlots(slider=self.d_slide)
         self.densities.build_plot_list()
@@ -170,7 +198,6 @@ class Main(Screen):
 
         self.returned_modalities = ''.join([x + '\n' for x in self.data_object.get_modalities()])
         self.detected_lbl.opacity = 1.0
-        # self.roc_index = 0
 
         self.beans = self.data_object.get_beans()
         num_gen_train = self.beans['gen_train']
@@ -196,6 +223,14 @@ class Main(Screen):
         self.ids.modalities_lbl.text = ''
         for mod_key in self.data_object.get_modalities():
             self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
+
+    ### Progress Bar Things
+    def update_bar(self, mod_key, dt):
+        if self.loading_pb.value <= 100:
+            self.loading_pb.value += self.increase_amount
+
+            if mod_key not in self.ids.modalities_lbl.text:
+                self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
 
 #############################################################
 #############################################################
