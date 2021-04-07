@@ -25,6 +25,7 @@ import Popups.PopupSelectiveFusion as SelectiveFusionPopup
 import Popups.PopupModalityEdit as PopupModalityEdit
 from Objects.ReportPDFs import generate_summary
 from Objects.DensitySlider import DensityPlots
+from Objects.ROCsSlider import ROCsPlots
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
 import kivy
@@ -125,13 +126,14 @@ class Main(Screen):
     dens_set = ObjectProperty()
     set_type = 'Entire'
     d_slide = Slider()
-    r_slide = Slider(min=0, max=1, value=0)
 
-    display_path_roc = StringProperty(None)
-    roc_set = ObjectProperty()
-    roc_index = NumericProperty(0)
-    current_roc_nums = 0
-    roc_modality_pointer = 0
+    r_slide = Slider()
+    display_path_roc = StringProperty('')
+
+    # roc_set = ObjectProperty()
+    # roc_index = NumericProperty(0)
+    # current_roc_nums = 0
+    # roc_modality_pointer = 0
 
     # popups
     tanh_popup = ObjectProperty(Popup)
@@ -154,6 +156,7 @@ class Main(Screen):
     eval = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
     fixed_FMR_val = TextInput()
 
+    data_object = None
 
     def setup(self, path):
         self.load_path = path
@@ -172,7 +175,7 @@ class Main(Screen):
 
         self.returned_modalities = ''.join([x + '\n' for x in self.data_object.get_modalities()])
         self.detected_lbl.opacity = 1.0
-        self.roc_index = 0
+        # self.roc_index = 0
 
         self.beans = self.data_object.get_beans()
         num_gen_train = self.beans['gen_train']
@@ -256,6 +259,9 @@ class Main(Screen):
     #############################################################
 
     def set_normalization(self):
+        if not self.data_object:
+            pass
+
         if self.chk_MinMax.active:
             self.normalize = 'MinMax'
 
@@ -296,24 +302,27 @@ class Main(Screen):
     def update_density_type(self):
         self.display_path_density = self.densities.update_plot_type()
 
-    def set_roc_set(self):
-        files = []
-        for filename in glob.glob('./generated/ROC/*'):
-            files.append(filename)
 
-        self.roc_set = files
-        self.r_slide.max = len(files)-1
-        self.current_roc_nums = len(files)
+    def next_roc_plot(self):
+        self.display_path_roc = self.roc_object.update_plot()
+    # def set_roc_set(self):
+    #     files = []
+    #     for filename in glob.glob('./generated/ROC/*'):
+    #         files.append(filename)
+    #
+    #     self.roc_set = files
+    #     self.r_slide.max = len(files)-1
+    #     self.current_roc_nums = len(files)
 
     def density_slider(self, value):
         if 0 <= value < self.d_slide.max+1:
             self.display_path_density = self.densities.update_plot(value)
 
     def roc_slider(self, value):
-        self.set_roc_set()
+        mx = self.r_slide.max
+        if 0 <= value < self.r_slide.max-1:
+            self.display_path_roc = self.roc_object.slider_update(value)
 
-        if 0 <= value < self.r_slide.max+1:
-            self.display_path_roc = self.roc_set[value]
 
     def slider_button(self, direction, img_set, value):
         if img_set == 'density':
@@ -321,18 +330,16 @@ class Main(Screen):
                 self.display_path_density = self.densities.move_left()
 
             if direction == 'right':
-                self.display_path_density = self.densities.move_right()
+                    self.display_path_density = self.densities.move_right()
 
         if img_set == 'roc':
             if direction == 'left':
-                if self.roc_modality_pointer > 0:
-                    self.display_path_roc = self.roc_set[value - 1]
-                    self.roc_modality_pointer = self.roc_modality_pointer - 1
+                if 0 <= value:
+                    self.display_path_roc = self.roc_object.move_left()
 
             if direction == 'right':
-                if self.roc_modality_pointer < self.r_slide.max:
-                    self.display_path_roc = self.roc_set[value + 1]
-                    self.roc_modality_pointer = self.roc_modality_pointer + 1
+                if 0 <= value < self.r_slide.max:
+                    self.display_path_roc = self.roc_object.move_right()
 
 
     def checkbox_click(self, instance, value):
@@ -363,7 +370,7 @@ class Main(Screen):
 
         things_to_save = self.save_settings.get_save_reports()
         if 'report' in things_to_save:
-            generate_summary(modalities=self.modality_list, results=self.eval,
+            generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
                              roc_plt=self.display_path_roc,
                              fmr_rate=float(self.fixed_FMR_val.text),
                              save_to_path=save_location+ '/FusionReport/')
@@ -418,6 +425,11 @@ class Main(Screen):
             eval_metrics = pd.DataFrame(self.eval)
             eval_metrics.to_csv(save_location+'/FusionReport/EvaluationMetrics.csv', index=False)
 
+    def get_tpr(fpr, tpr, fixed_far=0.01):
+        vert_line = np.full(len(fpr), fixed_far)
+        idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
+        return tpr[idx][0]
+
     def fuse(self):
         self.msg_accuracy = ''
         self.msg_eer = ''
@@ -433,44 +445,37 @@ class Main(Screen):
         if self.chk_svm.active:
             fusion_list.append('SVMRule')
 
-        fusion_mod = Fuse.FuseRule(fusion_list, self.modalities, self.normalize, self.sequential_fusion_settings, self.matrix_form)
+        fusion_mod = Fuse.FuseRule(list_o_rules=fusion_list, score_data=self.data_object.score_data,
+                                   modalities=self.data_object.get_modalities(),  fusion_settings=self.sequential_fusion_settings)
 
-        mets, disp_pth = fusion_mod.fuse_all()
-        self.set_roc_set()
-
-        self.display_path_roc = disp_pth[0]
+        mets = fusion_mod.fuse_all()
+        fusion_mod.cmc()
+        self.roc_object = ROCsPlots(slider=self.r_slide)
+        self.display_path_roc = self.roc_object.build_plot_list()
 
         # build strings
-        for key, mods in mets.items():
-            if 'Rule' in key:
-                self.eval[key]['AUC'] = mods['AUC']
-                self.eval[key]['EER'] = mods['EER']
+        for fused in [x for x in mets.index if ':' in x]:
+            accuracy = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(mets.loc[fused]['AUC'], 6) + '\n'
+            eer = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(mets.loc[fused]['EER'], 6) + '\n'
+            tmr = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(self.get_TMR(tpr=mets.loc[fused]['TPRS'],
+                                                                                 fpr=mets.loc[fused]['FPRS'],
+                                                                                 fixed_far=float(self.fixed_FMR_val.text)), 6) + '\n'
 
-                self.eval[key]['fprs'] = mods['fprs']
-                self.eval[key]['tprs'] = mods['tprs']
-                estimated_tmr = self.get_TMR(mods['fprs'], mods['tprs'],
-                                                     float(self.fixed_FMR_val.text))
-                self.eval[key]['TMR'] = estimated_tmr
+            self.msg_accuracy = self.msg_accuracy + accuracy
+            self.msg_eer = self.msg_eer + eer
+            self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
 
-        for key, vals in self.eval.items():
-                accuracy = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['AUC'], 6) + '\n'
-                eer = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['EER'], 6) + '\n'
-                tmr = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['TMR'], 6) + '\n'
-
-                self.msg_accuracy = self.msg_accuracy + accuracy
-                self.msg_eer = self.msg_eer + eer
-                self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
-
-        generate_summary(modalities=self.modality_list, results=self.eval,
-                         roc_plt=self.display_path_roc,
-                         fmr_rate=float(self.fixed_FMR_val.text))
+        # generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
+        #                  roc_plt=self.display_path_roc,
+        #                  fmr_rate=float(self.fixed_FMR_val.text))
 
     def update_evals(self):
+        ## A Fixed FMR has been updated
         self.msg_fixed_tmr = ''
         for key, mods in self.eval.items():
             if 'Rule' in key:
-                estimated_tmr = self.get_TMR(self.eval[key]['fprs'], self.eval[key]['tprs'],
-                                             float(self.fixed_FMR_val.text))
+                estimated_tmr = self.get_TMR(fpr=self.eval[key]['fprs'], tpr=self.eval[key]['tprs'],
+                                             fixed_far=float(self.fixed_FMR_val.text))
                 self.eval[key]['TMR'] = estimated_tmr
                 tmr = '[b]' + key + ': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
 
@@ -484,42 +489,11 @@ class Main(Screen):
         i, p, d = s.partition('.')
         return '.'.join([i, (d + '0' * n)[:n]])
 
-    def get_TMR(self, fmr, tmr, fixed_FMR):
-        df = pd.DataFrame({'FMR': fmr, 'TMR': tmr})
-        df = df.sort_values('FMR')
+    def get_TMR(self, fpr, tpr, fixed_far):
+        vert_line = np.full(len(fpr), fixed_far)
+        idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
+        return tpr[idx]
 
-        for idx, row in df.iterrows():
-            if row['FMR'] < fixed_FMR:
-                continue
-            else:
-                break
-
-        if idx != 0:
-            p1_FMR = df.iloc[idx - 1]['FMR']
-            p1_TMR = df.iloc[idx - 1]['TMR']
-
-            p2_FMR = df.iloc[idx]['FMR']
-            p2_TMR = df.iloc[idx]['TMR']
-
-        else:
-            p1_FMR = df.iloc[idx]['FMR']
-            p1_TMR = df.iloc[idx]['TMR']
-
-            p2_FMR = df.iloc[idx+1]['FMR']
-            p2_TMR = df.iloc[idx+1]['TMR']
-
-        m, b = self.get_line([(p1_FMR, p1_TMR), (p2_FMR, p2_TMR)])
-        estimated_tmr = m * fixed_FMR + b
-        return estimated_tmr
-
-    def get_line(self, points):
-        """
-        https://stackoverflow.com/questions/21565994/method-to-return-the-equation-of-a-straight-line-given-two-points
-        """
-        x_coords, y_coords = zip(*points)
-        A = vstack([x_coords, ones(len(x_coords))]).T
-        m, c = lstsq(A, y_coords)[0]
-        return m, c
 
 # class E(ExceptionHandler):
 #     def handle_exception(self, inst):

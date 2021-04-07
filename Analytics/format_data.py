@@ -204,7 +204,8 @@ class Score_data:
                     self.score_data[key] = data['score']
 
             file_data = file_data.merge(tmp_file_data, how='outer')
-        modality_list = [x for x in file_data if x not in ['Label', 'Probe_ID', 'Gallery_ID', 'Train_Test']]
+        modality_list = [x for x in file_data if x not in ['Label', 'Probe_ID', 'Gallery_ID', 'Train_Test'] and
+                         '_ORIGINAL' not in x]
 
         # IF there are any NANs in the Train_Test column, redivide the data
         # TODO: ensure subject disjoint
@@ -224,8 +225,10 @@ class Score_data:
 
     def normalize_data(self):
         for mod in self.score_data[self.modalities]:
-            key = 'NORMALIZED_' + mod
-            self.score_data[key] = self.score_data[mod]
+            tmp = self.score_data[mod]
+            self.score_data.rename(columns={mod: mod + '_ORIGINAL'}, inplace=True)
+
+            self.score_data[mod] = tmp
 
             if self.normalize == 'MinMax':
                 min_x = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].min()
@@ -233,27 +236,27 @@ class Score_data:
 
                 # trim test data to training's min and max values.
                 self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') &
-                                    (self.score_data[key] > max_x), key] = max_x
+                                    (self.score_data[mod] > max_x), mod] = max_x
                 self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') &
-                                    (self.score_data[key] < min_x), key] = min_x
+                                    (self.score_data[mod] < min_x), mod] = min_x
 
-                self.score_data[key] = (self.score_data[key] - min_x) / (max_x - min_x)
+                self.score_data[mod] = (self.score_data[mod] - min_x) / (max_x - min_x)
 
             elif self.normalize == 'ZScore':
                 u = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].mean()
                 s = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].std()
-                self.score_data[key] = (self.score_data[key] - u) / (s)
+                self.score_data[mod] = (self.score_data[mod] - u) / (s)
 
             elif self.normalize == 'Decimal':
                 max_x = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].max()
                 n = math.log10(max_x)
-                self.score_data[key] = (self.score_data[key]) / (10**n)
+                self.score_data[mod] = (self.score_data[mod]) / (10**n)
 
 
             elif self.normalize == 'Median':
                 mad = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].mad()
                 med = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].median()
-                self.score_data[key] = (self.score_data[key]-med) / (mad)
+                self.score_data[mod] = (self.score_data[mod]-med) / (mad)
 
             elif self.normalize=='DSigmoid': # TODO
                 # r1 = self.norm_params['r1']
@@ -273,36 +276,36 @@ class Score_data:
                 MUgh = psi.mean()
                 SIGgh = psi.std()
 
-                self.score_data[key] = 0.5 * (np.tan(0.01 * ((self.score_data[key] - MUgh) / SIGgh)) + 1)
+                self.score_data[mod] = 0.5 * (np.tan(0.01 * ((self.score_data[mod] - MUgh) / SIGgh)) + 1)
 
             else:
                 print("ERROR: unrecognized normalization technique requested")
 
 
-    def plot_distributions(self):
+    def plot_distributions(self): ## ToDO move to GUI.py
         # DIST PLOTS
         exp_id = ''
         for mod in self.modalities:
-            key = 'NORMALIZED_' + mod
+            # key = 'NORMALIZED_' + mod
             # Clock.schedule_once(partial(self.update_bar, ''))
 
             # Training Data
-            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 1.0), key].tolist()
-            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 0.0), key].tolist()
+            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 1.0), mod].tolist()
+            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 0.0), mod].tolist()
 
             self.make_density_plots(gen=gens, imp=imps,
                                     label='Training', norm_type=self.normalize, modality=mod, exp=exp_id)
 
             # Testing Data
-            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 1.0), key].tolist()
-            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0), key].tolist()
+            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 1.0), mod].tolist()
+            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0), mod].tolist()
 
             self.make_density_plots(gen=gens, imp=imps,
                                     label='Testing', norm_type=self.normalize, modality=mod, exp=exp_id)
 
             # All Data
-            self.make_density_plots(gen=self.score_data.loc[self.score_data['Label'] == 1.0, key],
-                                    imp=self.score_data.loc[self.score_data['Label'] == 0.0, key],
+            self.make_density_plots(gen=self.score_data.loc[self.score_data['Label'] == 1.0, mod],
+                                    imp=self.score_data.loc[self.score_data['Label'] == 0.0, mod],
                                     label='Entire', norm_type=self.normalize, modality=mod, exp=exp_id)
 
     def get_modalities(self):
@@ -348,9 +351,8 @@ class Score_data:
             new_name = updated_names[i]
 
             self.score_data.rename(columns={key: new_name}, inplace=True)
-            self.score_data.rename(columns={key + '_normalized': new_name + '_normalized'}, inplace=True)
 
-        self.modalities = [x for x in self.score_data.columns if x not in ['Label', 'Probe_ID', 'Gallery_ID', 'Train_Test'] and  'NORMALIZED_' not in x]
+        self.modalities = [x for x in self.score_data.columns if x not in ['Label', 'Probe_ID', 'Gallery_ID', 'Train_Test'] and '_ORIGINAL' not in x]
 
         # Dissimilarity Changes
         for mod in dissimilarity:
@@ -358,7 +360,5 @@ class Score_data:
 
         # Remove modalitiy
         for mod in dont_use:
-            self.score_data_inactive[mod + '_normalized'] = self.score_data[mod + '_normalized']
-            self.score_data_inactive[mod] = self.score_data[mod]
-            self.score_data.drop(mod, inplace=True)
-            self.score_data.drop(mod + '_normalized', inplace=True)
+            self.score_data.drop(mod, axis=1, inplace=True)
+            self.modalities.remove(mod)

@@ -12,6 +12,8 @@ import pickle
 import numpy as np
 import pandas as pd
 from collections import defaultdict
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import roc_curve, roc_auc_score, f1_score
@@ -21,7 +23,7 @@ from scipy.interpolate import interp1d
 from sklearn.svm import SVC
 from scipy.stats import gaussian_kde
 # from sklearn.metrics import det_curve
-
+from Analytics import CMC_Plot as CMC
 import warnings
 import time
 
@@ -30,75 +32,126 @@ np.seterr(divide='ignore', invalid='ignore')
 
 
 class FuseRule:
-    def __init__(self, list_o_rules, modal_infos, norm=None, fusion_settings=None, matrix_form=False):
+    def __init__(self, list_o_rules, score_data, modalities, fusion_settings=None):
         self.list_o_rules = sorted(list(set(list_o_rules)))
-        self.modal_info = modal_infos
-        self.return_modals = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
-
-        self.norm = norm
+        self.score_data = score_data
+        self.modalities = modalities
+        self.fused_modalities = []
         self.fusion_settings = fusion_settings
-        self.matrix_form = matrix_form
+        self.results = pd.DataFrame(columns=['FPRS', 'TPRS', 'EER', 'AUC', 'thresholds'])
 
         self.title = ''
 
     def make_rocs(self):
-        """
-
-        :param data_lists: Lists of scores (each item of list is a list for a modality)
-        :param labels: Labels for plots
-        :return:
-        """
         if not os.path.exists('./generated/ROC/'):
             os.makedirs('./generated/ROC/')
 
-        result_dict = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
-        plotz = []
-        rulz = []
-
-        for base, items in self.modal_info.items():
-            self.return_modals[base] = items
+        num_experiments = len(next(os.walk('./generated/ROC/'))[1])
+        experiment_dir = 'Experiment_' + str(num_experiments)
+        os.makedirs('./generated/ROC/' + experiment_dir)
 
         print('Making ROCs... ')
         plt.figure()
 
-        for key, item in self.return_modals.items():
-            rulz.append(key+'_')
-            Y_test = self.return_modals[key]['test_y']
-            scores = self.return_modals[key]['test_x']
+        analytic_beans = []
 
-            fprs, tprs, _ = roc_curve(Y_test, scores)
-            result_dict[key]['fprs'] = fprs
-            result_dict[key]['tprs'] = tprs
-            # https://stackoverflow.com/questions/28339746/equal-error-rate-in-python
-            result_dict[key]['EER'] = brentq(lambda x : 1. - x - interp1d(fprs, tprs)(x), 0., 1.)
-            result_dict[key]['AUC'] = roc_auc_score(Y_test, scores)
+        ## Baseline
+        for modality in self.modalities:
+            metrics = {'FPRS': [], 'TPRS': [], 'EER': [], 'AUC': [], 'thresholds': []}
+            Y_test = self.score_data['Label']
+            scores = self.score_data[modality]
 
-            tmp_scores = np.array(scores)
-            tmp_scores[tmp_scores < 0.5] = 0
-            tmp_scores[tmp_scores > 0.5] = 1
+            fprs, tprs, thresh = roc_curve(Y_test, scores)
 
-            result_dict[key]['F1'] = f1_score(Y_test, tmp_scores.astype(int), average='binary')
-            plt.plot(fprs, tprs, label=key.replace('-TEST', ''), marker='+')
-            # plt.semilogx(fprs, tprs, label=key.replace('-TEST', ''), marker='+')
+            metrics['FPRS'] = fprs
+            metrics['TPRS'] = tprs
+            metrics['thresholds'] = thresh
+            metrics['EER'] = brentq(lambda x : 1. - x - interp1d(fprs, tprs)(x), 0., 1.)
+            metrics['AUC'] = roc_auc_score(Y_test, scores)
+            analytic_beans.append(metrics)
+            # plt.semilogx(fprs, tprs, label=modality, marker='+')
+
+        ## Fused
+        for modality in self.fused_modalities:
+            metrics = {'FPRS': [], 'TPRS': [], 'EER': [], 'AUC': [], 'thresholds': []}
+            Y_test = self.score_data['Label']
+            scores = self.score_data[modality]
+
+            fprs, tprs, thresh = roc_curve(Y_test, scores)
+
+            metrics['FPRS'] = fprs
+            metrics['TPRS'] = tprs
+            metrics['thresholds'] = thresh
+            metrics['EER'] = brentq(lambda x : 1. - x - interp1d(fprs, tprs)(x), 0., 1.)
+            metrics['AUC'] = roc_auc_score(Y_test, scores)
+            analytic_beans.append(metrics)
+            # plt.semilogx(fprs, tprs, label=modality, marker='X')
+
+        self.results = pd.DataFrame(analytic_beans)
+        self.results.index = [x for x in self.modalities] + [x for x in self.fused_modalities]
+
+        ############## Baseline Plots
+        for baseline in self.modalities:
+            fprs = self.results.loc[baseline]['FPRS']
+            tprs = self.results.loc[baseline]['TPRS']
+            plt.semilogx(fprs, tprs, label=baseline, marker='+')
+
 
         plt.legend(bbox_to_anchor=(0.5, -0.02), loc="lower left", borderaxespad=0)
         plt.xlabel('False Match Rate (FMR)',  fontsize=15)
         plt.ylabel('True Match Rate (TMR)', fontsize=15)
+        plt.title('Baseline Modalities', fontsize=15)
 
-        # plt.title(self.norm + ' Normalization', fontsize=15)
-        fusion_rules = [x.split('_')[0] for x in rulz if 'Rule' in x]
-        plt.title('' + ' '.join(fusion_rules), fontsize=15)
-        plt.suptitle(self.norm + ' Normalization', fontsize=10, y=1)
-
-        plot_name = './generated/ROC/' + ''.join(fusion_rules) + '-' + self.title + '.png'
-        plotz.append(plot_name)
-        plt.savefig(plot_name, bbox_inches='tight')
-
-
-        print('Finished ROC')
+        plot_name = './generated/ROC/' + experiment_dir + '/baseline.png'
+        plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
         plt.clf()
 
-        return result_dict, plotz
+        ############## Fused Plots
+        for fused in self.fused_modalities:
+            for baseline in self.modalities:
+                fprs = self.results.loc[baseline]['FPRS']
+                tprs = self.results.loc[baseline]['TPRS']
+                plt.semilogx(fprs, tprs, label=baseline, marker='+')
+
+            fused_fprs =  self.results.loc[fused]['FPRS']
+            fused_tprs =  self.results.loc[fused]['TPRS']
+            plt.semilogx(fused_fprs, fused_tprs, label=modality, marker='X')
+
+            plt.legend(bbox_to_anchor=(0.5, -0.02), loc="lower left", borderaxespad=0)
+            plt.xlabel('False Match Rate (FMR)',  fontsize=15)
+            plt.ylabel('True Match Rate (TMR)', fontsize=15)
+
+            plt.title(fused + 'Fusion', fontsize=15)
+
+            plot_name = './generated/ROC/' + experiment_dir + '/' + fused + '.png'
+            plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
+            plt.clf()
+
+
+        ############## ALL Plots
+        for fused in self.fused_modalities:
+            for baseline in self.modalities:
+                fprs = self.results.loc[baseline]['FPRS']
+                tprs = self.results.loc[baseline]['TPRS']
+                plt.semilogx(fprs, tprs, label=baseline, marker='+')
+
+            fused_fprs =  self.results.loc[fused]['FPRS']
+            fused_tprs =  self.results.loc[fused]['TPRS']
+            plt.semilogx(fused_fprs, fused_tprs, label=modality, marker='X')
+
+            plt.legend(bbox_to_anchor=(0.5, -0.02), loc="lower left", borderaxespad=0)
+            plt.xlabel('False Match Rate (FMR)',  fontsize=15)
+            plt.ylabel('True Match Rate (TMR)', fontsize=15)
+
+            fusion_rules = [x for x in self.score_data.columns if x.isupper()]
+            plt.title('' + ' '.join(fusion_rules), fontsize=15)
+
+        plot_name = './generated/ROC/' + experiment_dir + '/' + 'all.png'
+        plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
+        plt.clf()
+
+        print('Finished ROC')
+
 
     ################################################################################################################
     ################################################################################################################
@@ -144,17 +197,16 @@ class FuseRule:
         return min(potential_x), max(potential_x)
 
     def sequential_rule(self):
-        start_time = time.time()
-        train_y = self.modal_info[list(self.modal_info)[0]]['train_y']
-        test_y = self.modal_info[list(self.modal_info)[0]]['test_y']
+        train_y = self.score_data[list(self.score_data)[0]]['train_y']
+        test_y = self.score_data[list(self.score_data)[0]]['test_y']
 
         baseline = self.fusion_settings['baseline']
 
-        modals=list(self.modal_info.keys())
+        modals=list(self.score_data.keys())
         other_modalities = [x for x in modals if x != baseline and 'Rule' not in x and 'TRAIN' not in x]
 
-        train_x = np.array(self.modal_info[baseline]['train_x'])
-        test_x = np.array(self.modal_info[baseline]['test_x'])
+        train_x = np.array(self.score_data[baseline]['train_x'])
+        test_x = np.array(self.score_data[baseline]['test_x'])
 
         if self.fusion_settings['auto']:
             # data_C.loc[data_C['Label'] == 1.0]['Data']
@@ -171,7 +223,7 @@ class FuseRule:
             if alpha <= train_x[score_index] < beta:
                 others = [train_x[score_index]]
                 for mod in other_modalities:
-                    others.append(self.modal_info[mod]['train_x'][score_index])
+                    others.append(self.score_data[mod]['train_x'][score_index])
 
                 train_x[score_index] = np.average(np.array(others))
 
@@ -179,7 +231,7 @@ class FuseRule:
             if alpha <= test_x[score_index] < beta:
                 others = [test_x[score_index]]
                 for mod in other_modalities:
-                    others.append(self.modal_info[mod]['train_x'][score_index])
+                    others.append(self.score_data[mod]['train_x'][score_index])
 
                 test_x[score_index] = np.average(np.array(others))
 
@@ -216,57 +268,27 @@ class FuseRule:
                                        'test_y': test_y}
 
     def sum_rule(self):
-        start_time = time.time()
-        train_y = self.modal_info[list(self.modal_info)[0]]['train_y']
-        test_y = self.modal_info[list(self.modal_info)[0]]['test_y']
-        summed_train_x = None
-        summed_test_x = None
-
-        for key, scores in self.modal_info.items():
-            if summed_train_x is None:
-                summed_train_x = scores['train_x']
-                summed_test_x = scores['test_x']
-            else:
-                summed_train_x = np.vstack((summed_train_x, scores['train_x']))
-                summed_test_x = np.vstack((summed_test_x, scores['test_x']))
-
-        self.title = self.title + 'Sum-'
-        # self.return_modals['SumRule'] = {'train_x': summed_train_x.sum(axis=0), 'train_y': train_y,
-        #                          'test_x': summed_test_x.sum(axis=0), 'test_y': test_y}
-
-        self.return_modals['SumRule'] = {'train_x': np.mean(summed_train_x, axis=0), 'train_y': train_y,
-                                 'test_x': np.mean(summed_test_x, axis=0), 'test_y': test_y}
-        # print("SUM RULE TOOK: " + str(time.time()-start_time) + ' seconds')
-
+        sum_title = 'SIMPLE_SUM:'
+        self.fused_modalities.append(sum_title)
+        self.score_data.insert(len(self.modalities), sum_title, self.score_data[self.modalities].mean(axis=1))
 
     def svm_rule(self):
-        train_y = self.modal_info[list(self.modal_info)[0]]['train_y']
-        test_y = self.modal_info[list(self.modal_info)[0]]['test_y']
-        train_x = None
-        test_x = None
+        baseline_modalities = [x for x in self.modalities if '_NORMALIZED' in x]
+        svm_title = 'SVM:' + '-'.join(baseline_modalities)
 
-        for key, scores in self.modal_info.items():
-            if 'Rule' in key:
-                continue
-            if train_x is None:
-                train_x = scores['train_x']
-                test_x = scores['test_x']
-            else:
-                train_x = np.vstack((train_x, scores['train_x']))
-                test_x = np.vstack((test_x, scores['test_x']))
+        train_y = self.score_data[self.score_data['Train_Test'] == 'TRAIN']['Label']
+
+        train = self.score_data[self.score_data['Train_Test'] == 'TRAIN']
+        train_x = train[self.modalities]
+
+        test = self.score_data[self.score_data['Train_Test'] == 'TEST']
+        test_x = test[self.modalities]
 
         clf = SVC(gamma='auto', probability=True)
-        clf.fit(train_x.transpose(), train_y)
-        y_score = clf.predict_proba(test_x.transpose())
+        clf.fit(train_x, train_y)
+        y_score = clf.predict_proba(self.score_data[self.modalities])
 
-        tmp = []
-        for i in range(len(test_y)):
-            tmp.append(y_score[i][int(test_y[i])])
-        y_score = tmp
-
-        self.title = self.title + 'SVM-'
-        self.return_modals['SVMRule'] = {'train_x': train_x, 'train_y': train_y,
-                                 'test_x': y_score, 'test_y': test_y}
+        self.score_data[svm_title] = y_score
 
 
     ################################################################################################################
@@ -290,7 +312,12 @@ class FuseRule:
         if 'SVMRule' in sorted_rules:
             self.svm_rule()
 
-        eval_mets, tmp_plts = self.make_rocs()
+        self.make_rocs()
 
-        return eval_mets, tmp_plts
+        self.modalities.extend(self.fused_modalities)
+        return self.results
 
+    def cmc(self):
+        cmc = CMC.CMC(data=self.score_data, modalities=self.modalities, k=20)
+        cmc.chop_and_sort()
+        cmc.plots()

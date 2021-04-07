@@ -1281,11 +1281,27 @@ ScreenManagement:
                     size_hint_x: 0.7
                     size_hint_y: 0.9
                     orientation: "vertical"
-                    padding: 5
+                    padding: 0, 0, 0, 10
 
-                    Image:
-                        id: display_image_roc
-                        source:  root.display_path_roc
+
+                    Button:
+                        id:roc_button
+                        background_normal: ''
+                        background_color: 1, 1, 1, 1
+
+                        on_press:
+                            root.next_roc_plot()
+                            self.background_color = (0.8, 0.9, 0.8, 0.05)
+
+                        Image:
+                            id: display_image_roc
+                            size: self.parent.size
+
+                            stretch: True
+                            keep_ratio: False
+                            source:root.display_path_roc
+
+
 
 
                 ##################
@@ -1398,7 +1414,6 @@ ScreenManagement:
                             background_color: 0, 0, 0, 0
                             on_press:
                                 root.slider_button('left','roc', int(roc_slider_id.value))
-                                if roc_slider_id.value > 0: roc_slider_id.value = roc_slider_id.value - 1
                             Image:
                                 source: './graphics/left.png'
                                 center_x: self.parent.center_x
@@ -1409,10 +1424,7 @@ ScreenManagement:
 
                         Slider:
                             id: roc_slider_id
-                            value: int(root.roc_index)
-
-                            min: 0
-                            max: root.current_roc_nums
+                            value: 0
                             step: 1
 
                             size_hint_x: 0.6
@@ -1423,8 +1435,7 @@ ScreenManagement:
                             size_hint_x: 0.1
                             background_color: 0, 0, 0, 0
                             on_press:
-                                root.slider_button('right','roc', density_slider_id.value)
-                                if roc_slider_id.value < root.current_roc_nums - 1: roc_slider_id.value = roc_slider_id.value + 1
+                                root.slider_button('right','roc', roc_slider_id.value)
                             Image:
                                 source: './graphics/right.png'
                                 center_x: self.parent.center_x
