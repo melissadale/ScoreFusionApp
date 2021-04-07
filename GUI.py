@@ -96,7 +96,6 @@ class Main(Screen):
     # def reset(self):
     def __init__(self, **kwargs):
         super(Main, self).__init__(**kwargs)
-        # self.update_bar_trigger = Clock.create_trigger(self.update_bar, -1)
 
     location = StringProperty('')
     save_location = StringProperty('')
@@ -130,10 +129,6 @@ class Main(Screen):
     r_slide = Slider()
     display_path_roc = StringProperty('')
 
-    # roc_set = ObjectProperty()
-    # roc_index = NumericProperty(0)
-    # current_roc_nums = 0
-    # roc_modality_pointer = 0
 
     # popups
     tanh_popup = ObjectProperty(Popup)
@@ -305,14 +300,6 @@ class Main(Screen):
 
     def next_roc_plot(self):
         self.display_path_roc = self.roc_object.update_plot()
-    # def set_roc_set(self):
-    #     files = []
-    #     for filename in glob.glob('./generated/ROC/*'):
-    #         files.append(filename)
-    #
-    #     self.roc_set = files
-    #     self.r_slide.max = len(files)-1
-    #     self.current_roc_nums = len(files)
 
     def density_slider(self, value):
         if 0 <= value < self.d_slide.max+1:
@@ -449,7 +436,7 @@ class Main(Screen):
                                    modalities=self.data_object.get_modalities(),  fusion_settings=self.sequential_fusion_settings)
 
         mets = fusion_mod.fuse_all()
-        fusion_mod.cmc()
+        # fusion_mod.cmc() TODO
         self.roc_object = ROCsPlots(slider=self.r_slide)
         self.display_path_roc = self.roc_object.build_plot_list()
 
@@ -464,7 +451,7 @@ class Main(Screen):
             self.msg_accuracy = self.msg_accuracy + accuracy
             self.msg_eer = self.msg_eer + eer
             self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
-
+            self.eval = mets
         # generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
         #                  roc_plt=self.display_path_roc,
         #                  fmr_rate=float(self.fixed_FMR_val.text))
@@ -472,14 +459,16 @@ class Main(Screen):
     def update_evals(self):
         ## A Fixed FMR has been updated
         self.msg_fixed_tmr = ''
-        for key, mods in self.eval.items():
-            if 'Rule' in key:
-                estimated_tmr = self.get_TMR(fpr=self.eval[key]['fprs'], tpr=self.eval[key]['tprs'],
-                                             fixed_far=float(self.fixed_FMR_val.text))
-                self.eval[key]['TMR'] = estimated_tmr
-                tmr = '[b]' + key + ': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
 
-                self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
+        fused = [x for x in self.eval.index if ":" in x]
+
+        for mods in fused:
+            estimated_tmr = self.get_TMR(fpr=self.eval.loc[mods]['FPRS'], tpr=self.eval.loc[mods]['TPRS'],
+                                         fixed_far=float(self.fixed_FMR_val.text))
+            self.eval.loc[mods]['TMR'] = estimated_tmr
+            tmr = '[b]' + mods + ': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
+
+            self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
 
     def truncate(self, f, n):
         '''Truncates/pads a float f to n decimal places without rounding'''
@@ -492,7 +481,7 @@ class Main(Screen):
     def get_TMR(self, fpr, tpr, fixed_far):
         vert_line = np.full(len(fpr), fixed_far)
         idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
-        return tpr[idx]
+        return tpr[idx][0]
 
 
 # class E(ExceptionHandler):
