@@ -543,6 +543,7 @@ ScreenManagement:
 
     fixed_FMR_val: fixed_fmr
 
+    experiment_id_val: Experiment_ID
 
 
 
@@ -1176,7 +1177,7 @@ ScreenManagement:
                     CheckBox:
                         id: chk_selective
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
                         n_active: root.selective_fusion_click(self, self.active)
 
                     Label:
@@ -1190,7 +1191,7 @@ ScreenManagement:
                     CheckBox:
                         id: chk_sum
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
 
                     Label:
                         text: 'Simple Sum Fusion'
@@ -1204,7 +1205,7 @@ ScreenManagement:
                     CheckBox:
                         id: chk_svm
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
 
                     Label:
                         text: 'SVM Fusion'
@@ -1218,7 +1219,7 @@ ScreenManagement:
                     CheckBox:
                         id: chk_weighted_sum
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
 
                     Label:
                         text: 'Weighted Sum Fusion'
@@ -1237,6 +1238,68 @@ ScreenManagement:
                     size_hint_y: 0.9
                     rows: 9
 
+                    GridLayout:
+                        rows: 2
+
+                        Label:
+                            text: 'Experiment Name:'
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.width, None
+                            color: hex('#18453B')
+                            bold: True
+
+                        TextInput:
+                            id: Experiment_ID
+                            text: 'Experiment_1' # Todo: current experiment id
+                            multiline: False
+
+                            halign: 'right'
+                            valign: 'middle'
+                            text_size: self.width, None
+                            size_hint: (.65, None)
+                            height: 30
+                            multiline: False
+                            on_text_validate: root.update_evals()
+
+                    GridLayout:
+                        cols: 2
+                        rows: 2
+                        CheckBox:
+                            size_hint_x: 0.1
+                            halign: 'right'
+                            id : chk_verification
+                            color: hex('#000000')
+                        Label:
+                            halign: 'left'
+                            size_hint_x: 0.9
+                            valign: 'middle'
+                            text_size: self.size
+                            text: 'Verification'
+                            color: hex('#18453B')
+                            active: True
+
+                        CheckBox:
+                            halign: 'right'
+                            size_hint_x: 0.1
+                            id : chk_identification
+                            color: hex('#000000')
+                        Label:
+                            halign: 'left'
+                            size_hint_x: 0.9
+                            valign: 'middle'
+                            text_size: self.size
+                            text: 'Identification'
+                            color: hex('#18453B')
+
+
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
 
 
                 ##################
@@ -1276,31 +1339,45 @@ ScreenManagement:
                 cols: 2
 
                 ##################
-                ################## left - top
+                ################## left
                 BoxLayout:
-                    size_hint_x: 0.7
-                    size_hint_y: 0.9
                     orientation: "vertical"
-                    padding: 0, 0, 0, 10
+
+                    BoxLayout:
+                        size_hint_y: 0.9
+                        orientation: "vertical"
+
+                        Button:
+                            id:roc_button
+                            background_normal: ''
+                            background_color: 1, 1, 1, 1
+
+                            canvas:
+                                Rectangle:
+                                    size: roc_button.width-0.9, roc_button.height+0.9
+                                    pos:self.pos
+                                    source: root.display_path_roc
+
+                            on_press:
+                                root.next_roc_plot()
 
 
-                    Button:
-                        id:roc_button
-                        background_normal: ''
-                        background_color: 1, 1, 1, 1
+                    GridLayout:
+                        size_hint_y: 0.1
+                        cols: 3
 
-                        on_press:
-                            root.next_roc_plot()
-                            self.background_color = (0.8, 0.9, 0.8, 0.05)
-
-                        Image:
-                            id: display_image_roc
-                            size: self.parent.size
-
-                            stretch: True
-                            keep_ratio: False
-                            source:root.display_path_roc
-
+                        Label:
+                            text: ''
+                        Label:
+                            text: root.current_experiment
+                            #halign: 'middle'
+                            #valign: 'middle'
+                            #padding: [0, (self.height-self.line_height)/2]
+                            text_size: self.size
+                            color: hex('#18453B')
+                            bold: True
+                        Label:
+                            text: ''
 
 
 

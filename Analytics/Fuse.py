@@ -32,7 +32,7 @@ np.seterr(divide='ignore', invalid='ignore')
 
 
 class FuseRule:
-    def __init__(self, list_o_rules, score_data, modalities, fusion_settings=None):
+    def __init__(self, list_o_rules, score_data, modalities, fusion_settings=None, experiment=''):
         self.list_o_rules = sorted(list(set(list_o_rules)))
         self.score_data = score_data
         self.modalities = modalities
@@ -40,15 +40,16 @@ class FuseRule:
         self.fusion_settings = fusion_settings
         self.results = pd.DataFrame(columns=['FPRS', 'TPRS', 'EER', 'AUC', 'thresholds'])
 
+        self.experiment = experiment
         self.title = ''
 
     def make_rocs(self):
-        if not os.path.exists('./generated/ROC/'):
-            os.makedirs('./generated/ROC/')
+        if not os.path.exists('./generated/experiments/'):
+            os.makedirs('./generated/experiments/')
 
-        num_experiments = len(next(os.walk('./generated/ROC/'))[1])
-        experiment_dir = 'Experiment_' + str(num_experiments)
-        os.makedirs('./generated/ROC/' + experiment_dir)
+        experiment_dir = self.experiment
+        if not os.path.exists('./generated/experiments/' + experiment_dir):
+            os.makedirs('./generated/experiments/' + experiment_dir)
 
         print('Making ROCs... ')
         plt.figure()
@@ -102,7 +103,7 @@ class FuseRule:
         plt.ylabel('True Match Rate (TMR)', fontsize=15)
         plt.title('Baseline Modalities', fontsize=15)
 
-        plot_name = './generated/ROC/' + experiment_dir + '/baseline.png'
+        plot_name = './generated/experiments/' + experiment_dir + '/baseline.png'
         plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
         plt.clf()
 
@@ -123,7 +124,7 @@ class FuseRule:
 
             plt.title(fused + 'Fusion', fontsize=15)
 
-            plot_name = './generated/ROC/' + experiment_dir + '/' + fused.replace(':', '') + '.png'
+            plot_name = './generated/experiments/' + experiment_dir + '/' + fused.replace(':', '') + '.png'
             plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
             plt.clf()
 
@@ -146,7 +147,7 @@ class FuseRule:
             fusion_rules = [x for x in self.score_data.columns if x.isupper()]
             plt.title('' + ' '.join(fusion_rules), fontsize=15)
 
-        plot_name = './generated/ROC/' + experiment_dir + '/' + 'all.png'
+        plot_name = './generated/experiments/' + experiment_dir + '/' + 'all.png'
         plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
         plt.clf()
 

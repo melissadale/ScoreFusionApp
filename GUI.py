@@ -150,6 +150,8 @@ class Main(Screen):
     msg_fixed_tmr = StringProperty('')
     eval = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
     fixed_FMR_val = TextInput()
+    experiment_id_val = TextInput()
+    current_experiment = StringProperty('')
 
     data_object = None
 
@@ -335,6 +337,7 @@ class Main(Screen):
 
     def next_roc_plot(self):
         self.display_path_roc = self.roc_object.update_plot()
+        # self.ids.roc_button.source = self.display_path_roc
 
     def density_slider(self, value):
         if 0 <= value < self.d_slide.max+1:
@@ -344,6 +347,7 @@ class Main(Screen):
         mx = self.r_slide.max
         if 0 <= value < self.r_slide.max-1:
             self.display_path_roc = self.roc_object.slider_update(value)
+            self.current_experiment = self.roc_object.get_experiment()
 
 
     def slider_button(self, direction, img_set, value):
@@ -358,10 +362,12 @@ class Main(Screen):
             if direction == 'left':
                 if 0 < value:
                     self.display_path_roc = self.roc_object.move_left()
+                    self.current_experiment = self.roc_object.get_experiment()
 
             if direction == 'right':
                 if 0 <= value < self.r_slide.max:
                     self.display_path_roc = self.roc_object.move_right()
+                    self.current_experiment = self.roc_object.get_experiment()
 
 
     def checkbox_click(self, instance, value):
@@ -468,12 +474,15 @@ class Main(Screen):
             fusion_list.append('SVMRule')
 
         fusion_mod = Fuse.FuseRule(list_o_rules=fusion_list, score_data=self.data_object.score_data,
-                                   modalities=self.data_object.get_modalities(),  fusion_settings=self.sequential_fusion_settings)
+                                   modalities=self.data_object.get_modalities(),
+                                   fusion_settings=self.sequential_fusion_settings,
+                                   experiment=self.experiment_id_val.text)
 
         mets = fusion_mod.fuse_all()
         # fusion_mod.cmc() TODO
         self.roc_object = ROCsPlots(slider=self.r_slide)
         self.display_path_roc = self.roc_object.build_plot_list()
+        self.current_experiment = self.roc_object.get_experiment()
 
         # build strings
         for fused in [x for x in mets.index if ':' in x]:

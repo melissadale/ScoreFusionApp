@@ -10,8 +10,7 @@ class ROCsPlots:
         self.current_plot_path = ''
 
         self.slider = kwargs.get('slider')
-
-        self.experiment_ids = next(os.walk('./generated/ROC/'))[1]
+        self.experiment_ids = next(os.walk('./generated/experiments/'))[1]
         self.number_experiments = len(self.experiment_ids)
         self.experiment_pointer = self.number_experiments-1
 
@@ -38,14 +37,17 @@ class ROCsPlots:
 
     def build_plot_list(self):
         plots = []
-        base = './generated/ROC/' + self.experiment_ids[self.experiment_pointer] + '/'
+        base = './generated/experiments/' + self.experiment_ids[self.experiment_pointer] + '/'
 
         for filename in glob.glob(base + '/*.png'):
-            plots.append(filename.replace('./generated/ROC/'+self.experiment_ids[self.experiment_pointer], ''))
+            plots.append(filename.replace('./generated/experiments/' + self.experiment_ids[self.experiment_pointer] , ''))
 
         self.slider.max = self.number_experiments
         self.plots_list = plots
         return self.get_image_path()
 
     def get_image_path(self):
-        return './generated/ROC/' + self.experiment_ids[self.experiment_pointer] + '/' + self.plots_list[self.current_plot_index]
+        return './generated/experiments/' + self.experiment_ids[self.experiment_pointer] + '/' + self.plots_list[self.current_plot_index]
+
+    def get_experiment(self):
+        return self.experiment_ids[self.experiment_pointer]
