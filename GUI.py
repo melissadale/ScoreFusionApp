@@ -111,6 +111,8 @@ class Main(Screen):
     normalize = ObjectProperty()
     norm_params = []
 
+    previous_ex_label = ObjectProperty(None)
+
     detected_lbl = ObjectProperty('')
     modalities_lbl = ObjectProperty('')
 
@@ -370,16 +372,26 @@ class Main(Screen):
                     self.current_experiment = self.roc_object.get_experiment()
 
 
-    def checkbox_click(self, instance, value):
-        if value is True:
-            self.split = True
-            self.input_test.opacity = 1.0
-            self.test_label.opacity = 1.0
+    def checkbox_click(self, instance, value, category='train-test'):
+        if category == 'train-test':
+            if value is True:
+                self.split = True
+                self.input_test.opacity = 1.0
+                self.test_label.opacity = 1.0
 
-        else:
-            self.split = False
-            self.input_test.opacity = 0.0
-            self.test_label.opacity = 0.0
+            else:
+                self.split = False
+                self.input_test.opacity = 0.0
+                self.test_label.opacity = 0.0
+
+        elif category == 'previous':
+            if value is True:
+                self.split = True
+                self.previous_ex_label.opacity = 1.0
+
+            else:
+                self.split = False
+                self.previous_ex_label.opacity = 0.0
 
 
     def selective_fusion_click(self, instance, value):
@@ -496,9 +508,10 @@ class Main(Screen):
             self.msg_eer = self.msg_eer + eer
             self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
             self.eval = mets
-        # generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
-        #                  roc_plt=self.display_path_roc,
-        #                  fmr_rate=float(self.fixed_FMR_val.text))
+
+        generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
+                         roc_plt=self.display_path_roc,
+                         fmr_rate=float(self.fixed_FMR_val.text))
 
     def update_evals(self):
         ## A Fixed FMR has been updated

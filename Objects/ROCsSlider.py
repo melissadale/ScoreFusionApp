@@ -30,7 +30,7 @@ class ROCsPlots:
         return self.get_image_path()
 
     def move_right(self):
-        if self.current_plot_index < self.number_experiments-1:
+        if self.current_plot_index < self.number_experiments:
             self.experiment_pointer = self.experiment_pointer+1
             self.slider.value = self.slider.value + 1
         return self.get_image_path()

@@ -145,7 +145,7 @@ class FuseRule:
             plt.ylabel('True Match Rate (TMR)', fontsize=15)
 
             fusion_rules = [x for x in self.score_data.columns if x.isupper()]
-            plt.title('' + ' '.join(fusion_rules), fontsize=15)
+            plt.title('Fusion Rules::' + ' '.join(fusion_rules), fontsize=15)
 
         plot_name = './generated/experiments/' + experiment_dir + '/' + 'all.png'
         plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
