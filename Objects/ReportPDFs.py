@@ -65,14 +65,14 @@ def generate_summary(modalities=None, results=None, roc_plt=None, fmr_rate=0.01,
     pdf.line(x1=pdf.l_margin, y1=200, x2=epw, y2=200)
     pdf.ln(th)
 
-    for rule_key, metrics in results.items():
+    for rule_key in results.index:
         pdf.set_font('Arial', 'B', 12)
         pdf.cell(col_width, th, rule_key, border=0)
         pdf.set_font('Arial', '', 12)
 
-        pdf.cell(col_width, th, str(round(metrics['AUC'], 5)), border=0)
-        pdf.cell(col_width, th, str(round(metrics['EER'], 5)), border=0)
-        pdf.cell(col_width, th, str(round(metrics['TMR'], 5)), border=0)
+        pdf.cell(col_width, th, str(round(results.loc[rule_key]['AUC'], 5)), border=0)
+        pdf.cell(col_width, th, str(round(results.loc[rule_key]['EER'], 5)), border=0)
+        pdf.cell(col_width, th, str(round(results.loc[rule_key]['TPRS'], 5)), border=0)
         pdf.ln(th)
 
     pdf.output(save_to_path+'ResultsSummary-'+str(date.today())+'.pdf', 'F')

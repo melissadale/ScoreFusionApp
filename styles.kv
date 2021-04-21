@@ -510,6 +510,8 @@ ScreenManagement:
     test_label: test_label
     input_test: input_test
 
+    previous_ex_label: previous_ex_label
+
     chk_MinMax:chk_MinMax
     chk_ZScore:chk_ZScore
     chk_None: chk_None
@@ -524,8 +526,6 @@ ScreenManagement:
     chk_Test:chk_Test
     chk_Train:chk_Train
     chk_Entire: chk_Entire
-    chk_dissimilar: chk_dissimilar
-
     ##
     chk_selective: chk_selective
     chk_sum: chk_sum
@@ -543,6 +543,7 @@ ScreenManagement:
 
     fixed_FMR_val: fixed_fmr
 
+    experiment_id_val: Experiment_ID
 
 
 
@@ -580,7 +581,7 @@ ScreenManagement:
                     ################## Load Scores
                     GridLayout:
                         cols: 2
-                        orientation: "vertical"
+                        orientation: "tb-lr"
                         size_hint_y: 0.2
 
                         Button:
@@ -612,24 +613,8 @@ ScreenManagement:
 
                     ################## Train/Test split info
                     GridLayout:
-                        rows: 2
-                        size_hint_y: 0.2
-
-                        BoxLayout:
-                            CheckBox:
-                                id: chk_dissimilar
-                                size_hint_x: 0.10
-                                color: hex('#0DB14B')
-
-                            Label:
-                                halign: 'left'
-                                valign: 'middle'
-                                text_size: self.width, None
-                                size_hint_x: 0.9
-
-                                markup: True
-                                text: 'These are [b]Dissimilarity[/b] Scores'
-                                color: 0.0, 0.0, 0.0, 1
+                        rows: 6
+                        size_hint_y: 0.4
 
                         BoxLayout:
                             CheckBox:
@@ -640,23 +625,25 @@ ScreenManagement:
 
                             Label:
                                 halign: 'left'
-                                valign: 'middle'
+                                valign: 'top'
                                 text_size: self.width, None
                                 size_hint_x: 0.9
 
-                                text: 'This is the entire dataset'
+                                text: '[b] Divide the dataset into training and testing: [b]'
+
+                                markup: True
                                 color: 0.0, 0.0, 0.0, 1
 
 
                         BoxLayout:
-                            padding: 40, 0
+                            padding: 90, 0
                             TextInput:
                                 id: input_test
                                 opacity: 0.0
 
 
                                 halign: 'right'
-                                valign: 'middle'
+                                valign: 'top'
                                 text_size: self.width, None
                                 size_hint: (.15, None)
                                 height: 30
@@ -668,7 +655,7 @@ ScreenManagement:
                                 id: test_label
                                 opacity: 0.0
 
-                                halign: 'left'
+                                #halign: 'left'
                                 valign: 'middle'
                                 size_hint: (.9, .4)
 
@@ -676,6 +663,42 @@ ScreenManagement:
                                 text: root.train_perc
                                 color: 0,0,0,1
 
+
+
+                    ##################################################################################
+                        Widget:
+                        Widget:
+
+                        BoxLayout:
+                            CheckBox:
+                                n_active: root.checkbox_click(self, self.active, 'previous')
+                                size_hint_x: 0.10
+                                active: False
+                                color: hex('#0DB14B')
+
+                            Label:
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.width, None
+                                size_hint_x: 0.9
+
+                                text: "[b] Load previous experiment's score settings [b]"
+
+                                markup: True
+                                color: 0.0, 0.0, 0.0, 1
+
+
+                        BoxLayout:
+                            padding: 90, 0
+                            Label:
+                                id: previous_ex_label
+                                halign: 'left'
+                                valign: 'middle'
+                                size_hint: (.9, .4)
+
+                                text_size: self.width, None
+                                text: 'Place Holder'
+                                color: 0,0,0,1
 
                     ################## Normalize
                     GridLayout:
@@ -918,7 +941,7 @@ ScreenManagement:
                         bold: True
                         on_press:
                             root.set_normalization()
-                            root.setup_2(root.location)
+                            root.set_progressbar(root.location)
                             # Main.tabby_tab.switch_to(Main.tab_list[2])
                             # https://stackoverflow.com/questions/38883763/kivy-button-on-press-switch-to-next-tab-using-kivy-builder
                 ##################
@@ -1125,8 +1148,7 @@ ScreenManagement:
                             step: 1
 
                             size_hint_x: 0.6
-                            on_value:
-                                root.density_slider(int(density_slider_id.value))
+                            on_value: root.density_slider(int(density_slider_id.value))
 
 
                         Button:
@@ -1177,7 +1199,7 @@ ScreenManagement:
                     CheckBox:
                         id: chk_selective
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
                         n_active: root.selective_fusion_click(self, self.active)
 
                     Label:
@@ -1191,10 +1213,10 @@ ScreenManagement:
                     CheckBox:
                         id: chk_sum
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
 
                     Label:
-                        text: 'Sum Fusion'
+                        text: 'Simple Sum Fusion'
                         size_hint_x: 0.8
                         halign: 'left'
                         valign: 'middle'
@@ -1205,7 +1227,7 @@ ScreenManagement:
                     CheckBox:
                         id: chk_svm
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
 
                     Label:
                         text: 'SVM Fusion'
@@ -1219,7 +1241,7 @@ ScreenManagement:
                     CheckBox:
                         id: chk_weighted_sum
                         size_hint_x: 0.2
-                        color: hex('#0DB14B')
+                        color: hex('#000000')
 
                     Label:
                         text: 'Weighted Sum Fusion'
@@ -1238,6 +1260,69 @@ ScreenManagement:
                     size_hint_y: 0.9
                     rows: 9
 
+                    GridLayout:
+                        rows: 2
+
+                        Label:
+                            text: 'Experiment Name:'
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.width, None
+                            color: hex('#18453B')
+                            bold: True
+
+                        TextInput:
+                            id: Experiment_ID
+                            text: 'Experiment_1' # Todo: current experiment id
+                            multiline: False
+
+                            halign: 'right'
+                            valign: 'middle'
+                            text_size: self.width, None
+                            size_hint: (.65, None)
+                            height: 30
+                            multiline: False
+                            on_text_validate: root.update_evals()
+
+                    GridLayout:
+                        cols: 2
+                        rows: 2
+                        CheckBox:
+                            size_hint_x: 0.1
+                            halign: 'right'
+                            id : chk_verification
+                            color: hex('#000000')
+                            active: True
+
+                        Label:
+                            halign: 'left'
+                            size_hint_x: 0.9
+                            valign: 'middle'
+                            text_size: self.size
+                            text: 'Verification'
+                            color: hex('#18453B')
+
+                        CheckBox:
+                            halign: 'right'
+                            size_hint_x: 0.1
+                            id : chk_identification
+                            color: hex('#000000')
+                        Label:
+                            halign: 'left'
+                            size_hint_x: 0.9
+                            valign: 'middle'
+                            text_size: self.size
+                            text: 'Identification'
+                            color: hex('#18453B')
+
+
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
+                    Widget:
 
 
                 ##################
@@ -1277,16 +1362,47 @@ ScreenManagement:
                 cols: 2
 
                 ##################
-                ################## left - top
+                ################## left
                 BoxLayout:
-                    size_hint_x: 0.7
-                    size_hint_y: 0.9
                     orientation: "vertical"
-                    padding: 5
 
-                    Image:
-                        id: display_image_roc
-                        source: root.display_path_roc
+                    BoxLayout:
+                        size_hint_y: 0.9
+                        orientation: "vertical"
+
+                        Button:
+                            id:roc_button
+                            background_normal: ''
+                            background_down: ''
+
+                            canvas:
+                                Rectangle:
+                                    #size: roc_button.width-0.9, roc_button.height+0.9
+                                    size: roc_button.height + 0.5*(roc_button.width-roc_button.height), roc_button.height
+                                    pos:self.pos
+                                    source: root.display_path_roc
+
+                            on_press:
+                                root.next_roc_plot()
+
+
+                    GridLayout:
+                        size_hint_y: 0.1
+                        cols: 3
+
+                        Label:
+                            text: ''
+                        Label:
+                            text: root.current_experiment
+                            #halign: 'middle'
+                            #valign: 'middle'
+                            #padding: [0, (self.height-self.line_height)/2]
+                            text_size: self.size
+                            color: hex('#18453B')
+                            bold: True
+                        Label:
+                            text: ''
+
 
 
                 ##################
@@ -1399,7 +1515,6 @@ ScreenManagement:
                             background_color: 0, 0, 0, 0
                             on_press:
                                 root.slider_button('left','roc', int(roc_slider_id.value))
-                                if roc_slider_id.value > 0: roc_slider_id.value = roc_slider_id.value - 1
                             Image:
                                 source: './graphics/left.png'
                                 center_x: self.parent.center_x
@@ -1410,10 +1525,7 @@ ScreenManagement:
 
                         Slider:
                             id: roc_slider_id
-                            value: int(root.roc_index)
-
-                            min: 0
-                            max: root.current_roc_nums
+                            value: 0
                             step: 1
 
                             size_hint_x: 0.6
@@ -1424,8 +1536,7 @@ ScreenManagement:
                             size_hint_x: 0.1
                             background_color: 0, 0, 0, 0
                             on_press:
-                                root.slider_button('right','roc', density_slider_id.value)
-                                if roc_slider_id.value < root.current_roc_nums - 1: roc_slider_id.value = roc_slider_id.value + 1
+                                root.slider_button('right','roc', roc_slider_id.value)
                             Image:
                                 source: './graphics/right.png'
                                 center_x: self.parent.center_x

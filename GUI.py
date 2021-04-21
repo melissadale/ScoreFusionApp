@@ -2,30 +2,30 @@
 Created on 1/29/2020
 By Melissa Dale
 """
-import functools
 import glob
 import os
 import shutil
 
 # os.environ['KIVY_GL_BACKEND'] = 'angle_sdl2'
-import threading
 
 import numpy as np
 import pandas as pd
 from collections import defaultdict
 from functools import partial
-from numpy import ones, vstack
-from numpy.linalg import lstsq
+import functools
+import threading
 
-import Analytics.format_data as fm
+import Analytics.format_data as fm2
 import Analytics.Fuse as Fuse
-import AppWidgets.PopupSave as SavePop
-import AppWidgets.PopupReset as ResetPopup
-import AppWidgets.PopupTanh as TanhPopup
-import AppWidgets.PopupDSig as DSigPopup
-import AppWidgets.PopupSelectiveFusion as SelectiveFusionPopup
-import AppWidgets.PopupModalityEdit as PopupModalityEdit
-from AppWidgets.ReportPDFs import generate_summary
+import Popups.PopupSave as SavePop
+import Popups.PopupReset as ResetPopup
+import Popups.PopupTanh as TanhPopup
+import Popups.PopupDSig as DSigPopup
+import Popups.PopupSelectiveFusion as SelectiveFusionPopup
+import Popups.PopupModalityEdit as PopupModalityEdit
+from Objects.ReportPDFs import generate_summary
+from Objects.DensitySlider import DensityPlots
+from Objects.ROCsSlider import ROCsPlots
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
 import kivy
@@ -34,7 +34,6 @@ from kivy.lang import Builder
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.base import ExceptionManager, ExceptionHandler
 from kivy.clock import Clock
 from kivy.uix.popup import Popup
 from kivy.uix.progressbar import ProgressBar
@@ -73,9 +72,9 @@ class SaveLoc(Screen):
     save_location = StringProperty('')
     data = ObjectProperty(None)
 
-    def __init__(self, **args):
-        Clock.schedule_once(self.init_widget, 0)
-        return super(SaveLoc, self).__init__(**args)
+    # def __init__(self, **args):
+    #     Clock.schedule_once(self.init_widget, 0)
+    #     return super(SaveLoc, self).__init__(**args)
 
     def init_widget(self, *args):
         fc = self.ids['filechooser_save']
@@ -97,7 +96,6 @@ class Main(Screen):
     # def reset(self):
     def __init__(self, **kwargs):
         super(Main, self).__init__(**kwargs)
-        # self.update_bar_trigger = Clock.create_trigger(self.update_bar, -1)
 
     location = StringProperty('')
     save_location = StringProperty('')
@@ -113,6 +111,8 @@ class Main(Screen):
     normalize = ObjectProperty()
     norm_params = []
 
+    previous_ex_label = ObjectProperty(None)
+
     detected_lbl = ObjectProperty('')
     modalities_lbl = ObjectProperty('')
 
@@ -126,26 +126,16 @@ class Main(Screen):
     display_path_density = StringProperty(None)
     dens_set = ObjectProperty()
     set_type = 'Entire'
-    d_slide = Slider(min=0, max=1, value=0)
-    r_slide = Slider(min=0, max=1, value=0)
+    d_slide = Slider()
 
-    display_path_roc = StringProperty(None)
-    roc_set = ObjectProperty()
-    roc_index = NumericProperty(0)
-    current_roc_nums = 0
+    r_slide = Slider()
+    display_path_roc = StringProperty('')
 
-    density_type = ['hist', 'PDF', 'overlap']
-    density_type_pointer = 2
-    current_density = density_type[density_type_pointer]
-    density_modality_pointer = 0
-    roc_modality_pointer = 0
+
     # popups
     tanh_popup = ObjectProperty(Popup)
     dsig_popup = ObjectProperty(Popup)
     fusion_selection_popup = ObjectProperty(Popup)
-    modality_list = ObjectProperty(None)
-    original_modality_list = []
-    # Progress bars
     loading_pb = ProgressBar()
     increase_amount = NumericProperty(0)
 
@@ -162,77 +152,89 @@ class Main(Screen):
     msg_fixed_tmr = StringProperty('')
     eval = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
     fixed_FMR_val = TextInput()
+    experiment_id_val = TextInput()
+    current_experiment = StringProperty('')
+
+    data_object = None
+
+    def set_progressbar(self, path):
+        self.load_path = path
+        threading.Thread(target=self.setup, args=()).start()
+
+    def setup(self):
+        self.data_object = fm2.Score_data(path=self.load_path, test_perc=self.test_perc,
+                             normalize=self.normalize, norm_params=self.norm_params,
+                             lbl=self.ids.modalities_lbl)
+        self.data_object.load_data()
+        self.data_object.normalize_data()
+        self.score_data = self.data_object.get_score_data()
+        self.increase_amount = 100/(len(self.data_object.get_modalities())*3)
+
+        ###############
+        for mod in self.data_object.modalities:
+            Clock.schedule_once(functools.partial(self.update_bar, mod))
+
+            train_gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 1.0), mod].tolist()
+            train_imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 0.0), mod].tolist()
+            self.data_object.make_density_plots(gen=train_gens, imp=train_imps,
+                                    label='Training', norm_type=self.normalize, modality=mod)
+
+            Clock.schedule_once(functools.partial(self.update_bar, mod))
+            test_gens = self.score_data.loc[
+                (self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 1.0), mod].tolist()
+            test_imps = self.score_data.loc[
+                (self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0), mod].tolist()
+            self.data_object.make_density_plots(gen=test_gens, imp=test_imps,
+                                   label='Training', norm_type=self.normalize, modality=mod)
+
+            Clock.schedule_once(functools.partial(self.update_bar, mod))
+            self.data_object.make_density_plots(gen=self.score_data.loc[self.score_data['Label'] == 1.0, mod],
+                                                imp=self.score_data.loc[self.score_data['Label'] == 0.0, mod],
+                                                label='Entire', norm_type=self.normalize, modality=mod)
+
+
+
+        self.densities = DensityPlots(slider=self.d_slide)
+        self.densities.build_plot_list()
+        self.display_path_density = self.densities.get_image_path()
+
+
+
+        self.returned_modalities = ''.join([x + '\n' for x in self.data_object.get_modalities()])
+        self.detected_lbl.opacity = 1.0
+
+        self.beans = self.data_object.get_beans()
+        num_gen_train = self.beans['gen_train']
+        num_gen_test = self.beans['gen_test']
+
+        num_imp_train = self.beans['imp_train']
+        num_imp_test = self.beans['imp_test']
+
+        # messages
+        self.msg_impgen_test = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(num_gen_test, num_imp_test)
+        self.msg_impgen_train = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(num_gen_train, num_imp_train)
+        self.msg_test = '[b]TESTING: [/b] {} Subjects'.format(num_imp_test)
+        self.msg_train = '[b]TRAINING: [/b] {} Subjects'.format(num_imp_train)
+        self.num_mods = len(self.modalities.keys())
+        self.msg_modalities = '[b]MODALITIES DETECTED: [/b] {}'.format(self.num_mods)
+
+    def modality_update_helper(self, args):
+        user_vals = self.edit_mods.get_updates()
+        self.data_object.update_datas(user_vals)
+        self.update_modality_label()
+
+    def update_modality_label(self):
+        self.ids.modalities_lbl.text = ''
+        for mod_key in self.data_object.get_modalities():
+            self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
 
     ### Progress Bar Things
     def update_bar(self, mod_key, dt):
         if self.loading_pb.value <= 100:
             self.loading_pb.value += self.increase_amount
-            self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
 
-    def setup_2(self, path):
-        self.load_path = path
-        threading.Thread(target=self.setup, args=()).start()
-
-    def setup(self):
-        temp_modalities, self.matrix_form, e_id = fm.get_data(self.load_path, test_perc=self.test_perc,
-                                                              dissimilar=self.chk_dissimilar)
-
-        self.increase_amount = 100/len(temp_modalities)
-
-        for key, items in temp_modalities.items():
-            Clock.schedule_once(functools.partial(self.update_bar, key))
-            mod_dict = fm.split_data(items, normalize=self.normalize, norm_params=self.norm_params, key=key, exp_id=e_id)
-            self.modalities[key] = mod_dict
-        self.modality_list = list(self.modalities)
-        self.original_modality_list = list(self.modalities)
-        self.modalities_original = self.modalities
-
-        self.detected_lbl.opacity = 1.0
-        self.roc_index = 0
-
-        self.num_gen_train = np.count_nonzero(self.modalities[list(self.modalities)[0]]['train_y'] == 0)
-        self.num_gen_test = np.count_nonzero(self.modalities[list(self.modalities)[0]]['test_y'] == 0)
-
-        self.num_imp_train = np.count_nonzero(self.modalities[list(self.modalities)[0]]['train_y'] == 1)
-        self.num_imp_test = np.count_nonzero(self.modalities[list(self.modalities)[0]]['test_y'] == 1)
-
-        # messages
-        self.msg_impgen_test = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(self.num_gen_test, self.num_imp_test)
-        self.msg_impgen_train = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(self.num_gen_train, self.num_imp_train)
-        self.msg_test = '[b]TESTING: [/b] {} Subjects'.format(self.num_imp_test)
-        self.msg_train = '[b]TRAINING: [/b] {} Subjects'.format(self.num_imp_train)
-        self.num_mods = len(self.modalities.keys())
-        self.msg_modalities = '[b]MODALITIES DETECTED: [/b] {}'.format(self.num_mods)
-
-        self.dens_set = self.get_right_densityplots()
-        self.display_path_density = self.dens_set[self.density_modality_pointer]
-        self.d_slide.max = len(self.modality_list)-1
-
-    def modality_update_helper(self, args):
-        user_vals = self.edit_mods.get_updates()
-
-        if user_vals:
-            # update modalities dict
-            self.modalities = self.modalities_original
-
-            for orig_key, items in user_vals.items():
-                if items[3]:  # modalities to fuse
-                    new_key = items[0]
-                    if new_key != orig_key:  # update modalities key
-                        self.modalities[new_key] = self.modalities[orig_key]
-                        del self.modalities[orig_key]
-
-                else:  # remove
-                    del self.modalities[orig_key]
-
-            # update modality list
-            self.modality_list = [mod[0] for key, mod in user_vals.items() if mod[3]]
-            self.update_modality_label()
-
-    def update_modality_label(self):
-        self.ids.modalities_lbl.text = ''
-        for mod_key in self.modality_list:
-            self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
+            if mod_key not in self.ids.modalities_lbl.text:
+                self.ids.modalities_lbl.text = self.ids.modalities_lbl.text + mod_key + '\n\n'
 
 #############################################################
 #############################################################
@@ -244,7 +246,7 @@ class Main(Screen):
         popup.open()
 
     def modality_edit_popup(self):
-        self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.original_modality_list)
+        self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities())
         self.popup_popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
                                 size=(600, 600))
         self.edit_mods.set_pop(self.popup_popup)
@@ -283,7 +285,7 @@ class Main(Screen):
         self.show_fusion_selection = SelectiveFusionPopup.SelectiveFusionPopup()
         self.fusion_selection_popup = Popup(title="Selective Fusion", content=self.show_fusion_selection, size_hint=(None, None),
                                 size=(600, 600))
-        self.show_fusion_selection.set_pop(self.fusion_selection_popup, self.modality_list)
+        self.show_fusion_selection.set_pop(self.fusion_selection_popup, self.data_object.get_modalities())
 
         self.fusion_selection_popup.open()  # show the popup
 
@@ -291,6 +293,9 @@ class Main(Screen):
     #############################################################
 
     def set_normalization(self):
+        if not self.data_object:
+            pass
+
         if self.chk_MinMax.active:
             self.normalize = 'MinMax'
 
@@ -322,87 +327,71 @@ class Main(Screen):
 
     def set_density_set(self):
         if self.chk_Test.active:
-            self.set_type = 'Testing'
-            self.dens_set = self.get_right_densityplots()
-            self.display_path_density = self.dens_set[self.density_modality_pointer]
-
+            self.display_path_density = self.densities.update_test_train('Testing')
         elif self.chk_Train.active:
-            self.set_type = 'Training'
-            self.dens_set = self.get_right_densityplots()
-            self.display_path_density = self.dens_set[self.density_modality_pointer]
+            self.display_path_density = self.densities.update_test_train('Training')
         else:
-            self.set_type = 'Entire'
-            self.dens_set = self.get_right_densityplots()
-            self.display_path_density = self.dens_set[self.density_modality_pointer]
-
-    def set_roc_set(self):
-        files = []
-        for filename in glob.glob('./generated/ROC/*'):
-            files.append(filename)
-
-        self.roc_set = files
-        self.r_slide.max = len(files)-1
-        self.current_roc_nums = len(files)
-
-    def get_right_densityplots(self):
-        files = []
-        pointer = './generated/density/' + self.set_type+'/' + self.current_density
-
-        for filename in glob.glob(pointer + '/*'):
-            if self.set_type in filename and self.experiment_id in filename:
-                files.append(filename)
-
-        return files
+            self.display_path_density = self.densities.update_test_train('Entire')
 
     def update_density_type(self):
-        self.density_type_pointer = (self.density_type_pointer + 1) % 3
-        self.current_density = self.density_type[self.density_type_pointer]
-        self.set_density_set()
+        self.display_path_density = self.densities.update_plot_type()
+
+
+    def next_roc_plot(self):
+        self.display_path_roc = self.roc_object.update_plot()
+        # self.ids.roc_button.source = self.display_path_roc
 
     def density_slider(self, value):
         if 0 <= value < self.d_slide.max+1:
-            self.display_path_density = self.dens_set[value]
+            self.display_path_density = self.densities.update_plot(value)
 
     def roc_slider(self, value):
-        self.set_roc_set()
+        mx = self.r_slide.max
+        if 0 <= value < self.r_slide.max-1:
+            self.display_path_roc = self.roc_object.slider_update(value)
+            self.current_experiment = self.roc_object.get_experiment()
 
-        if 0 <= value < self.r_slide.max+1:
-            self.display_path_roc = self.roc_set[value]
 
     def slider_button(self, direction, img_set, value):
         if img_set == 'density':
             if direction == 'left':
-                if self.density_modality_pointer > 0:
-                    self.display_path_density = self.dens_set[value - 1]
-                    self.density_modality_pointer = self.density_modality_pointer - 1
+                self.display_path_density = self.densities.move_left()
 
             if direction == 'right':
-                if self.density_modality_pointer < self.d_slide.max:
-                    self.display_path_density = self.dens_set[value + 1]
-                    self.density_modality_pointer = self.density_modality_pointer + 1
+                    self.display_path_density = self.densities.move_right()
 
         if img_set == 'roc':
             if direction == 'left':
-                if self.roc_modality_pointer > 0:
-                    self.display_path_roc = self.roc_set[value - 1]
-                    self.roc_modality_pointer = self.roc_modality_pointer - 1
+                if 0 < value:
+                    self.display_path_roc = self.roc_object.move_left()
+                    self.current_experiment = self.roc_object.get_experiment()
 
             if direction == 'right':
-                if self.roc_modality_pointer < self.r_slide.max:
-                    self.display_path_roc = self.roc_set[value + 1]
-                    self.roc_modality_pointer = self.roc_modality_pointer + 1
+                if 0 <= value < self.r_slide.max:
+                    self.display_path_roc = self.roc_object.move_right()
+                    self.current_experiment = self.roc_object.get_experiment()
 
 
-    def checkbox_click(self, instance, value):
-        if value is True:
-            self.split = True
-            self.input_test.opacity = 1.0
-            self.test_label.opacity = 1.0
+    def checkbox_click(self, instance, value, category='train-test'):
+        if category == 'train-test':
+            if value is True:
+                self.split = True
+                self.input_test.opacity = 1.0
+                self.test_label.opacity = 1.0
 
-        else:
-            self.split = False
-            self.input_test.opacity = 0.0
-            self.test_label.opacity = 0.0
+            else:
+                self.split = False
+                self.input_test.opacity = 0.0
+                self.test_label.opacity = 0.0
+
+        elif category == 'previous':
+            if value is True:
+                self.split = True
+                self.previous_ex_label.opacity = 1.0
+
+            else:
+                self.split = False
+                self.previous_ex_label.opacity = 0.0
 
 
     def selective_fusion_click(self, instance, value):
@@ -421,7 +410,7 @@ class Main(Screen):
 
         things_to_save = self.save_settings.get_save_reports()
         if 'report' in things_to_save:
-            generate_summary(modalities=self.modality_list, results=self.eval,
+            generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
                              roc_plt=self.display_path_roc,
                              fmr_rate=float(self.fixed_FMR_val.text),
                              save_to_path=save_location+ '/FusionReport/')
@@ -459,7 +448,7 @@ class Main(Screen):
 
 
         if 'datamets' in things_to_save:
-            dataset_metrics = pd.DataFrame(data={'Modalities': self.modality_list,
+            dataset_metrics = pd.DataFrame(data={'Modalities': self.data_object.get_modalities(),
                                                  'Train_Split': str(100-self.test_perc)+'%',
                                                  'Test_Split': str(self.test_perc)+'%',
                                                  'Total_Training': self.num_gen_train+self.num_imp_train,
@@ -476,63 +465,67 @@ class Main(Screen):
             eval_metrics = pd.DataFrame(self.eval)
             eval_metrics.to_csv(save_location+'/FusionReport/EvaluationMetrics.csv', index=False)
 
+    def get_tpr(fpr, tpr, fixed_far=0.01):
+        vert_line = np.full(len(fpr), fixed_far)
+        idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
+        return tpr[idx][0]
+
     def fuse(self):
         self.msg_accuracy = ''
         self.msg_eer = ''
         self.msg_fixed_tmr = ''
 
         fusion_list = []
-        self.serial_fusion_settings = None
+        self.sequential_fusion_settings = None
         if self.chk_selective.active:
-            fusion_list.append('SerialRule')
-            self.serial_fusion_settings = self.show_fusion_selection.get_parms()
+            fusion_list.append('SequentialRule')
+            self.sequential_fusion_settings = self.show_fusion_selection.get_parms()
         if self.chk_sum.active:
             fusion_list.append('SumRule')
         if self.chk_svm.active:
             fusion_list.append('SVMRule')
 
-        fusion_mod = Fuse.FuseRule(fusion_list, self.modalities, self.normalize, self.serial_fusion_settings, self.matrix_form)
+        fusion_mod = Fuse.FuseRule(list_o_rules=fusion_list, score_data=self.data_object.score_data,
+                                   modalities=self.data_object.get_modalities(),
+                                   fusion_settings=self.sequential_fusion_settings,
+                                   experiment=self.experiment_id_val.text)
 
-        mets, disp_pth = fusion_mod.fuse_all()
-        self.set_roc_set()
-
-        self.display_path_roc = disp_pth[0]
+        mets = fusion_mod.fuse_all()
+        # fusion_mod.cmc() TODO
+        self.roc_object = ROCsPlots(slider=self.r_slide)
+        self.display_path_roc = self.roc_object.build_plot_list()
+        self.current_experiment = self.roc_object.get_experiment()
 
         # build strings
-        for key, mods in mets.items():
-            if 'Rule' in key:
-                self.eval[key]['AUC'] = mods['AUC']
-                self.eval[key]['EER'] = mods['EER']
+        for fused in [x for x in mets.index if ':' in x]:
+            accuracy = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(mets.loc[fused]['AUC'], 6) + '\n'
+            eer = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(mets.loc[fused]['EER'], 6) + '\n'
+            tmr = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(self.get_TMR(tpr=mets.loc[fused]['TPRS'],
+                                                                                 fpr=mets.loc[fused]['FPRS'],
+                                                                                 fixed_far=float(self.fixed_FMR_val.text)), 6) + '\n'
 
-                self.eval[key]['fprs'] = mods['fprs']
-                self.eval[key]['tprs'] = mods['tprs']
-                estimated_tmr = self.get_TMR(mods['fprs'], mods['tprs'],
-                                                     float(self.fixed_FMR_val.text))
-                self.eval[key]['TMR'] = estimated_tmr
+            self.msg_accuracy = self.msg_accuracy + accuracy
+            self.msg_eer = self.msg_eer + eer
+            self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
+            self.eval = mets
 
-        for key, vals in self.eval.items():
-                accuracy = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['AUC'], 6) + '\n'
-                eer = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['EER'], 6) + '\n'
-                tmr = '[b]'+key+': [/b] {}'.format(0) + self.truncate(vals['TMR'], 6) + '\n'
-
-                self.msg_accuracy = self.msg_accuracy + accuracy
-                self.msg_eer = self.msg_eer + eer
-                self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
-
-        generate_summary(modalities=self.modality_list, results=self.eval,
+        generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
                          roc_plt=self.display_path_roc,
                          fmr_rate=float(self.fixed_FMR_val.text))
 
     def update_evals(self):
+        ## A Fixed FMR has been updated
         self.msg_fixed_tmr = ''
-        for key, mods in self.eval.items():
-            if 'Rule' in key:
-                estimated_tmr = self.get_TMR(self.eval[key]['fprs'], self.eval[key]['tprs'],
-                                             float(self.fixed_FMR_val.text))
-                self.eval[key]['TMR'] = estimated_tmr
-                tmr = '[b]' + key + ': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
 
-                self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
+        fused = [x for x in self.eval.index if ":" in x]
+
+        for mods in fused:
+            estimated_tmr = self.get_TMR(fpr=self.eval.loc[mods]['FPRS'], tpr=self.eval.loc[mods]['TPRS'],
+                                         fixed_far=float(self.fixed_FMR_val.text))
+            self.eval.loc[mods]['TMR'] = estimated_tmr
+            tmr = '[b]' + mods + ': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
+
+            self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
 
     def truncate(self, f, n):
         '''Truncates/pads a float f to n decimal places without rounding'''
@@ -542,42 +535,11 @@ class Main(Screen):
         i, p, d = s.partition('.')
         return '.'.join([i, (d + '0' * n)[:n]])
 
-    def get_TMR(self, fmr, tmr, fixed_FMR):
-        df = pd.DataFrame({'FMR': fmr, 'TMR': tmr})
-        df = df.sort_values('FMR')
+    def get_TMR(self, fpr, tpr, fixed_far):
+        vert_line = np.full(len(fpr), fixed_far)
+        idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
+        return tpr[idx][0]
 
-        for idx, row in df.iterrows():
-            if row['FMR'] < fixed_FMR:
-                continue
-            else:
-                break
-
-        if idx != 0:
-            p1_FMR = df.iloc[idx - 1]['FMR']
-            p1_TMR = df.iloc[idx - 1]['TMR']
-
-            p2_FMR = df.iloc[idx]['FMR']
-            p2_TMR = df.iloc[idx]['TMR']
-
-        else:
-            p1_FMR = df.iloc[idx]['FMR']
-            p1_TMR = df.iloc[idx]['TMR']
-
-            p2_FMR = df.iloc[idx+1]['FMR']
-            p2_TMR = df.iloc[idx+1]['TMR']
-
-        m, b = self.get_line([(p1_FMR, p1_TMR), (p2_FMR, p2_TMR)])
-        estimated_tmr = m * fixed_FMR + b
-        return estimated_tmr
-
-    def get_line(self, points):
-        """
-        https://stackoverflow.com/questions/21565994/method-to-return-the-equation-of-a-straight-line-given-two-points
-        """
-        x_coords, y_coords = zip(*points)
-        A = vstack([x_coords, ones(len(x_coords))]).T
-        m, c = lstsq(A, y_coords)[0]
-        return m, c
 
 # class E(ExceptionHandler):
 #     def handle_exception(self, inst):

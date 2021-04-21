@@ -1,7 +1,9 @@
 .idea/
 Analytics/__pycache__/format_data.cpython-36.pyc
 Analytics/__pycache__/
-AppWidgets/__pycache__/
+Popups/__pycache__/
 generated/
 ExampleScoreData/
 ResultsSummary.pdf
+Objects/__pycache__/
+ResultsSummary-2021-01-05.pdf
