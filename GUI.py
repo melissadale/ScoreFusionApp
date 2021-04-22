@@ -27,6 +27,8 @@ from Objects.ReportPDFs import generate_summary
 from Objects.DensitySlider import DensityPlots
 from Objects.ROCsSlider import ROCsPlots
 
+from Analytics.Experiment import Experiment
+
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
 import kivy
 from kivy.app import App
@@ -130,6 +132,8 @@ class Main(Screen):
 
     r_slide = Slider()
     display_path_roc = StringProperty('')
+
+    experiments = defaultdict(Experiment)
 
 
     # popups
@@ -346,10 +350,14 @@ class Main(Screen):
             self.display_path_density = self.densities.update_plot(value)
 
     def roc_slider(self, value):
-        mx = self.r_slide.max
-        if 0 <= value < self.r_slide.max-1:
-            self.display_path_roc = self.roc_object.slider_update(value)
-            self.current_experiment = self.roc_object.get_experiment()
+        try:
+            if 0 <= value < self.r_slide.max-1:
+                self.display_path_roc = self.roc_object.slider_update(value)
+                self.current_experiment = self.roc_object.get_experiment()
+        except:
+            # this fails when loading because roc_object is called before it is defined in the fuse button
+            # ToDo
+            pass
 
 
     def slider_button(self, direction, img_set, value):
@@ -474,6 +482,7 @@ class Main(Screen):
         self.msg_accuracy = ''
         self.msg_eer = ''
         self.msg_fixed_tmr = ''
+        self.current_experiment = self.experiment_id_val.text
 
         fusion_list = []
         self.sequential_fusion_settings = None
@@ -490,11 +499,14 @@ class Main(Screen):
                                    fusion_settings=self.sequential_fusion_settings,
                                    experiment=self.experiment_id_val.text)
 
-        mets = fusion_mod.fuse_all()
+        mets, models = fusion_mod.fuse_all()
+
+        self.experiments[self.experiment_id_val.text] = Experiment(results=mets, models=models)
+
         # fusion_mod.cmc() TODO
-        self.roc_object = ROCsPlots(slider=self.r_slide)
+        self.roc_object = ROCsPlots(slider=self.r_slide, experiment=self.current_experiment)
         self.display_path_roc = self.roc_object.build_plot_list()
-        self.current_experiment = self.roc_object.get_experiment()
+        # self.current_experiment = self.roc_object.get_experiment()
 
         # build strings
         for fused in [x for x in mets.index if ':' in x]:
@@ -509,9 +521,10 @@ class Main(Screen):
             self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
             self.eval = mets
 
-        generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
+        generate_summary(results=self.eval,
                          roc_plt=self.display_path_roc,
-                         fmr_rate=float(self.fixed_FMR_val.text))
+                         fmr_rate=float(self.fixed_FMR_val.text),
+                         experiment = self.current_experiment)
 
     def update_evals(self):
         ## A Fixed FMR has been updated

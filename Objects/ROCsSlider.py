@@ -11,8 +11,11 @@ class ROCsPlots:
 
         self.slider = kwargs.get('slider')
         self.experiment_ids = next(os.walk('./generated/experiments/'))[1]
-        self.number_experiments = len(self.experiment_ids)
-        self.experiment_pointer = self.number_experiments-1
+        self.current_experiment_name = kwargs.get('experiment')
+        self.number_experiments = len(self.experiment_ids)-1
+        self.experiment_pointer = self.experiment_ids.index(self.current_experiment_name)
+
+        self.slider.value = self.experiment_pointer
 
     def update_plot(self):
         self.current_plot_index = (self.current_plot_index + 1) % len(self.plots_list)

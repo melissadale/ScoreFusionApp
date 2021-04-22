@@ -26,6 +26,7 @@ from scipy.stats import gaussian_kde
 from Analytics import CMC_Plot as CMC
 import warnings
 import time
+from Analytics.Experiment import TrainedModel
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 np.seterr(divide='ignore', invalid='ignore')
@@ -40,14 +41,15 @@ class FuseRule:
         self.fusion_settings = fusion_settings
         self.results = pd.DataFrame(columns=['FPRS', 'TPRS', 'EER', 'AUC', 'thresholds'])
 
-        self.experiment = experiment
+        self.experiment_name = experiment
         self.title = ''
+        self.models = []
 
     def make_rocs(self):
         if not os.path.exists('./generated/experiments/'):
             os.makedirs('./generated/experiments/')
 
-        experiment_dir = self.experiment
+        experiment_dir = self.experiment_name
         if not os.path.exists('./generated/experiments/' + experiment_dir):
             os.makedirs('./generated/experiments/' + experiment_dir)
 
@@ -122,7 +124,7 @@ class FuseRule:
             plt.xlabel('False Match Rate (FMR)',  fontsize=15)
             plt.ylabel('True Match Rate (TMR)', fontsize=15)
 
-            plt.title(fused + 'Fusion', fontsize=15)
+            plt.title(fused + ' Fusion', fontsize=15)
 
             plot_name = './generated/experiments/' + experiment_dir + '/' + fused.replace(':', '') + '.png'
             plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
@@ -144,8 +146,8 @@ class FuseRule:
             plt.xlabel('False Match Rate (FMR)',  fontsize=15)
             plt.ylabel('True Match Rate (TMR)', fontsize=15)
 
-            fusion_rules = [x for x in self.score_data.columns if x.isupper()]
-            plt.title('Fusion Rules::' + ' '.join(fusion_rules), fontsize=15)
+            fusion_rules = [x.replace(':', '') for x in self.score_data.columns if x.isupper()]
+            plt.title('All Fusion Rules::' + ' '.join(fusion_rules), fontsize=15)
 
         plot_name = './generated/experiments/' + experiment_dir + '/' + 'all.png'
         plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
@@ -269,11 +271,18 @@ class FuseRule:
                                        'test_y': test_y}
 
     def sum_rule(self):
+        t0 = time.time()
         sum_title = 'SIMPLE_SUM:'
         self.fused_modalities.append(sum_title)
+
         self.score_data.insert(len(self.modalities), sum_title, self.score_data[self.modalities].mean(axis=1))
+        t1 = time.time()
+
+        self.models.append(TrainedModel(title=sum_title, train_time=t1-t0, model=None))
+
 
     def svm_rule(self):
+        t0 = time.time()
         svm_title = 'SVM:'
         self.fused_modalities.append(svm_title)
 
@@ -289,6 +298,9 @@ class FuseRule:
 
         clf = SVC(gamma='auto', probability=True)
         clf.fit(train_x, train_y)
+        t1 = time.time()
+
+        self.models.append(TrainedModel(title=svm_title, train_time=t1-t0, model=clf))
 
         ## Get the scores for the predicted test labels
         preds = clf.predict(test_x).astype(int)
@@ -328,7 +340,7 @@ class FuseRule:
         self.make_rocs()
 
         self.modalities.extend(self.fused_modalities)
-        return self.results
+        return self.results, self.models
 
     def cmc(self):
         cmc = CMC.CMC(data=self.score_data, modalities=self.modalities, k=20)
