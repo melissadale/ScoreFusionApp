@@ -66,13 +66,14 @@ def generate_summary(results=None, roc_plt=None, fmr_rate=0.01, save_to_path='./
 
     pdf.image(roc_plt, x=col_width/2, w=140)
     pdf.ln(th)
+    pdf.line(x1=pdf.l_margin, y1=198, x2=epw, y2=198)
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(col_width, th, 'Fusion Rule', border=0)
     pdf.cell(col_width, th, 'AUC', border=0)
     pdf.cell(col_width, th, 'EER', border=0)
     pdf.cell(col_width, th, 'TMR @'+str(fmr_rate)+'FMR', border=0)
-    pdf.line(x1=pdf.l_margin, y1=200, x2=epw, y2=200)
     pdf.ln(th)
+    pdf.line(x1=pdf.l_margin, y1=207, x2=epw, y2=207)
 
     for rule_key in results.index:
         pdf.set_font('Arial', 'B', 12)
