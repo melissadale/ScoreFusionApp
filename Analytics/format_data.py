@@ -256,31 +256,40 @@ class Score_data:
                 med = self.score_data[self.score_data['Train_Test'] == 'TRAIN'][mod].median()
                 self.score_data[mod] = (self.score_data[mod]-med) / (mad)
 
-            elif self.normalize=='DSigmoid': # TODO
-                # r1 = self.norm_params['r1']
-                # r2 = self.norm_params['r2']
-                # t = self.norm_params['t']
-                #
-                # self.score_data[self.score_data[key]< t] = 1 / (1 + np.exp(-2((self.score_data[key]-t) / r1)))
-                # self.score_data[self.score_data[key] >= t] = 1 / (1 + np.exp(-2((self.score_data[key] - t) / r2)))
-                pass
+            elif self.normalize=='DSigmoid':
+                r1 = self.norm_param['r1']
+                r2 = self.norm_param['r2']
+                t = self.norm_param['t']
+
+                # code readability cleanup
+                exp = self.score_data[mod]-t
+                r1_exp = np.exp(-2*(exp / r1))
+                r2_exp = np.exp(-2*(exp / r2))
+                self.score_data[self.score_data[mod] < t] = 1 / (1 + r1_exp)
+                self.score_data[self.score_data[mod] >= t] = 1 / (1 + r2_exp)
 
             elif self.normalize == 'BiweightEstimator': # TODO
                 pass
 
             elif self.normalize == 'TanhEstimator':
-                psi = sm.robust.norms.TukeyBiweight(c=4.685).psi(self.score_data[self.score_data['Train_Test']
-                                                                                 == 'TRAIN'][mod])
+                c = self.norm_param
+
+                psi = sm.robust.norms.TukeyBiweight(c=c).psi(self.score_data[
+                                                                 (self.score_data['Train_Test'] == 'TRAIN') &
+                                                                 (self.score_data['Label'] == 1.0) ][mod])
                 MUgh = psi.mean()
                 SIGgh = psi.std()
 
-                self.score_data[mod] = 0.5 * (np.tan(0.01 * ((self.score_data[mod] - MUgh) / SIGgh)) + 1)
+                self.score_data[mod] = 0.5 * (np.tan(0.01 * ((self.score_data[mod] - MUgh) / (SIGgh+0.0000000001)) + 1))
+
+            elif self.normalize == 'None':
+                pass
 
             else:
                 print("ERROR: unrecognized normalization technique requested")
 
 
-    def plot_distributions(self): ## ToDO move to GUI.py
+    def plot_distributions(self):
         # DIST PLOTS
         exp_id = ''
         for mod in self.modalities:

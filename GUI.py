@@ -106,7 +106,7 @@ class Main(Screen):
 
     input_test = ObjectProperty(None)
     test_label = ObjectProperty(None)
-    train_perc = StringProperty('% Testing - 80 % Training')
+    train_perc = StringProperty('   % Testing - 80 % Training \n')
 
     test_perc = NumericProperty(20)
     split = False
@@ -167,7 +167,7 @@ class Main(Screen):
 
     def setup(self):
         self.data_object = fm2.Score_data(path=self.load_path, test_perc=self.test_perc,
-                             normalize=self.normalize, norm_params=self.norm_params,
+                             normalize=self.normalize, norm_param=self.norm_params,
                              lbl=self.ids.modalities_lbl)
         self.data_object.load_data()
         self.data_object.normalize_data()
@@ -409,7 +409,7 @@ class Main(Screen):
 
     def update_test(self, test_p):
         self.test_perc = test_p
-        self.train_perc = '% Testing - ' + str(100 - self.test_perc) + '% Training'
+        self.train_perc = '   % Testing - ' + str(100 - self.test_perc) + '% Training \n'
 
     #########################################################################
     def save_report(self, save_location):

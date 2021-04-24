@@ -279,7 +279,7 @@ ScreenManagement:
 
     Label:
         size_hint_y: 0.5
-        text: 'Tanh Estimator requires variables a, b, & c to calculate the Hampel influence. For more information, please see [b] Score normalization in multimodal biometric systems [/b] by Jain, Nandakumar, Ross.'
+        text: 'Tanh Estimator requires variables a variable c to calculate the Hampel influence. For more information, please see [b] Score normalization in multimodal biometric systems [/b] by Jain, Nandakumar, Ross.'
 
         text_size: self.width, None
         height: self.texture_size[1]
@@ -290,23 +290,7 @@ ScreenManagement:
     GridLayout:
         size_hint_y: 0.1
         rows: 0
-        cols: 6
-
-        Label:
-            text: 'a: '
-            bold: True
-
-        TextInput:
-            id: Tanh_a
-            text: '2'
-
-        Label:
-            text: 'b: '
-            bold: True
-
-        TextInput:
-            id: Tanh_b
-            text: '4'
+        cols: 2
 
         Label:
             text: 'c: '
@@ -314,7 +298,7 @@ ScreenManagement:
 
         TextInput:
             id: Tanh_c
-            text: '8'
+            text: '4.685'
 
 
 
@@ -322,7 +306,7 @@ ScreenManagement:
         size_hint_y: 0.1
         text: 'Set Parameters'
         on_press:
-            root.set_tanh(Tanh_a.text, Tanh_b.text, Tanh_c.text)
+            root.set_tanh(Tanh_c.text)
             root.close()
 
 
