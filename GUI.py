@@ -189,7 +189,7 @@ class Main(Screen):
             test_imps = self.score_data.loc[
                 (self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0), mod].tolist()
             self.data_object.make_density_plots(gen=test_gens, imp=test_imps,
-                                   label='Training', norm_type=self.normalize, modality=mod)
+                                   label='Testing', norm_type=self.normalize, modality=mod)
 
             Clock.schedule_once(functools.partial(self.update_bar, mod))
             self.data_object.make_density_plots(gen=self.score_data.loc[self.score_data['Label'] == 1.0, mod],
@@ -215,11 +215,11 @@ class Main(Screen):
         num_imp_test = self.beans['imp_test']
 
         # messages
-        self.msg_impgen_test = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(num_gen_test, num_imp_test)
-        self.msg_impgen_train = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(num_gen_train, num_imp_train)
-        self.msg_test = '[b]TESTING: [/b] {} Subjects'.format(num_imp_test)
-        self.msg_train = '[b]TRAINING: [/b] {} Subjects'.format(num_imp_train)
-        self.num_mods = len(self.modalities.keys())
+        self.msg_impgen_test = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(num_imp_test, num_gen_test)
+        self.msg_impgen_train = '[b]Imposter Samples:[/b] {}\n[b]Genuine Samples:[/b] {}'.format(num_imp_train, num_gen_train)
+        self.msg_test = '[b]TESTING: [/b] {} Subjects'.format(num_gen_test)
+        self.msg_train = '[b]TRAINING: [/b] {} Subjects'.format(num_gen_train)
+        self.num_mods = len(self.data_object.get_modalities())
         self.msg_modalities = '[b]MODALITIES DETECTED: [/b] {}'.format(self.num_mods)
 
     def modality_update_helper(self, args):
@@ -383,6 +383,7 @@ class Main(Screen):
     def checkbox_click(self, instance, value, category='train-test'):
         if category == 'train-test':
             if value is True:
+                self.ids['load_previous_chk'].active = False
                 self.split = True
                 self.input_test.opacity = 1.0
                 self.test_label.opacity = 1.0
@@ -394,6 +395,7 @@ class Main(Screen):
 
         elif category == 'previous':
             if value is True:
+                self.ids['train_test_chk'].active = False
                 self.split = True
                 self.previous_ex_label.opacity = 1.0
 

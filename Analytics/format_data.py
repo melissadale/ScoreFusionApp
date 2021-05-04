@@ -60,6 +60,8 @@ class Score_data:
         y_ticks = ax.get_yticks()
         ax.set_ylabel(r"Density Estimate")
         ax2.set_ylabel(r"Sample Counts")
+
+        ax.set_xlabel(modality)
         plt.title(p)
 
         plt.savefig('./generated/density/' + label + '/overlap/' + norm_type + '_' + exp + '_' + label + '-' + modality
@@ -79,13 +81,10 @@ class Score_data:
         p = 'Density Estimates for '+modality+'\n' + label + '\n ' + str(len(gen)) + ' Subjects '
         plt.legend(bbox_to_anchor=(1, 1), loc=2)
         plt.ylabel(r"Density Estimate")
-        ax = plt.gca()
-        # ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-        # ax.tick_params(axis="y", direction="in", pad=-22)
-
         plt.title(p)
         ax = plt.gca()
         ax.set_xlim(lims)
+        ax.set_xlabel(modality)
         plt.savefig('./generated/density/' + label + '/PDF/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
         plt.clf()
 
@@ -120,6 +119,8 @@ class Score_data:
 
         ax.yaxis.label.set_color('white')
         ax.tick_params(axis='y', colors='white')
+
+        ax.set_xlabel(modality)
 
         plt.savefig('./generated/density/' + label + '/hist/' + norm_type + '_' + exp + '_' + label + '-' + modality + '.png', bbox_inches='tight')
         plt.clf()
@@ -287,33 +288,6 @@ class Score_data:
 
             else:
                 print("ERROR: unrecognized normalization technique requested")
-
-
-    def plot_distributions(self):
-        # DIST PLOTS
-        exp_id = ''
-        for mod in self.modalities:
-            # key = 'NORMALIZED_' + mod
-            # Clock.schedule_once(partial(self.update_bar, ''))
-
-            # Training Data
-            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 1.0), mod].tolist()
-            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TRAIN') & (self.score_data['Label'] == 0.0), mod].tolist()
-
-            self.make_density_plots(gen=gens, imp=imps,
-                                    label='Training', norm_type=self.normalize, modality=mod, exp=exp_id)
-
-            # Testing Data
-            gens = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 1.0), mod].tolist()
-            imps = self.score_data.loc[(self.score_data['Train_Test'] == 'TEST') & (self.score_data['Label'] == 0.0), mod].tolist()
-
-            self.make_density_plots(gen=gens, imp=imps,
-                                    label='Testing', norm_type=self.normalize, modality=mod, exp=exp_id)
-
-            # All Data
-            self.make_density_plots(gen=self.score_data.loc[self.score_data['Label'] == 1.0, mod],
-                                    imp=self.score_data.loc[self.score_data['Label'] == 0.0, mod],
-                                    label='Entire', norm_type=self.normalize, modality=mod, exp=exp_id)
 
     def get_modalities(self):
         return self.modalities

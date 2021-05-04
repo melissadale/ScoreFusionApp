@@ -569,8 +569,6 @@ ScreenManagement:
                         size_hint_y: 0.2
 
                         Button:
-                            #size_hint_x: 0.3
-                            #size_hint_y: 0.4
                             size: 150, 50
                             size_hint: None, None
 
@@ -602,6 +600,7 @@ ScreenManagement:
 
                         BoxLayout:
                             CheckBox:
+                                id: train_test_chk
                                 n_active: root.checkbox_click(self, self.active)
                                 size_hint_x: 0.10
                                 active: True
@@ -655,6 +654,7 @@ ScreenManagement:
 
                         BoxLayout:
                             CheckBox:
+                                id: load_previous_chk
                                 n_active: root.checkbox_click(self, self.active, 'previous')
                                 size_hint_x: 0.10
                                 active: False
@@ -827,18 +827,6 @@ ScreenManagement:
                             min: 0
                             max: 100
 
-                            # https://stackoverflow.com/questions/51719374/how-to-change-color-of-progress-bar-kivy
-                            # canvas:
-                            #     BorderImage:
-                            #         border: (12, 12, 12, 12)
-                            #         pos: self.x, self.center_y - 12
-                            #         size: self.width, 24
-                           #          source: '.graphics/PB-Base.png'
-                            #     BorderImage:
-                            #         border: [int(min(self.width * (self.value / float(self.max)) if self.max else 0, 12))] * 4
-                             #        pos: self.x, self.center_y - 12
-                             #        size: self.width * (self.value / float(self.max)) if self.max else 0, 24
-                             #        source: '.graphics/PB-Done.png'
 
                 ##################
                 ################## right - top
@@ -958,33 +946,37 @@ ScreenManagement:
                 ################## left - top
                 BoxLayout:
                     size_hint_x: 0.7
-                    size_hint_y: 0.9
+                    size_hint_y: 0.8
                     orientation: "vertical"
                     padding: 10
 
-                    Button: #TODO
-                        #TODO
-                        #TODO
-                        #TODO
+                    Button:
                         id: density_button
                         background_normal: ''
-                        background_color: 1, 1, 1, 1
+                        background_down: ''
 
                         on_press:
                             root.update_density_type()
-                            self.background_color = (0.8, 0.9, 0.8, 0.05)
 
-                        Image:
-                            id: display_image
-                            pos_hint: {'center_x': 0.5, 'center_y': 1.5}
+                        canvas:
+                            Rectangle:
+                                size: density_button.height + 0.5*(density_button.width-density_button.height), density_button.height
+                                pos:self.pos
+                                source: root.display_path_density
 
-                            allow_stretch: True
-                            source:root.display_path_density
+                    GridLayout:
+                        size_hint_y: 0.2
+                        cols: 3
 
-                            size: self.parent.size
-                            valign: 'top'
-
-
+                        Label:
+                            text: ''
+                        Label:
+                            text: ''
+                            text_size: self.size
+                            color: hex('#18453B')
+                            bold: True
+                        Label:
+                            text: ''
                 ##################
                 ################## right - top
                 GridLayout:
