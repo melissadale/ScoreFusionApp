@@ -134,7 +134,7 @@ class Main(Screen):
     display_path_roc = StringProperty('')
 
     experiments = defaultdict(Experiment)
-
+    experiment_results = None
 
     # popups
     tanh_popup = ObjectProperty(Popup)
@@ -503,6 +503,15 @@ class Main(Screen):
 
         mets, models = fusion_mod.fuse_all()
 
+        self.experiment_results = pd.concat([self.experiment_results, mets])
+        # self.experiment_results = self.experiment_results[~self.experiment_results.apply(tuple).duplicated()]
+        # df = df[~df['A'].apply(tuple).duplicated()]
+
+        # try:
+        #     self.experiment_results = self.experiment_results.merge(mets)
+        # except AttributeError:
+        #     self.experiment_results = mets
+
         self.experiments[self.experiment_id_val.text] = Experiment(results=mets, models=models)
 
         # fusion_mod.cmc() TODO
@@ -563,7 +572,7 @@ class Main(Screen):
 # ExceptionManager.add_handler(E())
 
 presentation = Builder.load_file("styles.kv")
-
+Builder.load_file("./StyleSheets/SavePopup.kv")
 
 class TabbedPanelApp(App):
     def build(self):

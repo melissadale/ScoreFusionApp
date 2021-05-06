@@ -39,7 +39,8 @@ class FuseRule:
         self.modalities = modalities
         self.fused_modalities = []
         self.fusion_settings = fusion_settings
-        self.results = pd.DataFrame(columns=['FPRS', 'TPRS', 'EER', 'AUC', 'thresholds'])
+        # self.results = pd.DataFrame(columns=['FPRS', 'TPRS', 'EER', 'AUC', 'thresholds'])
+        self.results = None
 
         self.experiment_name = experiment
         self.title = ''
@@ -58,45 +59,51 @@ class FuseRule:
 
         analytic_beans = []
 
+        base_modals = [x for x in self.modalities if ':' not in x]
+        fused_modals = [x for x in self.fused_modalities]
+
+
         ## Baseline
-        for modality in self.modalities:
-            metrics = {'FPRS': [], 'TPRS': [], 'EER': [], 'AUC': [], 'thresholds': []}
-            Y_test = self.score_data['Label']
-            scores = self.score_data[modality]
+        if not self.results:
+            for modality in base_modals:
+                metrics = {'FPRS': [], 'TPRS': [], 'EER': [], 'AUC': [], 'thresholds': [], 'Experiment': []}
+                Y_test = self.score_data['Label']
+                scores = self.score_data[modality]
 
-            fprs, tprs, thresh = roc_curve(Y_test, scores)
+                fprs, tprs, thresh = roc_curve(Y_test, scores)
 
-            metrics['FPRS'] = fprs
-            metrics['TPRS'] = tprs
-            metrics['thresholds'] = thresh
-            metrics['EER'] = brentq(lambda x : 1. - x - interp1d(fprs, tprs)(x), 0., 1.)
-            metrics['AUC'] = roc_auc_score(Y_test, scores)
-            analytic_beans.append(metrics)
-            # plt.semilogx(fprs, tprs, label=modality, marker='+')
+                metrics['Experiment'] = 'BASELINE'
+                metrics['FPRS'] = fprs
+                metrics['TPRS'] = tprs
+                metrics['thresholds'] = thresh
+                metrics['EER'] = brentq(lambda x : 1. - x - interp1d(fprs, tprs)(x), 0., 1.)
+                metrics['AUC'] = roc_auc_score(Y_test, scores)
+                analytic_beans.append(metrics)
 
         ## Fused
-        for modality in self.fused_modalities:
-            metrics = {'FPRS': [], 'TPRS': [], 'EER': [], 'AUC': [], 'thresholds': []}
+        for modality in fused_modals:
+            metrics = {'FPRS': [], 'TPRS': [], 'EER': [], 'AUC': [], 'thresholds': [], 'Experiment': []}
             Y_test = self.score_data['Label']
             scores = self.score_data[modality]
 
             fprs, tprs, thresh = roc_curve(Y_test, scores)
 
+            metrics['Experiment'] = self.experiment_name
             metrics['FPRS'] = fprs
             metrics['TPRS'] = tprs
             metrics['thresholds'] = thresh
             metrics['EER'] = brentq(lambda x : 1. - x - interp1d(fprs, tprs)(x), 0., 1.)
             metrics['AUC'] = roc_auc_score(Y_test, scores)
             analytic_beans.append(metrics)
-            # plt.semilogx(fprs, tprs, label=modality, marker='X')
 
         self.results = pd.DataFrame(analytic_beans)
-        self.results.index = [x for x in self.modalities] + [x for x in self.fused_modalities]
+        self.results.index = [x for x in base_modals] + [x for x in fused_modals]
 
         ############## Baseline Plots
-        for baseline in self.modalities:
+        for baseline in base_modals:
             fprs = self.results.loc[baseline]['FPRS']
             tprs = self.results.loc[baseline]['TPRS']
+
             plt.semilogx(fprs, tprs, label=baseline, marker='+')
 
 
@@ -110,12 +117,15 @@ class FuseRule:
         plt.clf()
 
         ############## Fused Plots
-        for fused in self.fused_modalities:
-            for baseline in self.modalities:
-                fprs = self.results.loc[baseline]['FPRS']
-                tprs = self.results.loc[baseline]['TPRS']
-                plt.semilogx(fprs, tprs, label=baseline, marker='+')
 
+        for baseline in base_modals:
+            fprs = self.results.loc[baseline]['FPRS']
+            tprs = self.results.loc[baseline]['TPRS']
+
+            plt.semilogx(fprs, tprs, label=baseline, marker='+')
+
+
+        for fused in fused_modals:
             fused_fprs =  self.results.loc[fused]['FPRS']
             fused_tprs =  self.results.loc[fused]['TPRS']
             plt.semilogx(fused_fprs, fused_tprs, label=fused, marker='X')
@@ -132,12 +142,12 @@ class FuseRule:
 
 
         ############## ALL Plots
-        for baseline in self.modalities:
+        for baseline in base_modals:
             fprs = self.results.loc[baseline]['FPRS']
             tprs = self.results.loc[baseline]['TPRS']
             plt.semilogx(fprs, tprs, label=baseline, marker='+')
 
-        for fused in self.fused_modalities:
+        for fused in fused_modals:
             fused_fprs =  self.results.loc[fused]['FPRS']
             fused_tprs =  self.results.loc[fused]['TPRS']
             plt.semilogx(fused_fprs, fused_tprs, label=fused, marker='X')
@@ -273,9 +283,12 @@ class FuseRule:
     def sum_rule(self):
         t0 = time.time()
         sum_title = 'SIMPLE_SUM:'
-        self.fused_modalities.append(sum_title)
 
-        self.score_data.insert(len(self.modalities), sum_title, self.score_data[self.modalities].mean(axis=1))
+        if sum_title not in self.fused_modalities:
+            self.fused_modalities.append(sum_title)
+
+        # self.score_data.insert(len(self.modalities), sum_title, self.score_data[self.modalities].mean(axis=1))
+        self.score_data[sum_title] = self.score_data[self.modalities].mean(axis=1)
         t1 = time.time()
 
         self.models.append(TrainedModel(title=sum_title, train_time=t1-t0, model=None))
@@ -284,7 +297,9 @@ class FuseRule:
     def svm_rule(self):
         t0 = time.time()
         svm_title = 'SVM:'
-        self.fused_modalities.append(svm_title)
+
+        if svm_title not in self.fused_modalities:
+            self.fused_modalities.append(svm_title)
 
         train_indices = self.score_data.index[self.score_data['Train_Test'] == 'TRAIN']
         test_indices = self.score_data.index[self.score_data['Train_Test'] == 'TEST']
