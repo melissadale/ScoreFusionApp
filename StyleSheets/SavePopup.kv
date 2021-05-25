@@ -1,0 +1,150 @@
+<SavePopup>:
+    rows:4
+    background_color: hex('#008183')
+    separator_color: hex('#0DB14B')
+    title_color: hex('#0DB14B')
+
+    chk_save_report: chk_save_report
+    chk_save_estimates: chk_save_estimates
+    chk_save_ROC: chk_save_ROC
+    chk_save_testtrain: chk_save_testtrain
+    chk_save_datamets: chk_save_datamets
+    chk_save_analysis: chk_save_analysis
+    chk_save_project: chk_save_project
+
+
+    GridLayout:
+        size_hint_y: 0.3
+        rows: 2
+
+        Label:
+            text: 'SAVE PLOTS'
+            bold: True
+
+            color: hex('#0DB14B')
+
+        GridLayout:
+            rows: 2
+            cols: 2
+
+            CheckBox:
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_save_estimates
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Estimate Densities'
+                color: 1,1,1,1
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_ROC
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'TMR vs FMR (ROC)'
+                color: 1,1,1,1
+
+    GridLayout:
+        size_hint_y: 0.3
+        rows: 2
+
+        Label:
+            text: 'SAVE DATA'
+            bold: True
+            color: hex('#0DB14B')
+        GridLayout:
+            rows: 3
+            cols: 2
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_testtrain
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Training and Testing Data'
+                color: 1,1,1,1
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_datamets
+                color: hex('#0DB14B')
+            Label:
+                size_hint_x: 0.9
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Dataset Metrics (e.g. samples per class)'
+                color: 1,1,1,1
+
+            CheckBox:
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_save_analysis
+                color: hex('#0DB14B')
+            Label:
+                size_hint_x: 0.9
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Evaluation Metrics'
+                color: 1,1,1,1
+
+    GridLayout:
+        size_hint_y: 0.3
+        rows: 2
+
+        Label:
+            text: 'SAVE Project'
+            bold: True
+            color: hex('#0DB14B')
+        GridLayout:
+            rows: 2
+            cols: 2
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_report
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Save Report Summary (PDF)'
+                color: 1,1,1,1
+
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_project
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Save the project to be reloaded in the future.'
+                color: 1,1,1,1
+
+    Button:
+        size_hint_y: 0.1
+        text: 'Save Report'
+        on_press:
+            root.close()

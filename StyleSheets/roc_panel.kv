@@ -1,0 +1,198 @@
+
+<ROCpanel@GridLayout>:
+    rows: 2
+    cols: 2
+
+    roc_slider: roc_slider_id
+    poot: fartz
+
+    ##################
+    ################## left
+    BoxLayout:
+        orientation: "vertical"
+
+        BoxLayout:
+            size_hint_y: 0.9
+            orientation: "vertical"
+
+            Button:
+                id:roc_button
+                background_normal: ''
+                background_down: ''
+
+                canvas:
+                    Rectangle:
+                        size: roc_button.height + 0.5*(roc_button.width-roc_button.height), roc_button.height
+                        pos:self.pos
+                        # source: root.parent.display_path_roc
+
+                on_press:
+                    root.parent.parent.parent.next_roc_plot()
+
+
+        GridLayout:
+            size_hint_y: 0.1
+            cols: 3
+
+            Label:
+                text: ''
+            Label:
+                id: experiment_name
+                text_size: self.size
+                color: hex('#18453B')
+                bold: True
+            Label:
+                text: ''
+
+
+
+    ##################
+    ################## right - top
+    GridLayout:
+        size_hint_x: 0.3
+        size_hint_y: 0.9
+        rows: 6
+
+        Label:
+            size_hint_y: 0.1
+            halign: 'left'
+            text_size: self.size
+            markup: True
+            text: '[b]AUC Accuracy[/b]'
+            color: hex('#0DB14B')
+
+        Label:
+            id: accuracy
+            size_hint_y: 0.2
+            halign: 'left'
+            valign: 'top'
+            text_size: self.size
+            markup: True
+            color: 0, 0, 0, 1
+
+
+        Label:
+            size_hint_y: 0.1
+            halign: 'left'
+            text_size: self.size
+            markup: True
+            text: '[b]Equal Error Rate[/b]'
+            color: hex('#0DB14B')
+        Label:
+            id: eer
+            size_hint_y: 0.2
+            halign: 'left'
+            valign: 'top'
+            text_size: self.size
+            markup: True
+            color: 0, 0, 0, 1
+
+        GridLayout:
+            rows: 3
+            size_hint_y: 0.4
+
+            Label:
+                size_hint_y: 0.2
+                halign: 'left'
+                text_size: self.size
+                markup: True
+                text: '[b]Estimated TMR[/b]'
+                color: hex('#0DB14B')
+
+            GridLayout:
+                cols: 2
+                size_hint_y: 0.2
+
+                Label:
+                    text: '@ fixed FMR'
+                    color: 0, 0, 0, 1
+                    bold: True
+
+                TextInput:
+                    id: fixed_fmr
+                    text: '0.01'
+                    multiline: False
+
+                    halign: 'right'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint: (.65, None)
+                    height: 30
+                    multiline: False
+                    on_text_validate: root.parent.parent.parent.update_evals()
+
+
+            Label:
+                id: fartz
+                size_hint_y: 0.6
+                halign: 'left'
+                valign: 'top'
+                text_size: self.size
+                markup: True
+                color: 0, 0, 0, 1
+                #text: root.msg_fixed_tmr
+
+    ##################
+    ################## left - bottom
+    GridLayout:
+        rows: 2
+        size_hint_x: 0.7
+        size_hint_y: 0.1
+
+        BoxLayout:
+            Label:
+                bold: True
+                size_hint_x: 0.3
+                text: 'ROC Plot: '
+                color: 0, 0, 0, 1
+
+            Button:
+                size_hint_x: 0.1
+                background_color: 0, 0, 0, 0
+                on_press:
+                    root.parent.parent.parent.slider_button('left','roc', int(roc_slider_id.value))
+                Image:
+                    source: './graphics/left.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    allow_stretch: True
+                    size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
+                    height: dp(30)  # The fixed height you want
+
+            Slider:
+                id: roc_slider_id
+                value: 0
+                step: 1
+
+                size_hint_x: 0.6
+                on_value: root.parent.parent.parent.roc_slider(int(roc_slider_id.value))
+
+
+            Button:
+                size_hint_x: 0.1
+                background_color: 0, 0, 0, 0
+
+                on_press:
+                    root.parent.parent.parent.slider_button('right','roc', roc_slider_id.value)
+                Image:
+                    source: './graphics/right.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    allow_stretch: True
+                    size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
+                    height: dp(30)  # The fixed height you want
+
+
+    ##################
+    ################## right - bottom
+    BoxLayout:
+        size_hint_x: 0.3
+        size_hint_y: 0.1
+
+        Button:
+            text: 'SAVE'
+            background_color:  hex('#0DB14B')
+            on_press:
+                root.parent.parent.parent.save_popup()
+                root.parent.parent.parent.manager.transition.direction = 'left'
+                root.parent.parent.parent.manager.current = 'save_directory'

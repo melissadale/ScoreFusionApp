@@ -27,6 +27,158 @@ ScreenManagement:
     SaveLoc:
         id: filechooser_save
 
+<SavePopup>:
+    rows:4
+    background_color: hex('#008183')
+    separator_color: hex('#0DB14B')
+    title_color: hex('#0DB14B')
+
+    chk_save_report: chk_save_report
+    chk_save_estimates: chk_save_estimates
+    chk_save_ROC: chk_save_ROC
+    chk_save_testtrain: chk_save_testtrain
+    chk_save_datamets: chk_save_datamets
+    chk_save_analysis: chk_save_analysis
+    chk_save_project: chk_save_project
+
+
+    GridLayout:
+        size_hint_y: 0.3
+        rows: 2
+
+        Label:
+            text: 'SAVE PLOTS'
+            bold: True
+
+            color: hex('#0DB14B')
+
+        GridLayout:
+            rows: 2
+            cols: 2
+
+            CheckBox:
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_save_estimates
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Estimate Densities'
+                color: 1,1,1,1
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_ROC
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'TMR vs FMR (ROC)'
+                color: 1,1,1,1
+
+    GridLayout:
+        size_hint_y: 0.3
+        rows: 2
+
+        Label:
+            text: 'SAVE DATA'
+            bold: True
+            color: hex('#0DB14B')
+        GridLayout:
+            rows: 3
+            cols: 2
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_testtrain
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Training and Testing Data'
+                color: 1,1,1,1
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_datamets
+                color: hex('#0DB14B')
+            Label:
+                size_hint_x: 0.9
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Dataset Metrics (e.g. samples per class)'
+                color: 1,1,1,1
+
+            CheckBox:
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_save_analysis
+                color: hex('#0DB14B')
+            Label:
+                size_hint_x: 0.9
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Evaluation Metrics'
+                color: 1,1,1,1
+
+    GridLayout:
+        size_hint_y: 0.3
+        rows: 2
+
+        Label:
+            text: 'SAVE Project'
+            bold: True
+            color: hex('#0DB14B')
+        GridLayout:
+            rows: 2
+            cols: 2
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_report
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Save Report Summary (PDF)'
+                color: 1,1,1,1
+
+
+            CheckBox:
+                halign: 'right'
+                size_hint_x: 0.1
+                id : chk_save_project
+                color: hex('#0DB14B')
+            Label:
+                halign: 'left'
+                size_hint_x: 0.9
+                valign: 'middle'
+                text_size: self.size
+                text: 'Save the project to be reloaded in the future.'
+                color: 1,1,1,1
+
+    Button:
+        size_hint_y: 0.1
+        text: 'Save Report'
+        on_press:
+            root.close()
+
+
 <ResetPopup>:
     rows:2
     background_color: hex('#008183')
@@ -368,11 +520,11 @@ ScreenManagement:
     modalities_lbl: modalities_lbl
 
     d_slide: density_slider_id
-    r_slide: roc_slider_id
-
+    r_slide: r_panel.roc_slider
+    current_roc_plot: r_panel.displayed_plot
     loading_pb: load_pb
 
-    fixed_FMR_val: fixed_fmr
+    #fixed_FMR_val: fixed_fmr
 
     experiment_id_val: Experiment_ID
 
@@ -416,6 +568,8 @@ ScreenManagement:
                         size_hint_y: 0.2
 
                         Button:
+                            #size_hint_x: 0.3
+                            #size_hint_y: 0.4
                             size: 150, 50
                             size_hint: None, None
 
@@ -447,7 +601,6 @@ ScreenManagement:
 
                         BoxLayout:
                             CheckBox:
-                                id: train_test_chk
                                 n_active: root.checkbox_click(self, self.active)
                                 size_hint_x: 0.10
                                 active: True
@@ -501,7 +654,6 @@ ScreenManagement:
 
                         BoxLayout:
                             CheckBox:
-                                id: load_previous_chk
                                 n_active: root.checkbox_click(self, self.active, 'previous')
                                 size_hint_x: 0.10
                                 active: False
@@ -674,7 +826,6 @@ ScreenManagement:
                             min: 0
                             max: 100
 
-
                 ##################
                 ################## right - top
                 GridLayout:
@@ -793,37 +944,30 @@ ScreenManagement:
                 ################## left - top
                 BoxLayout:
                     size_hint_x: 0.7
-                    size_hint_y: 0.8
+                    size_hint_y: 0.9
                     orientation: "vertical"
                     padding: 10
 
                     Button:
                         id: density_button
                         background_normal: ''
-                        background_down: ''
+                        background_color: 1, 1, 1, 1
 
                         on_press:
                             root.update_density_type()
+                            self.background_color = (0.8, 0.9, 0.8, 0.05)
 
-                        canvas:
-                            Rectangle:
-                                size: density_button.height + 0.5*(density_button.width-density_button.height), density_button.height
-                                pos:self.pos
-                                source: root.display_path_density
+                        Image:
+                            id: display_image
+                            pos_hint: {'center_x': 0.5, 'center_y': 1.5}
 
-                    GridLayout:
-                        size_hint_y: 0.2
-                        cols: 3
+                            allow_stretch: True
+                            source:root.display_path_density
 
-                        Label:
-                            text: ''
-                        Label:
-                            text: ''
-                            text_size: self.size
-                            color: hex('#18453B')
-                            bold: True
-                        Label:
-                            text: ''
+                            size: self.parent.size
+                            valign: 'top'
+
+
                 ##################
                 ################## right - top
                 GridLayout:
@@ -950,7 +1094,8 @@ ScreenManagement:
                             size_hint_x: 0.2
                             text: 'Modalities: '
                             color: 0, 0, 0, 1
-#################################################
+
+
                         Button:
                             size_hint_x: 0.1
                             background_color: 0, 0, 0, 0
@@ -1180,205 +1325,13 @@ ScreenManagement:
         TabbedPanelItem:
             text: 'Results and Analysis'
 
-            GridLayout:
-                rows: 2
-                cols: 2
+            ROCpanel:
+                id: r_panel
 
-                ##################
-                ################## left
-                BoxLayout:
-                    orientation: "vertical"
+                # Strings
+                displayed_plot.source: root.display_path_roc
+                experiment_name: root.current_experiment
+                fixed_tmr: root.msg_fixed_tmr
+                eer: root.msg_eer
+                accuracy: root.msg_accuracy
 
-                    BoxLayout:
-                        size_hint_y: 0.9
-                        orientation: "vertical"
-
-                        Button:
-                            id:roc_button
-                            background_normal: ''
-                            background_down: ''
-
-                            canvas:
-                                Rectangle:
-                                    #size: roc_button.width-0.9, roc_button.height+0.9
-                                    size: roc_button.height + 0.5*(roc_button.width-roc_button.height), roc_button.height
-                                    pos:self.pos
-                                    source: root.display_path_roc
-
-                            on_press:
-                                root.next_roc_plot()
-
-
-                    GridLayout:
-                        size_hint_y: 0.1
-                        cols: 3
-
-                        Label:
-                            text: ''
-                        Label:
-                            text: root.current_experiment
-                            #halign: 'middle'
-                            #valign: 'middle'
-                            #padding: [0, (self.height-self.line_height)/2]
-                            text_size: self.size
-                            color: hex('#18453B')
-                            bold: True
-                        Label:
-                            text: ''
-
-
-
-                ##################
-                ################## right - top
-                GridLayout:
-                    size_hint_x: 0.3
-                    size_hint_y: 0.9
-                    rows: 6
-
-                    Label:
-                        size_hint_y: 0.1
-                        halign: 'left'
-                        text_size: self.size
-                        markup: True
-                        text: '[b]AUC Accuracy[/b]'
-                        color: hex('#0DB14B')
-
-                    Label:
-                        size_hint_y: 0.2
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        markup: True
-                        text: root.msg_accuracy
-                        color: 0, 0, 0, 1
-
-
-                    Label:
-                        size_hint_y: 0.1
-                        halign: 'left'
-                        text_size: self.size
-                        markup: True
-                        text: '[b]Equal Error Rate[/b]'
-                        color: hex('#0DB14B')
-                    Label:
-                        size_hint_y: 0.2
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        markup: True
-                        text: root.msg_eer
-                        color: 0, 0, 0, 1
-                    # TODO
-                    # TODO
-                    # TODO
-                    # TODO
-                    # TODO
-                    # TODO
-                    GridLayout:
-                        rows: 3
-                        size_hint_y: 0.4
-
-                        Label:
-                            size_hint_y: 0.2
-                            halign: 'left'
-                            text_size: self.size
-                            markup: True
-                            text: '[b]Estimated TMR[/b]'
-                            color: hex('#0DB14B')
-
-                        GridLayout:
-                            cols: 2
-                            size_hint_y: 0.2
-
-                            Label:
-                                text: '@ fixed FMR'
-                                color: 0, 0, 0, 1
-                                bold: True
-
-                            TextInput:
-                                id: fixed_fmr
-                                text: '0.01'
-                                multiline: False
-
-                                halign: 'right'
-                                valign: 'middle'
-                                text_size: self.width, None
-                                size_hint: (.65, None)
-                                height: 30
-                                multiline: False
-                                on_text_validate: root.update_evals()
-
-
-                        Label:
-                            size_hint_y: 0.6
-                            halign: 'left'
-                            valign: 'top'
-                            text_size: self.size
-                            markup: True
-                            text: root.msg_fixed_tmr
-                            color: 0, 0, 0, 1
-
-                ##################
-                ################## left - bottom
-                GridLayout:
-                    rows: 2
-                    size_hint_x: 0.7
-                    size_hint_y: 0.1
-
-                    BoxLayout:
-                        Label:
-                            bold: True
-                            size_hint_x: 0.3
-                            text: 'ROC Plot: '
-                            color: 0, 0, 0, 1
-
-#################################################
-                        Button:
-                            size_hint_x: 0.1
-                            background_color: 0, 0, 0, 0
-                            on_press:
-                                root.slider_button('left','roc', int(roc_slider_id.value))
-                            Image:
-                                source: './graphics/left.png'
-                                center_x: self.parent.center_x
-                                center_y: self.parent.center_y
-                                allow_stretch: True
-                                size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
-                                height: dp(30)  # The fixed height you want
-
-                        Slider:
-                            id: roc_slider_id
-                            value: 0
-                            step: 1
-
-                            size_hint_x: 0.6
-                            on_value: root.roc_slider(int(roc_slider_id.value))
-
-
-                        Button:
-                            size_hint_x: 0.1
-                            background_color: 0, 0, 0, 0
-                            on_press:
-                                root.slider_button('right','roc', roc_slider_id.value)
-                            Image:
-                                source: './graphics/right.png'
-                                center_x: self.parent.center_x
-                                center_y: self.parent.center_y
-                                allow_stretch: True
-                                size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
-                                height: dp(30)  # The fixed height you want
-
-
-                ##################
-                ################## right - bottom
-                BoxLayout:
-                    size_hint_x: 0.3
-                    size_hint_y: 0.1
-
-                    Button:
-                        text: 'SAVE'
-                        background_color:  hex('#0DB14B')
-                        on_press:
-                            root.save_popup()
-                            root.manager.transition.direction = 'left'
-                            root.manager.current = 'save_directory'
