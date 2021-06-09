@@ -442,9 +442,59 @@ ScreenManagement:
 
                     ################## Train/Test split info
                     GridLayout:
-                        rows: 6
-                        size_hint_y: 0.4
+                        rows: 8
+                        size_hint_y: 0.5
 
+                        GridLayout:
+                            cols: 3
+                            Label:
+                                size_hint_x: 0.6
+                                text: '[b] What to do about MISSING SCORES: [b]'
+                                markup: True
+                                color: hex('#C89A58')
+                            BoxLayout:
+                                size_hint_x: 0.2
+                                CheckBox:
+                                    id: missing_ignore_chk
+                                    n_active: root.ignore_click(self, self.active)
+                                    size_hint_x: 0.10
+                                    active: True
+                                    color: hex('#0DB14B')
+                                    halign: 'left'
+                                    text_size: self.size
+
+                                Label:
+                                    halign: 'left'
+                                    valign: 'top'
+                                    text_size: self.width, None
+                                    size_hint_x: 0.9
+
+                                    text: '[b]    Ignore[b]'
+
+                                    markup: True
+                                    color: 0.0, 0.0, 0.0, 1
+
+                            BoxLayout:
+                                size_hint_x: 0.2
+                                CheckBox:
+                                    id: missing_impute_chk
+                                    n_active: root.impute_click(self, self.active)
+                                    size_hint_x: 0.10
+                                    active: False
+                                    color: hex('#0DB14B')
+
+                                Label:
+                                    halign: 'left'
+                                    valign: 'top'
+                                    text_size: self.width, None
+                                    size_hint_x: 0.9
+
+                                    text: '[b]    Impute[b]'
+
+                                    markup: True
+                                    color: 0.0, 0.0, 0.0, 1
+
+                        Widget:
                         BoxLayout:
                             CheckBox:
                                 id: train_test_chk
@@ -496,9 +546,6 @@ ScreenManagement:
 
 
                     ##################################################################################
-                        Widget:
-                        Widget:
-
                         BoxLayout:
                             CheckBox:
                                 id: load_previous_chk
@@ -534,7 +581,7 @@ ScreenManagement:
                     ################## Normalize
                     GridLayout:
                         rows: 2
-                        size_hint_y: 0.4
+                        size_hint_y: 0.3
                         Label:
                             text: 'Normalization'
                             color: hex('#0DB14B')
