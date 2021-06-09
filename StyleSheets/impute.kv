@@ -1,0 +1,146 @@
+<Imputation>:
+    rows: 3
+
+    GridLayout:
+        size_hint_y: 0.2
+        rows: 1
+        Label:
+            text: '[b]Imputation[b] replaces missing score values with a proxy value.'
+            color: hex('#0DB14B')
+            markup: True
+
+    GridLayout:
+        size_hint_y: 0.7
+        rows: 6
+
+        Label:
+            size_hint_y: 0.1
+            text: 'UNIVARIATE'
+            bold: True
+
+        GridLayout:
+            size_hint_y: 0.2
+            cols: 4
+
+            CheckBox:
+                group: 'imputes'
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_mean
+                active: True
+
+
+            Label:
+                size_hint_x: 0.4
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Mean'
+                color:hex('#0DB14B')
+
+
+
+            CheckBox:
+                group: 'imputes'
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_median
+                active: True
+
+
+            Label:
+                size_hint_x: 0.4
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Median'
+                color: hex('#0DB14B')
+
+        Label:
+            size_hint_y: 0.1
+            text: 'MULTIVARIATE'
+            bold: True
+
+
+        GridLayout:
+            size_hint_y: 0.3
+            cols: 4
+
+            CheckBox:
+                group: 'imputes'
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_Bayesian
+                active: True
+
+
+            Label:
+                size_hint_x: 0.4
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Bayesian Ridge (Linear)'
+                color: hex('#0DB14B')
+
+            CheckBox:
+                group: 'imputes'
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_DT
+                active: True
+
+
+            Label:
+                size_hint_x: 0.4
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'Decision Tree (Non-Linear)'
+                color: hex('#0DB14B')
+
+
+        GridLayout:
+            size_hint_y: 0.3
+            cols: 3
+            CheckBox:
+                group: 'imputes'
+                size_hint_x: 0.1
+                halign: 'right'
+                id : chk_KNN
+                active: True
+
+
+            Label:
+                size_hint_x: 0.4
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                text: 'KNN'
+                color: hex('#0DB14B')
+
+            GridLayout:
+                size_hint_x: 0.5
+                cols: 2
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'K = '
+
+                FloatLayout:
+                    TextInput:
+                        pos_hint: {'center_x': .1, 'center_y': .5}
+                        size_hint: (.65, .3)
+                        height: 30
+                        multiline: False
+
+                    Label:
+                        pos_hint: {'center_x': 1.0, 'center_y': .5}
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+                        text: 'Neighbors'
+
+    Button:
+        size_hint_y: 0.1
+        text: 'Impute'

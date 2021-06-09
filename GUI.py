@@ -18,6 +18,7 @@ import threading
 import Analytics.format_data as fm2
 import Analytics.Fuse as Fuse
 import Popups.PopupSave as SavePop
+import Popups.PopupImputation as ImputationPop
 import Popups.PopupReset as ResetPopup
 import Popups.PopupTanh as TanhPopup
 import Popups.PopupDSig as DSigPopup
@@ -249,6 +250,13 @@ class Main(Screen):
         self.save_settings.set_pop(popup)
         popup.open()
 
+    def impute_popup(self):
+        self.imputation_settings = ImputationPop.Imputation()
+        popup = Popup(title="Imputation ", content=self.imputation_settings, size_hint=(None, None),
+                            size=(600, 600))
+        self.imputation_settings.set_pop(popup)
+        popup.open()
+
     def modality_edit_popup(self):
         self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities())
         self.popup_popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
@@ -379,6 +387,16 @@ class Main(Screen):
                     self.display_path_roc = self.roc_object.move_right()
                     self.current_experiment = self.roc_object.get_experiment()
 
+
+    def impute_click(self, instance, value):
+        self.impute_popup()
+
+        if value is True:
+            self.ids['missing_ignore_chk'].active = False
+
+    def ignore_click(self, instance, value):
+        if value is True:
+            self.ids['missing_impute_chk'].active = False
 
     def checkbox_click(self, instance, value, category='train-test'):
         if category == 'train-test':
@@ -573,6 +591,7 @@ class Main(Screen):
 
 presentation = Builder.load_file("styles.kv")
 Builder.load_file("./StyleSheets/SavePopup.kv")
+Builder.load_file("./StyleSheets/impute.kv")
 
 class TabbedPanelApp(App):
     def build(self):
