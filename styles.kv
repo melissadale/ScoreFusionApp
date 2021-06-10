@@ -1237,7 +1237,26 @@ ScreenManagement:
                     orientation: "vertical"
 
                     BoxLayout:
-                        size_hint_y: 0.9
+                        size_hint_y: 0.1
+                        orientation: "vertical"
+
+                        Button:
+                            id:switch_button
+                            background_normal: ''
+                            background_down: ''
+
+                            canvas:
+                                Rectangle:
+                                    size: 0.15*switch_button.width, 0.7*switch_button.height
+                                    pos:self.pos
+                                    source: root.results_icon
+
+                            on_press:
+                                root.ROC_CMC_toggle()
+
+
+                    BoxLayout:
+                        size_hint_y: 0.8
                         orientation: "vertical"
 
                         Button:
