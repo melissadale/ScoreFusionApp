@@ -6,7 +6,8 @@ class CMC:
     def __init__(self, **kwargs):
         self.data = kwargs.get('data')
         self.modalities = kwargs.get('modalities')
-        print(self.modalities)
+        self.fused_modalities = kwargs.get('fused_modalities')
+        self.experiment_id = kwargs.get('exp_id')
         self.k = kwargs.get('k')
 
         self.hits = pd.DataFrame(columns=self.modalities)
@@ -18,10 +19,9 @@ class CMC:
         return L
 
     def chop_and_sort(self):
-        print('Starting - may god have mercy on our soul')
-        for mod in self.modalities:
+        for mod in self.modalities+self.fused_modalities:
 
-            ## Sort the galleries returned for probe
+            ## Sort the gallerys scores returned for probe
             trimmed_sorted = self.data.groupby('Probe_ID').apply(
                 lambda x: x.sort_values(mod, ascending=False)).reset_index(drop=True)
 
@@ -42,16 +42,11 @@ class CMC:
         self.hits.to_csv('./hit_rates.csv')
         print('SAVED')
 
-
-    def plots(self):
-        print('PLOTTING')
+    def generate_plots(self):
+        #### baseline plots
         for modality in self.modalities:
             hits = self.hits[modality]
-            if ':' in modality:
-                plt.plot([i for i in range(1, self.k + 1)], hits, label=modality, marker='D', linestyle='dotted')
-
-            else:
-                plt.plot([i for i in range(1, self.k + 1)], hits, label=modality, marker='o', linestyle='dotted')
+            plt.plot([i for i in range(1, self.k + 1)], hits, label=modality, marker='o', linestyle='dotted')
 
         plt.legend()
         plt.xlabel('Rank')
@@ -59,4 +54,35 @@ class CMC:
         plt.xticks([i for i in range(1, self.k + 1)])
 
         plt.title('CMC Curve')
-        plt.savefig('./CMC.png')
+        plt.savefig('./generated/experiments/CMC/' + self.experiment_id + '/CMC-baseline.png')
+        plt.clf()
+
+        #### fused plots
+        for modality in self.fused_modalities:
+            hits = self.hits[modality]
+            plt.plot([i for i in range(1, self.k + 1)], hits, label=modality, marker='D', linestyle='dotted')
+
+        plt.legend()
+        plt.xlabel('Rank')
+        plt.ylabel('Identification Rate')
+        plt.xticks([i for i in range(1, self.k + 1)])
+
+        plt.title('CMC Curve')
+        plt.savefig('./generated/experiments/CMC/' + self.experiment_id + '/CMC-fused.png')
+        plt.clf()
+
+        ## Plot all
+        for modality in self.modalities:
+            hits = self.hits[modality]
+            plt.plot([i for i in range(1, self.k + 1)], hits, label=modality, marker='o', linestyle='dotted')
+        for modality in self.fused_modalities:
+            hits = self.hits[modality]
+            plt.plot([i for i in range(1, self.k + 1)], hits, label=modality, marker='D', linestyle='dotted')
+
+        plt.legend()
+        plt.xlabel('Rank')
+        plt.ylabel('Identification Rate')
+        plt.xticks([i for i in range(1, self.k + 1)])
+
+        plt.title('CMC Curve')
+        plt.savefig('./generated/experiments/CMC/' + self.experiment_id + '/CMC-all.png')

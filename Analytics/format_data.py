@@ -224,6 +224,11 @@ class Score_data:
 
     def normalize_data(self):
         for mod in self.score_data[self.modalities]:
+            min = self.score_data[mod].min()
+            max = self.score_data[mod].max()
+            # print('b')
+
+        for mod in self.score_data[self.modalities]:
             tmp = self.score_data[mod]
             self.score_data.rename(columns={mod: mod + '_ORIGINAL'}, inplace=True)
 

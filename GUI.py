@@ -350,11 +350,8 @@ class Main(Screen):
         self.display_path_density = self.densities.update_plot_type()
 
     def ROC_CMC_toggle(self):
-        try:
-            self.results_panel.change_setting()
-            self.results_icon = self.results_panel.get_toggle()
-        except:
-            pass
+        self.display_path_roc = self.results_panel.change_setting()
+        self.results_icon = self.results_panel.get_toggle()
 
     def next_roc_plot(self):
         self.display_path_roc = self.results_panel.update_plot()
@@ -512,6 +509,8 @@ class Main(Screen):
         self.current_experiment = self.experiment_id_val.text
 
         fusion_list = []
+        task_list = []
+
         self.sequential_fusion_settings = None
         if self.chk_selective.active:
             fusion_list.append('SequentialRule')
@@ -521,10 +520,16 @@ class Main(Screen):
         if self.chk_svm.active:
             fusion_list.append('SVMRule')
 
+        if self.chk_verification.active:
+            task_list.append('Verification')
+        if self.chk_identification.active:
+            task_list.append('Identication')
+
         fusion_mod = Fuse.FuseRule(list_o_rules=fusion_list, score_data=self.data_object.score_data,
                                    modalities=self.data_object.get_modalities(),
                                    fusion_settings=self.sequential_fusion_settings,
-                                   experiment=self.experiment_id_val.text)
+                                   experiment=self.experiment_id_val.text,
+                                   tasks=task_list)
 
         mets, models = fusion_mod.fuse_all()
 
