@@ -51,6 +51,8 @@ class FuseRule:
         experiment_dir = self.experiment_name
         if not os.path.exists('./generated/experiments/ROC/' + experiment_dir):
             os.makedirs('./generated/experiments/ROC/' + experiment_dir)
+        if not os.path.exists('./generated/experiments/CMC/' + experiment_dir):
+            os.makedirs('./generated/experiments/CMC/' + experiment_dir)
 
         print('Making ROCs... ')
         plt.figure()
