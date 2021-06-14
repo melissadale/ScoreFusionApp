@@ -33,7 +33,7 @@ np.seterr(divide='ignore', invalid='ignore')
 
 
 class FuseRule:
-    def __init__(self, list_o_rules, score_data, modalities, fusion_settings=None, experiment=''):
+    def __init__(self, list_o_rules, score_data, modalities, fusion_settings=None, experiment='', tasks=[]):
         self.list_o_rules = sorted(list(set(list_o_rules)))
         self.score_data = score_data
         self.modalities = modalities
@@ -41,18 +41,18 @@ class FuseRule:
         self.fusion_settings = fusion_settings
         # self.results = pd.DataFrame(columns=['FPRS', 'TPRS', 'EER', 'AUC', 'thresholds'])
         self.results = None
+        self.tasks = tasks
 
         self.experiment_name = experiment
         self.title = ''
         self.models = []
 
     def make_rocs(self):
-        if not os.path.exists('./generated/experiments/'):
-            os.makedirs('./generated/experiments/')
-
         experiment_dir = self.experiment_name
-        if not os.path.exists('./generated/experiments/' + experiment_dir):
-            os.makedirs('./generated/experiments/' + experiment_dir)
+        if not os.path.exists('./generated/experiments/ROC/' + experiment_dir):
+            os.makedirs('./generated/experiments/ROC/' + experiment_dir)
+        if not os.path.exists('./generated/experiments/CMC/' + experiment_dir):
+            os.makedirs('./generated/experiments/CMC/' + experiment_dir)
 
         print('Making ROCs... ')
         plt.figure()
@@ -112,7 +112,7 @@ class FuseRule:
         plt.ylabel('True Match Rate (TMR)', fontsize=15)
         plt.title('Baseline Modalities', fontsize=15)
 
-        plot_name = './generated/experiments/' + experiment_dir + '/baseline.png'
+        plot_name = './generated/experiments/ROC/' + experiment_dir + '/baseline.png'
         plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
         plt.clf()
 
@@ -136,7 +136,7 @@ class FuseRule:
 
             plt.title(fused + ' Fusion', fontsize=15)
 
-            plot_name = './generated/experiments/' + experiment_dir + '/' + fused.replace(':', '') + '.png'
+            plot_name = './generated/experiments/ROC/' + experiment_dir + '/' + fused.replace(':', '') + '.png'
             plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
             plt.clf()
 
@@ -159,7 +159,7 @@ class FuseRule:
             fusion_rules = [x.replace(':', '') for x in self.score_data.columns if x.isupper()]
             plt.title('All Fusion Rules::' + ' '.join(fusion_rules), fontsize=15)
 
-        plot_name = './generated/experiments/' + experiment_dir + '/' + 'all.png'
+        plot_name = './generated/experiments/ROC/' + experiment_dir + '/' + 'all.png'
         plt.savefig(plot_name, bbox_inches='tight', pad_inches=0.5)
         plt.clf()
 
@@ -352,12 +352,20 @@ class FuseRule:
         if 'SVMRule' in sorted_rules:
             self.svm_rule()
 
-        self.make_rocs()
+        if 'Verification' in self.tasks:
+            self.make_rocs()
+
+        if 'Identication' in self.tasks:
+            if not os.path.exists('./generated/experiments/CMC/' + self.experiment_name):
+                os.makedirs('./generated/experiments/CMC/' + self.experiment_name)
+            self.cmc()
 
         self.modalities.extend(self.fused_modalities)
         return self.results, self.models
 
     def cmc(self):
-        cmc = CMC.CMC(data=self.score_data, modalities=self.modalities, k=20)
+        cmc = CMC.CMC(data=self.score_data, modalities=self.modalities, fused_modalities=self.fused_modalities, k=20, exp_id=self.experiment_name)
         cmc.chop_and_sort()
-        cmc.plots()
+        print('CMCing')
+        cmc.generate_plots()
+        print('Done CMCing')

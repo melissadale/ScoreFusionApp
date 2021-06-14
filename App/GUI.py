@@ -26,7 +26,8 @@ import Popups.PopupSelectiveFusion as SelectiveFusionPopup
 import Popups.PopupModalityEdit as PopupModalityEdit
 from Objects.ReportPDFs import generate_summary
 from Objects.DensitySlider import DensityPlots
-from Objects.ROCsSlider import ROCsPlots
+# from Objects.ROCsSlider import ROCsPlots
+from Objects.ResultsPanel import Results
 
 from Analytics.Experiment import Experiment
 
@@ -133,7 +134,7 @@ class Main(Screen):
 
     r_slide = Slider()
     display_path_roc = StringProperty('')
-
+    results_icon = StringProperty('./graphics/ROC.png')
     experiments = defaultdict(Experiment)
     experiment_results = None
 
@@ -348,9 +349,12 @@ class Main(Screen):
     def update_density_type(self):
         self.display_path_density = self.densities.update_plot_type()
 
+    def ROC_CMC_toggle(self):
+        self.display_path_roc = self.results_panel.change_setting()
+        self.results_icon = self.results_panel.get_toggle()
 
     def next_roc_plot(self):
-        self.display_path_roc = self.roc_object.update_plot()
+        self.display_path_roc = self.results_panel.update_plot()
         # self.ids.roc_button.source = self.display_path_roc
 
     def density_slider(self, value):
@@ -360,8 +364,8 @@ class Main(Screen):
     def roc_slider(self, value):
         try:
             if 0 <= value < self.r_slide.max-1:
-                self.display_path_roc = self.roc_object.slider_update(value)
-                self.current_experiment = self.roc_object.get_experiment()
+                self.display_path_roc = self.results_panel.slider_update(value)
+                self.current_experiment = self.results_panel.get_experiment()
         except:
             # this fails when loading because roc_object is called before it is defined in the fuse button
             # ToDo
@@ -379,13 +383,13 @@ class Main(Screen):
         if img_set == 'roc':
             if direction == 'left':
                 if 0 < value:
-                    self.display_path_roc = self.roc_object.move_left()
-                    self.current_experiment = self.roc_object.get_experiment()
+                    self.display_path_roc = self.results_panel.move_left()
+                    self.current_experiment = self.results_panel.get_experiment()
 
             if direction == 'right':
                 if 0 <= value < self.r_slide.max:
-                    self.display_path_roc = self.roc_object.move_right()
-                    self.current_experiment = self.roc_object.get_experiment()
+                    self.display_path_roc = self.results_panel.move_right()
+                    self.current_experiment = self.results_panel.get_experiment()
 
 
     def impute_click(self, instance, value):
@@ -505,6 +509,8 @@ class Main(Screen):
         self.current_experiment = self.experiment_id_val.text
 
         fusion_list = []
+        task_list = []
+
         self.sequential_fusion_settings = None
         if self.chk_selective.active:
             fusion_list.append('SequentialRule')
@@ -514,28 +520,28 @@ class Main(Screen):
         if self.chk_svm.active:
             fusion_list.append('SVMRule')
 
+        if self.chk_verification.active:
+            task_list.append('Verification')
+        if self.chk_identification.active:
+            task_list.append('Identication')
+
         fusion_mod = Fuse.FuseRule(list_o_rules=fusion_list, score_data=self.data_object.score_data,
                                    modalities=self.data_object.get_modalities(),
                                    fusion_settings=self.sequential_fusion_settings,
-                                   experiment=self.experiment_id_val.text)
+                                   experiment=self.experiment_id_val.text,
+                                   tasks=task_list)
 
         mets, models = fusion_mod.fuse_all()
 
         self.experiment_results = pd.concat([self.experiment_results, mets])
-        # self.experiment_results = self.experiment_results[~self.experiment_results.apply(tuple).duplicated()]
-        # df = df[~df['A'].apply(tuple).duplicated()]
-
-        # try:
-        #     self.experiment_results = self.experiment_results.merge(mets)
-        # except AttributeError:
-        #     self.experiment_results = mets
-
         self.experiments[self.experiment_id_val.text] = Experiment(results=mets, models=models)
 
         # fusion_mod.cmc() TODO
-        self.roc_object = ROCsPlots(slider=self.r_slide, experiment=self.current_experiment)
-        self.display_path_roc = self.roc_object.build_plot_list()
-        # self.current_experiment = self.roc_object.get_experiment()
+
+        self.results_panel = Results(slider=self.r_slide, experiment=self.current_experiment)
+        self.results_icon = self.results_panel.get_toggle()
+        self.display_path_roc = self.results_panel.build_plot_list()
+        self.current_experiment = self.results_panel.get_experiment()
 
         # build strings
         for fused in [x for x in mets.index if ':' in x]:
@@ -550,10 +556,10 @@ class Main(Screen):
             self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
             self.eval = mets
 
-        generate_summary(results=self.eval,
-                         roc_plt=self.display_path_roc,
-                         fmr_rate=float(self.fixed_FMR_val.text),
-                         experiment = self.current_experiment)
+        # generate_summary(results=self.eval,
+        #                  roc_plt=self.display_path_roc,
+        #                  fmr_rate=float(self.fixed_FMR_val.text),
+        #                  experiment = self.current_experiment)
 
     def update_evals(self):
         ## A Fixed FMR has been updated

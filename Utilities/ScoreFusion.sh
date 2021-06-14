@@ -2,8 +2,8 @@
 mkdir ScoreFusion
 cd ScoreFusion
 
-conda create --name sf_environment python=3.85
-source activate sf_environment
+conda create --name scorefusion_environment python=3.85
+source activate scorefusion_environment
 
 
 echo "************************************************************"
@@ -22,3 +22,4 @@ echo "****   All DONE!"
 echo "****   Thank you for trying the ScoreFusionApp"
 echo "****   You are ready to launch the application with: python GUI.py"
 echo "************************************************************"
+
