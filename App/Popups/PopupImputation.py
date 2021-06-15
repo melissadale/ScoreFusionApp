@@ -1,6 +1,6 @@
 import kivy
 from kivy.uix.gridlayout import GridLayout
-kivy.require('1.9.0')
+kivy.require('1.11.1')
 
 class Imputation(GridLayout):
     dpop = None

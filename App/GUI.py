@@ -26,7 +26,6 @@ import Popups.PopupSelectiveFusion as SelectiveFusionPopup
 import Popups.PopupModalityEdit as PopupModalityEdit
 from Objects.ReportPDFs import generate_summary
 from Objects.DensitySlider import DensityPlots
-# from Objects.ROCsSlider import ROCsPlots
 from Objects.ResultsPanel import Results
 
 from Analytics.Experiment import Experiment
@@ -198,13 +197,9 @@ class Main(Screen):
                                                 imp=self.score_data.loc[self.score_data['Label'] == 0.0, mod],
                                                 label='Entire', norm_type=self.normalize, modality=mod)
 
-
-
         self.densities = DensityPlots(slider=self.d_slide)
         self.densities.build_plot_list()
         self.display_path_density = self.densities.get_image_path()
-
-
 
         self.returned_modalities = ''.join([x + '\n' for x in self.data_object.get_modalities()])
         self.detected_lbl.opacity = 1.0
@@ -260,12 +255,10 @@ class Main(Screen):
 
     def modality_edit_popup(self):
         self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities())
-        self.popup_popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
+        popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
                                 size=(600, 600))
-        self.edit_mods.set_pop(self.popup_popup)
-        self.popup_popup.bind(on_dismiss=self.modality_update_helper)
-
-        self.popup_popup.open()
+        self.edit_mods.set_pop(popup)
+        popup.open()
 
     def reset_popup(self):
         self.reset = ResetPopup.ResetPopup()
@@ -393,10 +386,10 @@ class Main(Screen):
 
 
     def impute_click(self, instance, value):
-        self.impute_popup()
-
         if value is True:
+            self.impute_popup()
             self.ids['missing_ignore_chk'].active = False
+
 
     def ignore_click(self, instance, value):
         if value is True:
