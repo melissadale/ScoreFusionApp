@@ -1155,7 +1155,10 @@ ScreenManagement:
                             size_hint: (.65, None)
                             height: 30
                             multiline: False
-                            on_text_validate: root.update_evals()
+                            on_text_validate:
+                                fusing_animation.opacity = 1.0
+                                done_animation.opacity = 0.0
+
 
                     GridLayout:
                         cols: 2
@@ -1194,9 +1197,38 @@ ScreenManagement:
                     Widget:
                     Widget:
                     Widget:
-                    Widget:
-                    Widget:
 
+                    GridLayout:
+                        id: fusing_animation
+                        opacity: 1.0
+                        cols: 2
+
+                        Label:
+                            text: 'Experiment Settings'
+                            color: hex('#18453B')
+                            bold: True
+                            size_hint_x: 0.7
+                        Image:
+                            size_hint_x: 0.3
+                            height: dp(50)
+                            source: './graphics/fusing.gif'
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            allow_stretch: True
+                            size_hint_y: None
+                            anim_delay: 0.05
+                            mipmap: True
+
+
+                    BoxLayout:
+                        id: done_animation
+                        opacity: 0.0
+                        cols: 2
+
+                        Label:
+                            text: 'Fusions are Done'
+                            color: hex('#18453B')
+                            bold: True
 
                 ##################
                 ################## left - bottom
@@ -1219,6 +1251,8 @@ ScreenManagement:
                         background_color:  hex('#0DB14B')
                         on_press:
                             root.fuse()
+                            fusing_animation.opacity = 0.0
+                            done_animation.opacity = 1.0
 
         ##########################################################
         ##########################################################

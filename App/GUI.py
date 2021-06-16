@@ -533,7 +533,7 @@ class Main(Screen):
 
     def fuse(self):
         self.current_experiment = self.experiment_id_val.text
-
+        # self.ids.fusing_animation.opacity = 1.0
         fusion_list = []
         task_list = []
 
