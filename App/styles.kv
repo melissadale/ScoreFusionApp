@@ -1308,8 +1308,8 @@ ScreenManagement:
                         size_hint_y: 0.1
                         halign: 'left'
                         text_size: self.size
-                        markup: True
-                        text: '[b]AUC Accuracy[/b]'
+                        text: root.results_header_one
+                        bold: True
                         color: hex('#0DB14B')
 
                     Label:
@@ -1326,9 +1326,9 @@ ScreenManagement:
                         size_hint_y: 0.1
                         halign: 'left'
                         text_size: self.size
-                        markup: True
-                        text: '[b]Equal Error Rate[/b]'
+                        text: root.results_header_two
                         color: hex('#0DB14B')
+                        bold: True
                     Label:
                         size_hint_y: 0.2
                         halign: 'left'
@@ -1351,22 +1351,22 @@ ScreenManagement:
                             size_hint_y: 0.2
                             halign: 'left'
                             text_size: self.size
-                            markup: True
-                            text: '[b]Estimated TMR[/b]'
+                            text: root.results_header_three
                             color: hex('#0DB14B')
+                            bold: True
 
                         GridLayout:
                             cols: 2
                             size_hint_y: 0.2
 
                             Label:
-                                text: '@ fixed FMR'
+                                text: root.results_subheader
                                 color: 0, 0, 0, 1
                                 bold: True
 
                             TextInput:
                                 id: fixed_fmr
-                                text: '0.01'
+                                text: root.results_default
                                 multiline: False
 
                                 halign: 'right'
