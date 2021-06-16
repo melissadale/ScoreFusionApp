@@ -76,3 +76,12 @@ class Results:
 
     def get_toggle(self):
         return self.toggle
+
+    def get_active(self):
+        return self.active
+
+    def get_headers(self):
+        if self.active == 'ROC':
+            return 'AUC Accuracy', 'Equal Error Rate', 'Estimated TMR', '@ Fixed FMR', '0.01'
+        elif self.active == 'CMC':
+            return 'Rank 1 Accuracy', 'Rank 2 Accuracy', 'Rank K Accuracy', 'K = ', '5'

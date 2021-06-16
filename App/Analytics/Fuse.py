@@ -23,7 +23,7 @@ from scipy.interpolate import interp1d
 from sklearn.svm import SVC
 from scipy.stats import gaussian_kde
 # from sklearn.metrics import det_curve
-from Analytics import CMC_Plot as CMC
+from Analytics import IdentificationTasks as Identify
 import warnings
 import time
 from Analytics.Experiment import TrainedModel
@@ -39,13 +39,14 @@ class FuseRule:
         self.modalities = modalities
         self.fused_modalities = []
         self.fusion_settings = fusion_settings
-        # self.results = pd.DataFrame(columns=['FPRS', 'TPRS', 'EER', 'AUC', 'thresholds'])
         self.results = None
         self.tasks = tasks
 
         self.experiment_name = experiment
         self.title = ''
         self.models = []
+
+        self.cmc_accuracies = None
 
     def make_rocs(self):
         experiment_dir = self.experiment_name
@@ -358,14 +359,13 @@ class FuseRule:
         if 'Identication' in self.tasks:
             if not os.path.exists('./generated/experiments/CMC/' + self.experiment_name):
                 os.makedirs('./generated/experiments/CMC/' + self.experiment_name)
-            self.cmc()
+            self.cmc_accuracies = self.cmc()
 
         self.modalities.extend(self.fused_modalities)
-        return self.results, self.models
+        return self.results, self.models, self.cmc_accuracies
 
     def cmc(self):
-        cmc = CMC.CMC(data=self.score_data, modalities=self.modalities, fused_modalities=self.fused_modalities, k=20, exp_id=self.experiment_name)
+        cmc = Identify.Identify(data=self.score_data, modalities=self.modalities, fused_modalities=self.fused_modalities, k=20, exp_id=self.experiment_name)
         cmc.chop_and_sort()
-        print('CMCing')
         cmc.generate_plots()
-        print('Done CMCing')
+        return cmc.get_accuracies()

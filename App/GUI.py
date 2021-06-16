@@ -46,6 +46,21 @@ from kivy.uix.slider import Slider
 kivy.require('1.9.0')
 
 
+def get_tmr(fpr, tpr, fixed_far):
+    vert_line = np.full(len(fpr), fixed_far)
+    idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
+    return tpr[idx][0]
+
+
+def truncate(f, n):
+    '''Truncates/pads a float f to n decimal places without rounding'''
+    s = '{}'.format(f)
+    if 'e' in s or 'E' in s:
+        return '{0:.{1}f}'.format(f, n)
+    i, p, d = s.partition('.')
+    return '.'.join([i, (d + '0' * n)[:n]])
+
+
 class ScreenManagement(ScreenManager):
     pass
 
@@ -152,13 +167,31 @@ class Main(Screen):
     msg_train = StringProperty('[b]TRAINING: [/b] {} Subjects'.format(0))
     msg_modalities = StringProperty('[b]MODALITIES DETECTED: [/b] {}'.format(0))
 
+    msg_accuracy_ROC = StringProperty('')
+    msg_eer_ROC = StringProperty('')
+    msg_fixed_tmr_ROC = StringProperty('')
+
+    msg_accuracy_CMC = StringProperty('')
+    msg_eer_CMC = StringProperty('')
+    msg_fixed_tmr_CMC = StringProperty('')
+
     msg_accuracy = StringProperty('')
     msg_eer = StringProperty('')
     msg_fixed_tmr = StringProperty('')
-    eval = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
+
+
+    eval_ROC = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
     fixed_FMR_val = TextInput()
     experiment_id_val = TextInput()
     current_experiment = StringProperty('')
+
+    results_header_one = StringProperty('AUC Accuracy')
+    results_header_two = StringProperty('Equal Error Rate')
+    results_header_three = StringProperty('Estimated TMR')
+    results_subheader = StringProperty('@ Fixed FMR')
+    results_default = StringProperty('0.01')
+    cmcs = None
+
 
     data_object = None
 
@@ -345,10 +378,13 @@ class Main(Screen):
     def ROC_CMC_toggle(self):
         self.display_path_roc = self.results_panel.change_setting()
         self.results_icon = self.results_panel.get_toggle()
+        self.results_header_one, self.results_header_two, self.results_header_three, \
+        self.results_subheader, self.results_default = self.results_panel.get_headers()
+        self.metric_switch()
+
 
     def next_roc_plot(self):
         self.display_path_roc = self.results_panel.update_plot()
-        # self.ids.roc_button.source = self.display_path_roc
 
     def density_slider(self, value):
         if 0 <= value < self.d_slide.max+1:
@@ -435,7 +471,7 @@ class Main(Screen):
 
         things_to_save = self.save_settings.get_save_reports()
         if 'report' in things_to_save:
-            generate_summary(modalities=self.data_object.get_modalities(), results=self.eval,
+            generate_summary(modalities=self.data_object.get_modalities(), results=self.eval_ROC,
                              roc_plt=self.display_path_roc,
                              fmr_rate=float(self.fixed_FMR_val.text),
                              save_to_path=save_location+ '/FusionReport/')
@@ -487,7 +523,7 @@ class Main(Screen):
             dataset_metrics.to_csv(save_location + '/FusionReport/Dataset_Metrics.csv', index=False)
 
         if 'analysis' in things_to_save:
-            eval_metrics = pd.DataFrame(self.eval)
+            eval_metrics = pd.DataFrame(self.eval_ROC)
             eval_metrics.to_csv(save_location+'/FusionReport/EvaluationMetrics.csv', index=False)
 
     def get_tpr(fpr, tpr, fixed_far=0.01):
@@ -496,9 +532,6 @@ class Main(Screen):
         return tpr[idx][0]
 
     def fuse(self):
-        self.msg_accuracy = ''
-        self.msg_eer = ''
-        self.msg_fixed_tmr = ''
         self.current_experiment = self.experiment_id_val.text
 
         fusion_list = []
@@ -524,12 +557,10 @@ class Main(Screen):
                                    experiment=self.experiment_id_val.text,
                                    tasks=task_list)
 
-        mets, models = fusion_mod.fuse_all()
+        mets, models, cmcs = fusion_mod.fuse_all()
 
         self.experiment_results = pd.concat([self.experiment_results, mets])
         self.experiments[self.experiment_id_val.text] = Experiment(results=mets, models=models)
-
-        # fusion_mod.cmc() TODO
 
         self.results_panel = Results(slider=self.r_slide, experiment=self.current_experiment)
         self.results_icon = self.results_panel.get_toggle()
@@ -538,48 +569,75 @@ class Main(Screen):
 
         # build strings
         for fused in [x for x in mets.index if ':' in x]:
-            accuracy = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(mets.loc[fused]['AUC'], 6) + '\n'
-            eer = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(mets.loc[fused]['EER'], 6) + '\n'
-            tmr = '[b]'+fused+': [/b] {}'.format(0) + self.truncate(self.get_TMR(tpr=mets.loc[fused]['TPRS'],
+            accuracy = '[b]'+fused+': [/b] {}'.format(0) + truncate(mets.loc[fused]['AUC'], 6) + '\n'
+            eer = '[b]'+fused+': [/b] {}'.format(0) + truncate(mets.loc[fused]['EER'], 6) + '\n'
+
+            tmr = '[b]'+fused+': [/b] {}'.format(0) + truncate(get_tmr(tpr=mets.loc[fused]['TPRS'],
                                                                                  fpr=mets.loc[fused]['FPRS'],
                                                                                  fixed_far=float(self.fixed_FMR_val.text)), 6) + '\n'
+            self.msg_accuracy_ROC = self.msg_accuracy_ROC + accuracy
+            self.msg_eer_ROC = self.msg_eer_ROC + eer
+            self.msg_fixed_tmr_ROC = self.msg_fixed_tmr_ROC + tmr
+            self.eval_ROC = mets
 
-            self.msg_accuracy = self.msg_accuracy + accuracy
-            self.msg_eer = self.msg_eer + eer
-            self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
-            self.eval = mets
 
+        #  CMC Metrics
+        if cmcs is not None:
+            for fused in [x for x in cmcs.columns if ':' in x]:
+                r1 = '[b]'+fused+': [/b] {}'.format(0) + str(truncate(cmcs.iloc[0][fused], 6 ))+ '\n'
+                r2 = '[b]'+fused+': [/b] {}'.format(0) + str(truncate(cmcs.iloc[1][fused], 6 )) + '\n'
+                rk = '[b]'+fused+': [/b] {}'.format(0) + str(truncate(cmcs.iloc[5][fused], 6 )) + '\n'
+
+                self.msg_accuracy_CMC = self.msg_accuracy_CMC + r1
+                self.msg_eer_CMC = self.msg_eer_CMC + r2
+                self.msg_fixed_tmr_CMC = self.msg_fixed_tmr_CMC + rk
+
+        self.cmcs = cmcs
+        self.metric_switch()
         # generate_summary(results=self.eval,
         #                  roc_plt=self.display_path_roc,
         #                  fmr_rate=float(self.fixed_FMR_val.text),
         #                  experiment = self.current_experiment)
 
+    def metric_switch(self):
+
+        active_metrics = self.results_panel.get_active()
+
+        if active_metrics == 'ROC':
+            self.msg_accuracy = self.msg_accuracy_ROC
+            self.msg_eer = self.msg_eer_ROC
+            self.msg_fixed_tmr = self.msg_fixed_tmr_ROC
+
+        elif active_metrics == 'CMC':
+            self.msg_accuracy = self.msg_accuracy_CMC
+            self.msg_eer = self.msg_eer_CMC
+            self.msg_fixed_tmr = self.msg_fixed_tmr_CMC
+
+
     def update_evals(self):
         ## A Fixed FMR has been updated
-        self.msg_fixed_tmr = ''
+        self.msg_fixed_tmr_ROC = ''
+        new_vals = ''
+        tmp = self.results_panel.get_active()
 
-        fused = [x for x in self.eval.index if ":" in x]
+        if tmp == 'ROC':
+            fused = [x for x in self.eval_ROC.index if ":" in x]
+            for mods in fused:
+                estimated_tmr = get_tmr(fpr=self.eval_ROC.loc[mods]['FPRS'], tpr=self.eval_ROC.loc[mods]['TPRS'],
+                                        fixed_far=float(self.fixed_FMR_val.text))
+                self.eval_ROC.loc[mods]['TMR'] = estimated_tmr
+                tmr = '[b]' + mods + ': [/b] {}'.format(0) + truncate(estimated_tmr, 6) + '\n'
 
-        for mods in fused:
-            estimated_tmr = self.get_TMR(fpr=self.eval.loc[mods]['FPRS'], tpr=self.eval.loc[mods]['TPRS'],
-                                         fixed_far=float(self.fixed_FMR_val.text))
-            self.eval.loc[mods]['TMR'] = estimated_tmr
-            tmr = '[b]' + mods + ': [/b] {}'.format(0) + self.truncate(estimated_tmr, 6) + '\n'
+                new_vals = new_vals + tmr
 
-            self.msg_fixed_tmr = self.msg_fixed_tmr + tmr
+        elif tmp == 'CMC':
+            fused = [x for x in self.cmcs.columns if ":" in x]
+            for mods in fused:
+                tmr = '[b]' + mods + ': [/b] {}'.format(0) + str(truncate(self.cmcs.iloc[int(self.ids.fixed_fmr.text)][mods], 6)) + '\n'
 
-    def truncate(self, f, n):
-        '''Truncates/pads a float f to n decimal places without rounding'''
-        s = '{}'.format(f)
-        if 'e' in s or 'E' in s:
-            return '{0:.{1}f}'.format(f, n)
-        i, p, d = s.partition('.')
-        return '.'.join([i, (d + '0' * n)[:n]])
+                new_vals = new_vals + tmr
 
-    def get_TMR(self, fpr, tpr, fixed_far):
-        vert_line = np.full(len(fpr), fixed_far)
-        idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
-        return tpr[idx][0]
+        self.msg_fixed_tmr = new_vals
 
 
 # class E(ExceptionHandler):
@@ -591,6 +649,7 @@ class Main(Screen):
 presentation = Builder.load_file("styles.kv")
 Builder.load_file("./StyleSheets/SavePopup.kv")
 Builder.load_file("./StyleSheets/impute.kv")
+
 
 class TabbedPanelApp(App):
     def build(self):

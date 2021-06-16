@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-class CMC:
+class Identify:
     def __init__(self, **kwargs):
         self.data = kwargs.get('data')
         self.modalities = kwargs.get('modalities')
@@ -39,8 +39,6 @@ class CMC:
                 hit_rates.append(rate)
 
             self.hits[mod] = hit_rates
-        self.hits.to_csv('./hit_rates.csv')
-        print('SAVED')
 
     def generate_plots(self):
         #### baseline plots
@@ -86,3 +84,6 @@ class CMC:
 
         plt.title('CMC Curve')
         plt.savefig('./generated/experiments/CMC/' + self.experiment_id + '/CMC-all.png')
+
+    def get_accuracies(self):
+        return self.hits
