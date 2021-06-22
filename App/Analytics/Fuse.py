@@ -52,8 +52,11 @@ class FuseRule:
         experiment_dir = self.experiment_name
         if not os.path.exists('./generated/experiments/ROC/' + experiment_dir):
             os.makedirs('./generated/experiments/ROC/' + experiment_dir)
+
+        # TODO: handle ROC/CMC settings better
         if not os.path.exists('./generated/experiments/CMC/' + experiment_dir):
             os.makedirs('./generated/experiments/CMC/' + experiment_dir)
+
 
         print('Making ROCs... ')
         plt.figure()
@@ -119,14 +122,13 @@ class FuseRule:
 
         ############## Fused Plots
 
-        for baseline in base_modals:
-            fprs = self.results.loc[baseline]['FPRS']
-            tprs = self.results.loc[baseline]['TPRS']
-
-            plt.semilogx(fprs, tprs, label=baseline, marker='+')
-
-
         for fused in fused_modals:
+            for baseline in base_modals:
+                fprs = self.results.loc[baseline]['FPRS']
+                tprs = self.results.loc[baseline]['TPRS']
+
+                plt.semilogx(fprs, tprs, label=baseline, marker='+')
+
             fused_fprs =  self.results.loc[fused]['FPRS']
             fused_tprs =  self.results.loc[fused]['TPRS']
             plt.semilogx(fused_fprs, fused_tprs, label=fused, marker='X')

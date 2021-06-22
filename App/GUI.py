@@ -115,6 +115,9 @@ class Main(Screen):
     def __init__(self, **kwargs):
         super(Main, self).__init__(**kwargs)
 
+        self.imputation = 'ignore'
+        self.imputation_settings = None
+
     location = StringProperty('')
     save_location = StringProperty('')
     experiment_id = ''  # identify by directory containing scores
@@ -285,6 +288,8 @@ class Main(Screen):
                             size=(600, 600))
         self.imputation_settings.set_pop(popup)
         popup.open()
+        self.imputation = self.imputation_settings.get_imputation()
+
 
     def modality_edit_popup(self):
         self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities())
