@@ -24,6 +24,7 @@ import Popups.PopupTanh as TanhPopup
 import Popups.PopupDSig as DSigPopup
 import Popups.PopupSelectiveFusion as SelectiveFusionPopup
 import Popups.PopupModalityEdit as PopupModalityEdit
+import Popups.PopupRunning as thinking
 from Objects.ReportPDFs import generate_summary
 from Objects.DensitySlider import DensityPlots
 from Objects.ResultsPanel import Results
@@ -161,6 +162,7 @@ class Main(Screen):
     fusion_selection_popup = ObjectProperty(Popup)
     loading_pb = ProgressBar()
     increase_amount = NumericProperty(0)
+    running = thinking.RunningPopup()
 
     # messages
     msg_impgen_test = StringProperty('Imposter Samples: {} \n Genuine Samples: {}'.format(0, 0))
@@ -290,6 +292,20 @@ class Main(Screen):
         popup.open()
         self.imputation = self.imputation_settings.get_imputation()
 
+    def running_popup(self):
+        self.running = thinking.RunningPopup()
+        popup = Popup(title="Thinking ...  ", content=self.running, size_hint=(None, None),
+                            size=(600, 600))
+        self.running.set_pop(popup)
+        popup.open()
+
+    def show_thinking(self):
+        self.running_popup()
+        ## https://stackoverflow.com/questions/30595908/building-a-simple-progress-bar-or-loading-animation-in-kivy
+        mythread = threading.Thread(target=self.fuse)
+        mythread.start()
+
+        # Clock.schedule_once(self.fuse)
 
     def modality_edit_popup(self):
         self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities())
@@ -536,9 +552,10 @@ class Main(Screen):
         idx = np.argwhere(np.diff(np.sign(fpr - vert_line))).flatten()
         return tpr[idx][0]
 
+
     def fuse(self):
         self.current_experiment = self.experiment_id_val.text
-        # self.ids.fusing_animation.opacity = 1.0
+
         fusion_list = []
         task_list = []
 
@@ -599,6 +616,9 @@ class Main(Screen):
 
         self.cmcs = cmcs
         self.metric_switch()
+
+        self.running.close()
+
         # generate_summary(results=self.eval,
         #                  roc_plt=self.display_path_roc,
         #                  fmr_rate=float(self.fixed_FMR_val.text),
@@ -654,6 +674,8 @@ class Main(Screen):
 presentation = Builder.load_file("styles.kv")
 Builder.load_file("./StyleSheets/SavePopup.kv")
 Builder.load_file("./StyleSheets/impute.kv")
+Builder.load_file("./StyleSheets/running.kv")
+
 
 
 class TabbedPanelApp(App):

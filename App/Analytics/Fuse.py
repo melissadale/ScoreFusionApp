@@ -33,7 +33,7 @@ np.seterr(divide='ignore', invalid='ignore')
 
 
 class FuseRule:
-    def __init__(self, list_o_rules, score_data, modalities, fusion_settings=None, experiment='', tasks=[]):
+    def __init__(self, list_o_rules, score_data, modalities, fusion_settings=None, experiment='', tasks=[], thinking=None):
         self.list_o_rules = sorted(list(set(list_o_rules)))
         self.score_data = score_data
         self.modalities = modalities
@@ -45,6 +45,7 @@ class FuseRule:
         self.experiment_name = experiment
         self.title = ''
         self.models = []
+        self.thinking = thinking
 
         self.cmc_accuracies = None
 
