@@ -619,10 +619,6 @@ class Main(Screen):
 
         self.running.close()
 
-        # generate_summary(results=self.eval,
-        #                  roc_plt=self.display_path_roc,
-        #                  fmr_rate=float(self.fixed_FMR_val.text),
-        #                  experiment = self.current_experiment)
 
     def metric_switch(self):
 
