@@ -43,6 +43,8 @@ from kivy.uix.popup import Popup
 from kivy.uix.progressbar import ProgressBar
 from kivy.uix.textinput import TextInput
 from kivy.uix.slider import Slider
+import os, sys
+from kivy.resources import resource_add_path, resource_find
 
 kivy.require('1.9.0')
 
@@ -683,4 +685,6 @@ class TabbedPanelApp(App):
 
 
 if __name__ == '__main__':
+    if hasattr(sys, '_MEIPASS'):
+        resource_add_path(os.path.join(sys._MEIPASS))
     TabbedPanelApp().run()
