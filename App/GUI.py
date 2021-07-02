@@ -49,7 +49,7 @@ import os, sys
 from kivy.resources import resource_add_path, resource_find
 
 kivy.require('1.9.0')
-
+# this is a test to see if my sourcetree credentials have been updated appropriately to work with Github's new security do-hicky
 
 def get_tmr(fpr, tpr, fixed_far):
     vert_line = np.full(len(fpr), fixed_far)
