@@ -365,9 +365,6 @@ ScreenManagement:
     chk_verification: chk_verification
     chk_identification: chk_identification
 
-
-    # returned_modalities: returned_modalities
-    detected_lbl: detected_lbl
     modalities_lbl: modalities_lbl
 
     d_slide: density_slider_id
@@ -719,10 +716,12 @@ ScreenManagement:
                             text_size: self.size
                             bold: True
 
+
                         ProgressBar:
                             id: load_pb
                             min: 0
                             max: 100
+                            size_hint_x: 0.8
 
 
                 ##################
@@ -730,56 +729,44 @@ ScreenManagement:
                 GridLayout:
                     size_hint_x: 0.3
                     size_hint_y: 0.9
-                    rows: 2
+                    rows: 3
 
-                    GridLayout:
-                        cols: 2
-                        size_hint_y: 0.2
+                    canvas.before:
+                        Color:
+                            rgba: 0.87, 0.87, 0.87, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
-                        Label:
-                            id: detected_lbl
-                            size_hint_x: 0.8
-                            size_hint_y: 1.0
-                            halign: 'center'
-                            valign: 'top'
-                            text_size: self.size
+                    Image:
+                        size_hint_y: 0.1
+                        id: loading_animation_gif
+                        # source: './graphics/SF_DARK_GIF.zip'
+                        source: './graphics/logo.png'
+                        center_x: self.parent.center_x
+                        center_y: self.parent.center_y
+                        size_hint_y: None
+                        height: dp(60)  # The fixed height you want
+                        anim_delay: 0.5
+                        mipmap: True
 
-                            opacity: 1.0
-                            text: '\n\nDetected Modalities'
-                            bold: True
-                            underline: True
-                            color: hex('#18453B')
 
-                            canvas.before:
-                                Color:
-                                    rgba: 0.91, 0.93, 0.96, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
+                    Button:
+                        id: detected_mods_btn
+                        size_hint_y: 0.1
+                        valign: 'top'
+                        background_normal: ''
+                        background_color: 0.87, 0.87, 0.87, 1
+                        opacity: 0.0
+                        on_press:
+                            root.modality_edit_popup()
 
-                        Button:
-                            size_hint_x: 0.2
-                            size_hint_y: 1.0
-                            height: dp(20)
-                            valign: 'top'
-                            background_normal: ''
-                            background_color: 0.91, 0.93, 0.96, 1
-                            on_press:
-                                root.modality_edit_popup()
+                        canvas:
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                                source: './graphics/detected_modalities.png'
 
-                            Image:
-                                source: './graphics/edit_pencil.png'
-                                allow_stretch: True
-                                center_x: self.parent.center_x
-                                center_y: self.parent.center_y
-                                size_hint_y: None
-                                height: dp(20)
-                                canvas.before:
-                                    Color:
-                                        rgba: 0.91, 0.93, 0.96, 1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
 
                     Label:
                         id: modalities_lbl
@@ -790,12 +777,6 @@ ScreenManagement:
                         text_size: self.size
                         color: 0, 0, 0, 1
 
-                        canvas.before:
-                            Color:
-                                rgba: 0.91, 0.93, 0.96, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
 
 
                 ##################
@@ -810,7 +791,9 @@ ScreenManagement:
                         bold: True
                         on_press:
                             root.set_normalization()
-                            root.set_progressbar(root.location)
+                            root.loading_animation(root.location)
+
+                            # root.set_progressbar(root.location)
                             # Main.tabby_tab.switch_to(Main.tab_list[2])
                             # https://stackoverflow.com/questions/38883763/kivy-button-on-press-switch-to-next-tab-using-kivy-builder
                 ##################

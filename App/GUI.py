@@ -14,6 +14,8 @@ from collections import defaultdict
 from functools import partial
 import functools
 import threading
+from collections import OrderedDict
+import re
 
 import Analytics.format_data as fm2
 import Analytics.Fuse as Fuse
@@ -137,7 +139,7 @@ class Main(Screen):
 
     previous_ex_label = ObjectProperty(None)
 
-    detected_lbl = ObjectProperty('')
+    # detected_lbl = ObjectProperty('')
     modalities_lbl = ObjectProperty('')
 
     returned_modalities = StringProperty('')
@@ -202,8 +204,7 @@ class Main(Screen):
 
     data_object = None
 
-    def set_progressbar(self, path):
-        self.load_path = path
+    def set_progressbar(self):
         threading.Thread(target=self.setup, args=()).start()
 
     def setup(self):
@@ -242,7 +243,7 @@ class Main(Screen):
         self.display_path_density = self.densities.get_image_path()
 
         self.returned_modalities = ''.join([x + '\n' for x in self.data_object.get_modalities()])
-        self.detected_lbl.opacity = 1.0
+
 
         self.beans = self.data_object.get_beans()
         num_gen_train = self.beans['gen_train']
@@ -258,6 +259,7 @@ class Main(Screen):
         self.msg_train = '[b]TRAINING: [/b] {} Subjects'.format(num_gen_train)
         self.num_mods = len(self.data_object.get_modalities())
         self.msg_modalities = '[b]MODALITIES DETECTED: [/b] {}'.format(self.num_mods)
+        self.ids.loading_animation_gif.source = './graphics/logo.png'
 
     def modality_update_helper(self, args):
         user_vals = self.edit_mods.get_updates()
@@ -296,18 +298,22 @@ class Main(Screen):
 
     def running_popup(self):
         self.running = thinking.RunningPopup()
-        popup = Popup(title="Thinking ...  ", content=self.running, size_hint=(None, None),
+        popup = Popup(title="Fusion Experiments", content=self.running, size_hint=(None, None),
                             size=(600, 600))
         self.running.set_pop(popup)
         popup.open()
 
     def show_thinking(self):
         self.running_popup()
-        ## https://stackoverflow.com/questions/30595908/building-a-simple-progress-bar-or-loading-animation-in-kivy
         mythread = threading.Thread(target=self.fuse)
         mythread.start()
 
-        # Clock.schedule_once(self.fuse)
+    def loading_animation(self, path):
+        self.load_path = path
+        self.ids.loading_animation_gif.source = './graphics/SF_DARK_GIF.zip'
+        self.ids.detected_mods_btn.opacity = 1.0
+        mythread = threading.Thread(target=self.set_progressbar)
+        mythread.start()
 
     def modality_edit_popup(self):
         self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities())
@@ -593,28 +599,77 @@ class Main(Screen):
 
         # build strings
         for fused in [x for x in mets.index if ':' in x]:
-            accuracy = '[b]'+fused+': [/b] {}'.format(0) + truncate(mets.loc[fused]['AUC'], 6) + '\n'
-            eer = '[b]'+fused+': [/b] {}'.format(0) + truncate(mets.loc[fused]['EER'], 6) + '\n'
+            accuracy = '[b]'+fused+' [/b]' + truncate((mets.loc[fused]['AUC']*100), 2) + ' %\n'
+            eer = '[b]'+fused+' [/b]' + truncate((mets.loc[fused]['EER']*100), 2) + ' %\n'
 
-            tmr = '[b]'+fused+': [/b] {}'.format(0) + truncate(get_tmr(tpr=mets.loc[fused]['TPRS'],
-                                                                                 fpr=mets.loc[fused]['FPRS'],
-                                                                                 fixed_far=float(self.fixed_FMR_val.text)), 6) + '\n'
-            self.msg_accuracy_ROC = self.msg_accuracy_ROC + accuracy
-            self.msg_eer_ROC = self.msg_eer_ROC + eer
-            self.msg_fixed_tmr_ROC = self.msg_fixed_tmr_ROC + tmr
+            tmr = '[b]'+fused+' [/b]' + truncate((get_tmr(tpr=mets.loc[fused]['TPRS'],
+                                                 fpr=mets.loc[fused]['FPRS'],
+                                                 fixed_far=float(self.fixed_FMR_val.text))*100), 2) + ' %\n'
+            if fused in self.msg_accuracy_ROC:
+                # previous experiment, need to update values
+                temp_breakdown = self.msg_accuracy_ROC.split('\n')
+                starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
+                temp_breakdown[starts[0]] = accuracy
+                t_ROC = ''.join(temp_breakdown)
+
+                temp_breakdown = self.msg_eer_ROC.split('\n')
+                starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
+                temp_breakdown[starts[0]] = eer
+                # temp_breakdown = [i + '\n' for i in temp_breakdown if '\n' not in i]
+                t_eer_ROC = ''.join(temp_breakdown).replace('%', '%\n')
+
+                temp_breakdown = self.msg_fixed_tmr_ROC.split('\n')
+                starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
+                temp_breakdown[starts[0]] = tmr
+                t_tmr_ROC = ''.join(temp_breakdown)
+
+
+            else:
+                t_ROC = self.msg_accuracy_ROC + accuracy
+                t_eer_ROC = self.msg_eer_ROC + eer
+                t_tmr_ROC = self.msg_fixed_tmr_ROC + tmr
+
+
+            self.msg_accuracy_ROC = t_ROC
+            self.msg_eer_ROC = t_eer_ROC
+            self.msg_fixed_tmr_ROC = t_tmr_ROC
+
             self.eval_ROC = mets
 
 
         #  CMC Metrics
         if cmcs is not None:
             for fused in [x for x in cmcs.columns if ':' in x]:
-                r1 = '[b]'+fused+': [/b] {}'.format(0) + str(truncate(cmcs.iloc[0][fused], 6 ))+ '\n'
-                r2 = '[b]'+fused+': [/b] {}'.format(0) + str(truncate(cmcs.iloc[1][fused], 6 )) + '\n'
-                rk = '[b]'+fused+': [/b] {}'.format(0) + str(truncate(cmcs.iloc[5][fused], 6 )) + '\n'
+                r1 = '[b]'+fused+' [/b]' + truncate((cmcs.iloc[0][fused]*100), 2) + ' %\n'
+                r2 = '[b]'+fused+' [/b]' + truncate((cmcs.iloc[1][fused]*100), 2) + ' %\n'
+                rk = '[b]'+fused+' [/b]' + truncate((cmcs.iloc[5][fused]*100), 2) + ' %\n'
 
-                self.msg_accuracy_CMC = self.msg_accuracy_CMC + r1
-                self.msg_eer_CMC = self.msg_eer_CMC + r2
-                self.msg_fixed_tmr_CMC = self.msg_fixed_tmr_CMC + rk
+                if fused in self.msg_accuracy_CMC:
+                    # previous experiment, need to update values
+                    temp_breakdown = self.msg_accuracy_CMC.split('\n')
+                    starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
+                    temp_breakdown[starts[0]] = r1
+                    t_accuracy_CMC = ''.join(temp_breakdown)
+
+                    temp_breakdown = self.msg_eer_CMC.split('\n')
+                    starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
+                    temp_breakdown[starts[0]] = r2
+                    t_eer_CMC = ''.join(temp_breakdown)
+
+                    temp_breakdown = self.msg_fixed_tmr_CMC.split('\n')
+                    starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
+                    temp_breakdown[starts[0]] = rk
+                    t_fixed_tmr_CMC = ''.join(temp_breakdown)
+
+                else:
+                    t_accuracy_CMC = self.msg_accuracy_CMC + r1
+                    t_eer_CMC = self.msg_eer_CMC + r2
+                    t_fixed_tmr_CMC = self.msg_fixed_tmr_CMC + rk
+
+                self.msg_accuracy_CMC = t_accuracy_CMC
+                self.msg_eer_CMC = t_eer_CMC
+                self.msg_fixed_tmr_CMC = t_fixed_tmr_CMC
+
 
         self.cmcs = cmcs
         self.metric_switch()
@@ -630,6 +685,7 @@ class Main(Screen):
             self.msg_accuracy = self.msg_accuracy_ROC
             self.msg_eer = self.msg_eer_ROC
             self.msg_fixed_tmr = self.msg_fixed_tmr_ROC
+            self.update_evals()
 
         elif active_metrics == 'CMC':
             self.msg_accuracy = self.msg_accuracy_CMC
@@ -649,14 +705,14 @@ class Main(Screen):
                 estimated_tmr = get_tmr(fpr=self.eval_ROC.loc[mods]['FPRS'], tpr=self.eval_ROC.loc[mods]['TPRS'],
                                         fixed_far=float(self.fixed_FMR_val.text))
                 self.eval_ROC.loc[mods]['TMR'] = estimated_tmr
-                tmr = '[b]' + mods + ': [/b] {}'.format(0) + truncate(estimated_tmr, 6) + '\n'
+                tmr = '[b]' + mods + ' [/b]' + truncate((estimated_tmr*100), 2) + '%\n'
 
                 new_vals = new_vals + tmr
 
         elif tmp == 'CMC':
             fused = [x for x in self.cmcs.columns if ":" in x]
             for mods in fused:
-                tmr = '[b]' + mods + ': [/b] {}'.format(0) + str(truncate(self.cmcs.iloc[int(self.ids.fixed_fmr.text)][mods], 6)) + '\n'
+                tmr = '[b]' + mods + ' [/b]' + truncate((self.cmcs.iloc[int(self.ids.fixed_fmr.text)][mods]*100), 2) + '%\n'
 
                 new_vals = new_vals + tmr
 
