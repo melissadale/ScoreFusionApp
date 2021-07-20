@@ -1,9 +1,11 @@
 import kivy
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.button import Button
 from kivy.uix.label import Label
+from kivy.uix.widget import Widget
 
 kivy.require('1.11.1')
 
@@ -13,6 +15,7 @@ class ModeEditPopup(GridLayout):
         super().__init__()
         self.done = False
         self.modality_list = kwargs.get('modality_list')
+        self.msg = kwargs.get('msg')
         self.cols = 1
         self.return_vals = None
         self.fpop = None
@@ -22,35 +25,53 @@ class ModeEditPopup(GridLayout):
         else:
             self.changes = dict.fromkeys(set(self.modality_list), [])
 
-            header = GridLayout(cols=4, size_hint_y=0.1)
+            header = BoxLayout(cols=4, size_hint_y=0.1,)
 
-            header.add_widget(Label(text='Fuse', size_hint_x=0.2, bold=True))
-            header.add_widget(Label(text='Modality Name', size_hint_x=0.4, bold=True,
-                                    color=(0.05, 0.69, 0.29, 1.0)))
-            header.add_widget(Label(text='Similarity ', size_hint_x=0.2, bold=True))
-            header.add_widget(Label(text='Dissimilarity ', size_hint_x=0.2, bold=True))
+            header.add_widget(Label(text='Fuse', size_hint_x=None, width=10, bold=True,
+                                    text_size = self.size, halign="right", valign="middle"))
+            header.add_widget(Label(text='Modality',size_hint_x=None, width=290, bold=True,
+                                    text_size = self.size, color=(0.05, 0.69, 0.29, 1.0),
+                                    halign="left", valign="middle"))
+            header.add_widget(Label(text='Similarity ', size_hint_x=None, width=100, bold=True,
+                                    text_size = self.size, halign="right", valign="middle"))
+            header.add_widget(Label(text='Dissimilarity ', size_hint_x=None, width=100, bold=True,
+                                    text_size = self.size, halign="right", valign="middle"))
 
             self.add_widget(header)
 
             layout = GridLayout(cols=1, size_hint_y=0.8)
-            for mod in self.modality_list:
-                row = GridLayout(cols=4)
 
-                fuse_chk = CheckBox(size_hint_x=0.2, size_hint_y=None, active=True)
+            if '_ORIGINAl' in self.modality_list:
+                original = [x for x in self.modality_list if "_ORIGINAL" in self.modality_list]
+            else:
+                original = self.modality_list
+
+            for mod in original:
+                row = BoxLayout()
+
+                fuse_chk = CheckBox(width=30, height=30, size_hint_x=None, size_hint_y=None,
+                                    active=True)
                 row.add_widget(fuse_chk)
+                row.add_widget(Widget(width=15, height=30, size_hint_x=None, size_hint_y=None))
 
-                mod_name = TextInput(text=mod, size_hint_x=0.4, size_hint_y=None, multiline=False,
-                                     height=30, valign='top')
+                mod_name = TextInput(text=mod, width=250, height=30, size_hint_x=None, size_hint_y=None,
+                                     multiline=False)
                 row.add_widget(mod_name)
+                row.add_widget(Widget(width=60, height=30, size_hint_x=None, size_hint_y=None))
 
-                similarity_chk = CheckBox(size_hint_x=0.2, size_hint_y=None, active=True, group=mod)
+
+                similarity_chk = CheckBox(width=30, height=30, size_hint_x=None, size_hint_y=None,
+                                    active=True, group=mod)
                 row.add_widget(similarity_chk)
+                row.add_widget(Widget(width=60, height=30, size_hint_x=None, size_hint_y=None))
 
-                dissimilarity_chk = CheckBox(size_hint_x=0.2, size_hint_y=None, group=mod)
+                dissimilarity_chk = CheckBox(width=50, height=30, size_hint_x=None, size_hint_y=None,
+                                    group=mod)
                 row.add_widget(dissimilarity_chk)
 
                 layout.add_widget(row)
                 self.changes[mod] = [mod_name, similarity_chk, dissimilarity_chk, fuse_chk]
+
             layout.add_widget(Label(text=''))
 
             self.add_widget(layout)
@@ -70,6 +91,7 @@ class ModeEditPopup(GridLayout):
 
     def update_dicts(self, arg):
         tmp = dict.fromkeys(set(self.modality_list), [])
+        tmp_message = ''
 
         for mod, val in tmp.items():
             mod_lbl = self.changes[mod][0].text
@@ -78,6 +100,10 @@ class ModeEditPopup(GridLayout):
             use_mod = self.changes[mod][3].active
             tmp[mod] = [mod_lbl, mod_sim, mod_dis, use_mod]
 
+            if self.changes[mod][3].active:
+                tmp_message = tmp_message + mod_lbl + '\n\n'
+
+        self.msg.text = tmp_message
         self.return_vals = tmp
         self.close()
 

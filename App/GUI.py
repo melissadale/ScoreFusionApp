@@ -30,7 +30,7 @@ import Popups.PopupRunning as thinking
 from Objects.ReportPDFs import generate_summary
 from Objects.DensitySlider import DensityPlots
 from Objects.ResultsPanel import Results
-
+from Objects.AppPaths import Loc, SaveLoc
 from Analytics.Experiment import Experiment
 
 # Program to explain how to create tabbed panel App in kivy: https://www.geeksforgeeks.org/python-tabbed-panel-in-kivy/
@@ -49,7 +49,7 @@ import os, sys
 from kivy.resources import resource_add_path, resource_find
 
 kivy.require('1.9.0')
-# this is a test to see if my sourcetree credentials have been updated appropriately to work with Github's new security do-hicky
+
 
 def get_tmr(fpr, tpr, fixed_far):
     vert_line = np.full(len(fpr), fixed_far)
@@ -68,48 +68,6 @@ def truncate(f, n):
 
 class ScreenManagement(ScreenManager):
     pass
-
-
-class Loc(Screen):
-    load_location = StringProperty('')
-    data = ObjectProperty(None)
-
-    def __init__(self, **args):
-        Clock.schedule_once(self.init_widget, 0)
-        return super(Loc, self).__init__(**args)
-
-    def init_widget(self, *args):
-        fc = self.ids['filechoose']
-        fc.bind(on_entry_added=self.update_file_list_entry)
-        fc.bind(on_subentry_to_entry=self.update_file_list_entry)
-
-    def update_file_list_entry(self, file_choose, file_list_entry, *args):
-        file_list_entry.children[0].color = (0.0, 0.0, 0.0, 1.0)  # File Names
-        file_list_entry.children[1].color = (0.0, 0.0, 0.0, 1.0)  # Dir Names
-
-    def change_text(self, path):
-        self.load_location = str(path)
-
-
-class SaveLoc(Screen):
-    save_location = StringProperty('')
-    data = ObjectProperty(None)
-
-    # def __init__(self, **args):
-    #     Clock.schedule_once(self.init_widget, 0)
-    #     return super(SaveLoc, self).__init__(**args)
-
-    def init_widget(self, *args):
-        fc = self.ids['filechooser_save']
-        fc.bind(on_entry_added=self.update_file_list_entry)
-        fc.bind(on_subentry_to_entry=self.update_file_list_entry)
-
-    def update_file_list_entry(self, file_chooser, file_list_entry, *args):
-        file_list_entry.children[0].color = (0.0, 0.0, 0.0, 1.0)  # File Names
-        file_list_entry.children[1].color = (0.0, 0.0, 0.0, 1.0)  # Dir Names
-
-    def change_text(self, path):
-        self.save_location = str(path)
 
 
 class Main(Screen):
@@ -138,8 +96,6 @@ class Main(Screen):
     norm_params = []
 
     previous_ex_label = ObjectProperty(None)
-
-    # detected_lbl = ObjectProperty('')
     modalities_lbl = ObjectProperty('')
 
     returned_modalities = StringProperty('')
@@ -150,6 +106,7 @@ class Main(Screen):
 
     # images
     display_path_density = StringProperty(None)
+    detected_button_image = StringProperty('./graphics/detected_modalities_blank.png')
     dens_set = ObjectProperty()
     set_type = 'Entire'
     d_slide = Slider()
@@ -189,7 +146,8 @@ class Main(Screen):
     msg_fixed_tmr = StringProperty('')
 
 
-    eval_ROC = defaultdict(lambda: defaultdict(partial(np.ndarray, 0)))
+    eval_ROC = None
+    eval_CMC = None
     fixed_FMR_val = TextInput()
     experiment_id_val = TextInput()
     current_experiment = StringProperty('')
@@ -206,6 +164,7 @@ class Main(Screen):
 
     def set_progressbar(self):
         threading.Thread(target=self.setup, args=()).start()
+        self.detected_button_image = './graphics/detected_modalities_edit.png'
 
     def setup(self):
         self.data_object = fm2.Score_data(path=self.load_path, test_perc=self.test_perc,
@@ -260,8 +219,9 @@ class Main(Screen):
         self.num_mods = len(self.data_object.get_modalities())
         self.msg_modalities = '[b]MODALITIES DETECTED: [/b] {}'.format(self.num_mods)
         self.ids.loading_animation_gif.source = './graphics/logo.png'
+        self.detected_button_image = './graphics/detected_modalities_edit.png'
 
-    def modality_update_helper(self, args):
+    def modality_update_helper(self):
         user_vals = self.edit_mods.get_updates()
         self.data_object.update_datas(user_vals)
         self.update_modality_label()
@@ -311,12 +271,12 @@ class Main(Screen):
     def loading_animation(self, path):
         self.load_path = path
         self.ids.loading_animation_gif.source = './graphics/SF_DARK_GIF.zip'
-        self.ids.detected_mods_btn.opacity = 1.0
         mythread = threading.Thread(target=self.set_progressbar)
         mythread.start()
 
     def modality_edit_popup(self):
-        self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities())
+        self.edit_mods = PopupModalityEdit.ModeEditPopup(modality_list=self.data_object.get_modalities(),
+                                                         msg=self.ids.modalities_lbl)
         popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
                                 size=(600, 600))
         self.edit_mods.set_pop(popup)
@@ -351,7 +311,7 @@ class Main(Screen):
 
     def fusion_selective_popup(self):
         self.show_fusion_selection = SelectiveFusionPopup.SelectiveFusionPopup()
-        self.fusion_selection_popup = Popup(title="Selective Fusion", content=self.show_fusion_selection, size_hint=(None, None),
+        self.fusion_selection_popup = Popup(title="Sequential Fusion", content=self.show_fusion_selection, size_hint=(None, None),
                                 size=(600, 600))
         self.show_fusion_selection.set_pop(self.fusion_selection_popup, self.data_object.get_modalities())
 
@@ -500,10 +460,16 @@ class Main(Screen):
 
         things_to_save = self.save_settings.get_save_reports()
         if 'report' in things_to_save:
-            generate_summary(modalities=self.data_object.get_modalities(), results=self.eval_ROC,
-                             roc_plt=self.display_path_roc,
-                             fmr_rate=float(self.fixed_FMR_val.text),
-                             save_to_path=save_location+ '/FusionReport/')
+            if self.eval_ROC is not None:
+                generate_summary(results=self.eval_ROC,
+                                 roc_plt=self.results_panel.change_setting(given='ROC'),
+                                 fmr_rate=float(self.fixed_FMR_val.text),
+                                 save_to_path=save_location+ '/FusionReport/')
+            if self.eval_CMC is not None:
+                generate_summary(results=self.eval_CMC,
+                                 roc_plt=self.results_panel.change_setting(given='CMC'),
+                                 fmr_rate=float(self.fixed_FMR_val.text),
+                                 save_to_path=save_location+ '/FusionReport/')
 
         if 'estimates' in things_to_save:
             if not os.path.exists(save_location + '/FusionReport/DensityEstimates/'):
@@ -598,6 +564,9 @@ class Main(Screen):
         self.current_experiment = self.results_panel.get_experiment()
 
         # build strings
+        self.msg_accuracy_ROC = ''
+        self.msg_eer_ROC = ''
+        self.msg_fixed_tmr_ROC = ''
         for fused in [x for x in mets.index if ':' in x]:
             accuracy = '[b]'+fused+' [/b]' + truncate((mets.loc[fused]['AUC']*100), 2) + ' %\n'
             eer = '[b]'+fused+' [/b]' + truncate((mets.loc[fused]['EER']*100), 2) + ' %\n'
@@ -605,70 +574,29 @@ class Main(Screen):
             tmr = '[b]'+fused+' [/b]' + truncate((get_tmr(tpr=mets.loc[fused]['TPRS'],
                                                  fpr=mets.loc[fused]['FPRS'],
                                                  fixed_far=float(self.fixed_FMR_val.text))*100), 2) + ' %\n'
-            if fused in self.msg_accuracy_ROC:
-                # previous experiment, need to update values
-                temp_breakdown = self.msg_accuracy_ROC.split('\n')
-                starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
-                temp_breakdown[starts[0]] = accuracy
-                t_ROC = ''.join(temp_breakdown)
 
-                temp_breakdown = self.msg_eer_ROC.split('\n')
-                starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
-                temp_breakdown[starts[0]] = eer
-                # temp_breakdown = [i + '\n' for i in temp_breakdown if '\n' not in i]
-                t_eer_ROC = ''.join(temp_breakdown).replace('%', '%\n')
+            self.msg_accuracy_ROC = self.msg_accuracy_ROC + accuracy
+            self.msg_eer_ROC = self.msg_eer_ROC + eer
+            self.msg_fixed_tmr_ROC = self.msg_fixed_tmr_ROC + tmr
 
-                temp_breakdown = self.msg_fixed_tmr_ROC.split('\n')
-                starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
-                temp_breakdown[starts[0]] = tmr
-                t_tmr_ROC = ''.join(temp_breakdown)
-
-
-            else:
-                t_ROC = self.msg_accuracy_ROC + accuracy
-                t_eer_ROC = self.msg_eer_ROC + eer
-                t_tmr_ROC = self.msg_fixed_tmr_ROC + tmr
-
-
-            self.msg_accuracy_ROC = t_ROC
-            self.msg_eer_ROC = t_eer_ROC
-            self.msg_fixed_tmr_ROC = t_tmr_ROC
-
-            self.eval_ROC = mets
-
+        self.eval_ROC = mets
+        self.eval_CMC = cmcs
 
         #  CMC Metrics
         if cmcs is not None:
-            for fused in [x for x in cmcs.columns if ':' in x]:
-                r1 = '[b]'+fused+' [/b]' + truncate((cmcs.iloc[0][fused]*100), 2) + ' %\n'
-                r2 = '[b]'+fused+' [/b]' + truncate((cmcs.iloc[1][fused]*100), 2) + ' %\n'
-                rk = '[b]'+fused+' [/b]' + truncate((cmcs.iloc[5][fused]*100), 2) + ' %\n'
+            self.msg_accuracy_CMC = ''
+            self.msg_eer_CMC = ''
+            self.msg_fixed_tmr_CMC = ''
 
-                if fused in self.msg_accuracy_CMC:
-                    # previous experiment, need to update values
-                    temp_breakdown = self.msg_accuracy_CMC.split('\n')
-                    starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
-                    temp_breakdown[starts[0]] = r1
-                    t_accuracy_CMC = ''.join(temp_breakdown)
+            for fused in [x for x in cmcs.index if ':' in x]:
+                r1 = '[b]'+fused+' [/b]' + truncate((cmcs.loc[fused]['Rank1'] * 100), 2) + ' %\n'
+                r2 = '[b]'+fused+' [/b]' + truncate((cmcs.loc[fused]['Rank2'] * 100), 2) + ' %\n'
+                rk = '[b]'+fused+' [/b]' + truncate((cmcs.loc[fused]['Rank5'] * 100), 2) + ' %\n'
 
-                    temp_breakdown = self.msg_eer_CMC.split('\n')
-                    starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
-                    temp_breakdown[starts[0]] = r2
-                    t_eer_CMC = ''.join(temp_breakdown)
 
-                    temp_breakdown = self.msg_fixed_tmr_CMC.split('\n')
-                    starts = [n for n, l in enumerate(temp_breakdown) if fused in l]
-                    temp_breakdown[starts[0]] = rk
-                    t_fixed_tmr_CMC = ''.join(temp_breakdown)
-
-                else:
-                    t_accuracy_CMC = self.msg_accuracy_CMC + r1
-                    t_eer_CMC = self.msg_eer_CMC + r2
-                    t_fixed_tmr_CMC = self.msg_fixed_tmr_CMC + rk
-
-                self.msg_accuracy_CMC = t_accuracy_CMC
-                self.msg_eer_CMC = t_eer_CMC
-                self.msg_fixed_tmr_CMC = t_fixed_tmr_CMC
+                self.msg_accuracy_CMC = self.msg_accuracy_CMC + r1
+                self.msg_eer_CMC = self.msg_eer_CMC + r2
+                self.msg_fixed_tmr_CMC = self.msg_fixed_tmr_CMC + rk
 
 
         self.cmcs = cmcs
@@ -710,9 +638,9 @@ class Main(Screen):
                 new_vals = new_vals + tmr
 
         elif tmp == 'CMC':
-            fused = [x for x in self.cmcs.columns if ":" in x]
+            fused = [x for x in self.cmcs.index if ":" in x]
             for mods in fused:
-                tmr = '[b]' + mods + ' [/b]' + truncate((self.cmcs.iloc[int(self.ids.fixed_fmr.text)][mods]*100), 2) + '%\n'
+                tmr = '[b]' + mods + ' [/b]' + truncate((self.cmcs.loc[mods]['Rank' + self.ids.fixed_fmr.text]*100), 2) + '%\n'
 
                 new_vals = new_vals + tmr
 

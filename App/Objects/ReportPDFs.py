@@ -69,9 +69,16 @@ def generate_summary(results=None, roc_plt=None, fmr_rate=0.01, save_to_path='./
     pdf.line(x1=pdf.l_margin, y1=198, x2=epw, y2=198)
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(col_width, th, 'Fusion Rule', border=0)
-    pdf.cell(col_width, th, 'AUC', border=0)
-    pdf.cell(col_width, th, 'EER', border=0)
-    pdf.cell(col_width, th, 'TMR @'+str(fmr_rate)+'FMR', border=0)
+
+    if 'AUC' in results:
+        pdf.cell(col_width, th, 'AUC', border=0)
+        pdf.cell(col_width, th, 'EER', border=0)
+        pdf.cell(col_width, th, 'TMR @'+str(fmr_rate)+'FMR', border=0)
+    else:
+        pdf.cell(col_width, th, 'Rank 1', border=0)
+        pdf.cell(col_width, th, 'Rank 2', border=0)
+        pdf.cell(col_width, th, 'Rank '+str(fmr_rate), border=0)
+
     pdf.ln(th)
     pdf.line(x1=pdf.l_margin, y1=207, x2=epw, y2=207)
 
@@ -86,16 +93,30 @@ def generate_summary(results=None, roc_plt=None, fmr_rate=0.01, save_to_path='./
         pdf.cell(col_width, th, rule_key, border=0)
         pdf.set_font('Arial', '', 12)
 
-        pdf.cell(col_width, th, str(round(results.loc[rule_key]['AUC'], 5)), border=0)
-        pdf.cell(col_width, th, str(round(results.loc[rule_key]['EER'], 5)), border=0)
+        if 'AUC' in results:
+            pdf.cell(col_width, th, str(round(results.loc[rule_key]['AUC'], 5)), border=0)
+            pdf.cell(col_width, th, str(round(results.loc[rule_key]['EER'], 5)), border=0)
 
-        # TPR Calculation
-        tpr = results.loc[rule_key]['TPRS']
-        vert_line = np.full(len(results.loc[rule_key]['FPRS']), fmr_rate)
-        idx = np.argwhere(np.diff(np.sign(results.loc[rule_key]['FPRS'] - vert_line))).flatten()
-        tpr_val = tpr[idx][0]
+            # TPR Calculation
+            tpr = results.loc[rule_key]['TPRS']
+            vert_line = np.full(len(results.loc[rule_key]['FPRS']), fmr_rate)
+            idx = np.argwhere(np.diff(np.sign(results.loc[rule_key]['FPRS'] - vert_line))).flatten()
+            tpr_val = tpr[idx][0]
 
-        pdf.cell(col_width, th, str(round(tpr_val, 5)), border=0)
-        pdf.ln(th)
+            pdf.cell(col_width, th, str(round(tpr_val, 5)), border=0)
+            pdf.ln(th)
+
+        else:
+            pdf.cell(col_width, th, str(round(results.loc[rule_key]['r1'], 5)), border=0)
+            pdf.cell(col_width, th, str(round(results.loc[rule_key]['EER'], 5)), border=0)
+
+            # TPR Calculation
+            tpr = results.loc[rule_key]['TPRS']
+            vert_line = np.full(len(results.loc[rule_key]['FPRS']), fmr_rate)
+            idx = np.argwhere(np.diff(np.sign(results.loc[rule_key]['FPRS'] - vert_line))).flatten()
+            tpr_val = tpr[idx][0]
+
+            pdf.cell(col_width, th, str(round(tpr_val, 5)), border=0)
+            pdf.ln(th)
 
     pdf.output(save_to_path+'ResultsSummary-'+str(date.today())+'.pdf', 'F')

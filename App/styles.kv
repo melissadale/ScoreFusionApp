@@ -646,7 +646,7 @@ ScreenManagement:
                                 text: 'Median&MAD'
                                 color: 0,0,0,1
 
-                        ##### Second Row
+                        ##### Second Row TODO
                             CheckBox:
                                 group: 'norm'
                                 halign: 'right'
@@ -757,7 +757,7 @@ ScreenManagement:
                         valign: 'top'
                         background_normal: ''
                         background_color: 0.87, 0.87, 0.87, 1
-                        opacity: 0.0
+                        opacity: 1.0
                         on_press:
                             root.modality_edit_popup()
 
@@ -765,7 +765,7 @@ ScreenManagement:
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
-                                source: './graphics/detected_modalities.png'
+                                source: root.detected_button_image
 
 
                     Label:
@@ -1059,7 +1059,7 @@ ScreenManagement:
                         n_active: root.selective_fusion_click(self, self.active)
 
                     Label:
-                        text: 'Selective Fusion'
+                        text: 'Sequential Fusion'
                         size_hint_x: 0.8
                         halign: 'left'
                         valign: 'middle'

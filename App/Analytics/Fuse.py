@@ -175,114 +175,42 @@ class FuseRule:
     def extract_alpha_beta(self, gen, imp):
         # get bin width for gen and imp
         gen_Q1 = np.quantile(gen, 0.25)
-        gen_Q3 = np.quantile(gen, 0.75)
-        gen_IQR = gen_Q3 - gen_Q1
-        cube = np.cbrt(len(gen))
-        gen_width = 2*gen_IQR/cube
+        imp_Q3 = np.quantile(imp, 0.75)
 
-        imp_Q1 = np.quantile(gen, 0.25)
-        imp_Q3 = np.quantile(gen, 0.75)
-        imp_IQR = imp_Q3 - imp_Q1
-        cube_imp = np.cbrt(len(imp))
-        imp_width = 2*imp_IQR/cube_imp
+        ran = np.array([imp_Q3, gen_Q1])
 
-        # Dummy X specifies the values for the x axis
-        dummy_x = np.linspace(0.0, 1.0, 100)
-        gen_kde = gaussian_kde(gen, bw_method=gen_width)
-        y_gen = gen_kde.evaluate(dummy_x)
-
-        imp_kde = gaussian_kde(imp, bw_method=imp_width)
-        y_imp = imp_kde.evaluate(dummy_x)
-        y = y_imp / y_gen
-
-        # # # # # #
-        potential_x = []
-        potential_y = []
-
-        # "Near 1" range
-        lower, upper = 1.0, 1.0
-
-        while len(potential_y) <= 10:
-            for i in range(len(y)):
-                lower = lower - 0.001
-                upper = upper + 0.001
-
-                if lower <= y[i] <= upper:
-                    potential_x.append(dummy_x[i])
-                    potential_y.append(y[i])
-
-        return min(potential_x), max(potential_x)
+        return min(ran), max(ran)
 
     def sequential_rule(self):
-        train_y = self.score_data[list(self.score_data)[0]]['train_y']
-        test_y = self.score_data[list(self.score_data)[0]]['test_y']
+        t0 = time.time()
+        seq_title='SequentialRule'
+        train = self.score_data[self.score_data['Train_Test'] == 'TRAIN']
 
         baseline = self.fusion_settings['baseline']
 
-        modals=list(self.score_data.keys())
-        other_modalities = [x for x in modals if x != baseline and 'Rule' not in x and 'TRAIN' not in x]
-
-        train_x = np.array(self.score_data[baseline]['train_x'])
-        test_x = np.array(self.score_data[baseline]['test_x'])
-
         if self.fusion_settings['auto']:
-            # data_C.loc[data_C['Label'] == 1.0]['Data']
-            gen_scores = test_x[test_y == 1.0]
-            imp_scores = test_x[test_y == 0.0]
+            seq_title = seq_title+'(AUTO):'
+
+            gen_scores = train[train['Label'] == 1.0][self.modalities]
+            imp_scores = train[train['Label'] == 0.0][self.modalities]
             alpha, beta = self.extract_alpha_beta(gen_scores, imp_scores)
 
         else:
             alpha = self.fusion_settings['alpha']
             beta = self.fusion_settings['beta']
+            seq_title = seq_title+'('+str(round(alpha, 2))+'-'+str(round(alpha, 2))+'):'
+
+        if seq_title not in self.fused_modalities:
+            self.fused_modalities.append(seq_title)
 
 
-        for score_index in range(len(train_x)):
-            if alpha <= train_x[score_index] < beta:
-                others = [train_x[score_index]]
-                for mod in other_modalities:
-                    others.append(self.score_data[mod]['train_x'][score_index])
+        self.score_data[seq_title] = self.score_data[baseline]
+        # df[(df['closing_price'] >= 99) & (df['closing_price'] <= 101)]
+        self.score_data[seq_title] = \
+            self.score_data[(self.score_data[seq_title]>= alpha) & (self.score_data[seq_title]< beta)].mean(axis=1)
 
-                train_x[score_index] = np.average(np.array(others))
-
-        for score_index in range(len(test_x)):
-            if alpha <= test_x[score_index] < beta:
-                others = [test_x[score_index]]
-                for mod in other_modalities:
-                    others.append(self.score_data[mod]['train_x'][score_index])
-
-                test_x[score_index] = np.average(np.array(others))
-
-        # else:
-            # precentage_tracker=0
-            # precentage_tracker_gen = 0
-            # precentage_tracker_imp = 0
-            #
-            # for score_index in range(len(test_x)):
-            #     if alpha <= test_x[score_index] < beta:
-            #         precentage_tracker += 1
-            #         if test_y[score_index] == 1.0:
-            #             precentage_tracker_gen +=1
-            #
-            #         if test_y[score_index] == 0.0:
-            #             precentage_tracker_imp +=1
-            #
-            #         others = [test_x[score_index]]
-            #         for mod in other_modalities:
-            #             others.append(self.modal_info[mod]['test_x'][score_index])
-            #         test_x[score_index] = np.average(np.array(others))
-            #
-            # perc_changed = precentage_tracker/len(test_x)
-            # print('!!!!!!!!!!!!!!!!!!!!!!!!')
-            # print('PERCENTAGE CHANGED:' + str(perc_changed))
-            # print('Imposter Fused: ' + str(precentage_tracker_imp/precentage_tracker))
-            # print('Genuine Fused: ' + str(precentage_tracker_gen/precentage_tracker))
-
-        # print("sequential RULE TOOK: " + str(time.time()-start_time) + ' seconds')
-        self.title = self.title + 'Auto__'+ baseline + '-' +  str(int(alpha*100)) + '-' + str(int(beta*100))
-        self.return_modals['SequentialRule'] = {'train_x': train_x,
-                                       'train_y': train_y,
-                                       'test_x': test_x,
-                                       'test_y': test_y}
+        t1 = time.time()
+        self.models.append(TrainedModel(title=seq_title, train_time=t1 - t0, model=None))
 
     def sum_rule(self):
         t0 = time.time()
@@ -291,7 +219,6 @@ class FuseRule:
         if sum_title not in self.fused_modalities:
             self.fused_modalities.append(sum_title)
 
-        # self.score_data.insert(len(self.modalities), sum_title, self.score_data[self.modalities].mean(axis=1))
         self.score_data[sum_title] = self.score_data[self.modalities].mean(axis=1)
         t1 = time.time()
 
@@ -364,11 +291,12 @@ class FuseRule:
                 os.makedirs('./generated/experiments/CMC/' + self.experiment_name)
             self.cmc_accuracies = self.cmc()
 
-        self.modalities.extend(self.fused_modalities)
+        # self.modalities.extend(self.fused_modalities)
         return self.results, self.models, self.cmc_accuracies
 
     def cmc(self):
         cmc = Identify.Identify(data=self.score_data, modalities=self.modalities, fused_modalities=self.fused_modalities, k=20, exp_id=self.experiment_name)
         cmc.chop_and_sort()
         cmc.generate_plots()
-        return cmc.get_accuracies()
+        # return cmc.get_accuracies()
+        return cmc.get_cmc_summary()

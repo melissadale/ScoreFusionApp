@@ -15,18 +15,31 @@ class Results:
         self.roc_object = ROCsPlots(slider=kwargs.get('slider'), experiment=kwargs.get('experiment'))
         self.cmc_object = CMCsPlots(slider=kwargs.get('slider'), experiment=kwargs.get('experiment'))
 
-    def change_setting(self):
-        if self.active == 'ROC':
-            self.active = 'CMC'
-            self.build_plot_list()
-            self.toggle = './graphics/CMC.png'
-            self.active_display_path = './generated/experiments/CMC/' + self.get_experiment() + '/CMC-all.png'
+    def change_setting(self, given=False):
+        if given:
+            if given == 'ROC':
+                self.active = 'ROC'
+                self.build_plot_list()
+                self.toggle = './graphics/ROC.png'
+                self.active_display_path = './generated/experiments/ROC/' + self.get_experiment() + '/CMC-all.png'
 
-        elif self.active == 'CMC':
-            self.active = 'ROC'
-            self.build_plot_list()
-            self.toggle = './graphics/ROC.png'
-            self.active_display_path = './generated/experiments/ROC/' + self.get_experiment() + '/all.png'
+            elif given == 'CMC':
+                self.active = 'CMC'
+                self.build_plot_list()
+                self.toggle = './graphics/CMC.png'
+                self.active_display_path = './generated/experiments/CMC/' + self.get_experiment() + '/all.png'
+        else:
+            if self.active == 'ROC':
+                self.active = 'CMC'
+                self.build_plot_list()
+                self.toggle = './graphics/CMC.png'
+                self.active_display_path = './generated/experiments/CMC/' + self.get_experiment() + '/CMC-all.png'
+
+            elif self.active == 'CMC':
+                self.active = 'ROC'
+                self.build_plot_list()
+                self.toggle = './graphics/ROC.png'
+                self.active_display_path = './generated/experiments/ROC/' + self.get_experiment() + '/all.png'
 
         return self.active_display_path
 

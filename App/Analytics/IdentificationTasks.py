@@ -87,3 +87,19 @@ class Identify:
 
     def get_accuracies(self):
         return self.hits
+
+    def get_cmc_summary(self):
+        rows = self.modalities + self.fused_modalities
+        cols = ['Rank'+ str(i) for i in range(1, 21)] + ['Experiment']
+        res = pd.DataFrame(columns=cols, index=rows)
+        for mod in self.modalities:
+            for i in range(1,21):
+                res.loc[mod]['Rank'+str(i)] = self.hits[mod][i-1]
+            res.loc[mod]['Experiment'] = 'Baseline'
+
+        for mod in self.fused_modalities:
+            for i in range(1, 21):
+                res.loc[mod]['Rank' + str(i)] = self.hits[mod][i - 1]
+            res.loc[mod]['Experiment'] =self.experiment_id
+
+        return res

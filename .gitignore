@@ -9,3 +9,5 @@ Objects/__pycache__/
 ResultsSummary-2021-01-05.pdf
 __pycache__/
 App/tests/
+App/face/
+App/finger/
