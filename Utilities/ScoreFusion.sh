@@ -1,8 +1,8 @@
 #!/bin/bash
 mkdir ScoreFusion
 cd ScoreFusion
-conda create --name scorefusion_environment python=3.8.5
-conda activate scorefusion_environment
+conda create --name scorefusion_env python=3.8.5
+conda activate scorefusion_env
 echo "************************************************************"
 echo "****   Cloning ScoreFusionApp from GitHub"
 echo "************************************************************"
