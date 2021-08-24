@@ -149,6 +149,7 @@ class Main(Screen):
     eval_ROC = None
     eval_CMC = None
     fixed_FMR_val = TextInput()
+    fixed_rank = TextInput()
     experiment_id_val = TextInput()
     current_experiment = StringProperty('')
 
@@ -460,15 +461,19 @@ class Main(Screen):
 
         things_to_save = self.save_settings.get_save_reports()
         if 'report' in things_to_save:
+            print('___________________________________________________')
+            print(os.path.dirname(os.path.realpath(__file__)))
             if self.eval_ROC is not None:
+                self.results_panel.change_setting(given='ROC')
                 generate_summary(results=self.eval_ROC,
-                                 roc_plt=self.results_panel.change_setting(given='ROC'),
+                                 roc_plt=os.path.realpath(__file__).replace('GUI.py', '')+'generated/experiments/ROC/'+self.current_experiment+'/all.png',
                                  fmr_rate=float(self.fixed_FMR_val.text),
                                  save_to_path=save_location+ '/FusionReport/')
             if self.eval_CMC is not None:
+                self.results_panel.change_setting(given='CMC')
                 generate_summary(results=self.eval_CMC,
-                                 roc_plt=self.results_panel.change_setting(given='CMC'),
-                                 fmr_rate=float(self.fixed_FMR_val.text),
+                                 roc_plt=os.path.realpath(__file__).replace('GUI.py', '')+'generated/experiments/CMC/'+self.current_experiment+'/CMC-all.png',
+                                 fmr_rate='5',
                                  save_to_path=save_location+ '/FusionReport/')
 
         if 'estimates' in things_to_save:

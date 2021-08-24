@@ -93,7 +93,10 @@ def generate_summary(results=None, roc_plt=None, fmr_rate=0.01, save_to_path='./
         pdf.cell(col_width, th, rule_key, border=0)
         pdf.set_font('Arial', '', 12)
 
+        report_type = ''
+
         if 'AUC' in results:
+            report_type = 'Verification-'
             pdf.cell(col_width, th, str(round(results.loc[rule_key]['AUC'], 5)), border=0)
             pdf.cell(col_width, th, str(round(results.loc[rule_key]['EER'], 5)), border=0)
 
@@ -107,16 +110,10 @@ def generate_summary(results=None, roc_plt=None, fmr_rate=0.01, save_to_path='./
             pdf.ln(th)
 
         else:
-            pdf.cell(col_width, th, str(round(results.loc[rule_key]['r1'], 5)), border=0)
-            pdf.cell(col_width, th, str(round(results.loc[rule_key]['EER'], 5)), border=0)
-
-            # TPR Calculation
-            tpr = results.loc[rule_key]['TPRS']
-            vert_line = np.full(len(results.loc[rule_key]['FPRS']), fmr_rate)
-            idx = np.argwhere(np.diff(np.sign(results.loc[rule_key]['FPRS'] - vert_line))).flatten()
-            tpr_val = tpr[idx][0]
-
-            pdf.cell(col_width, th, str(round(tpr_val, 5)), border=0)
+            report_type = 'Identification-'
+            pdf.cell(col_width, th, str(round(results.loc[rule_key]['Rank1'], 5)), border=0)
+            pdf.cell(col_width, th, str(round(results.loc[rule_key]['Rank2'], 5)), border=0)
+            pdf.cell(col_width, th, str(round(results.loc[rule_key]['Rank'+str(fmr_rate)], 5)), border=0)
             pdf.ln(th)
 
-    pdf.output(save_to_path+'ResultsSummary-'+str(date.today())+'.pdf', 'F')
+    pdf.output(save_to_path+'ResultsSummary-'+report_type+str(date.today())+'.pdf', 'F')
