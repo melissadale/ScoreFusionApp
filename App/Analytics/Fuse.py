@@ -191,8 +191,8 @@ class FuseRule:
         if self.fusion_settings['auto']:
             seq_title = seq_title+'(AUTO):'
 
-            gen_scores = train[train['Label'] == 1.0][self.modalities]
-            imp_scores = train[train['Label'] == 0.0][self.modalities]
+            gen_scores = train[train['Label'] == 1.0][baseline]
+            imp_scores = train[train['Label'] == 0.0][baseline]
             alpha, beta = self.extract_alpha_beta(gen_scores, imp_scores)
 
         else:
@@ -204,10 +204,9 @@ class FuseRule:
             self.fused_modalities.append(seq_title)
 
 
-        self.score_data[seq_title] = self.score_data[baseline]
-        # df[(df['closing_price'] >= 99) & (df['closing_price'] <= 101)]
         self.score_data[seq_title] = \
-            self.score_data[(self.score_data[seq_title]>= alpha) & (self.score_data[seq_title]< beta)].mean(axis=1)
+            self.score_data[(self.score_data[baseline]>= alpha) & (self.score_data[baseline]< beta)][self.modalities].mean(axis=1)
+        self.score_data[seq_title].fillna(self.score_data[baseline], inplace=True)
 
         t1 = time.time()
         self.models.append(TrainedModel(title=seq_title, train_time=t1 - t0, model=None))
