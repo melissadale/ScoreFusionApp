@@ -75,11 +75,11 @@ class Main(Screen):
     #     self.reset()
     #
     # def reset(self):
-    def __init__(self, **kwargs):
-        super(Main, self).__init__(**kwargs)
-
-        self.imputation = 'ignore'
-        self.imputation_settings = None
+    # def __init__(self, **kwargs):
+    #     super(Main, self).__init__(**kwargs)
+    #
+    #     self.imputation = 'ignore'
+    #     self.imputation_settings = None
 
     location = StringProperty('')
     save_location = StringProperty('')
@@ -170,7 +170,7 @@ class Main(Screen):
     def setup(self):
         self.data_object = fm2.Score_data(path=self.load_path, test_perc=self.test_perc,
                              normalize=self.normalize, norm_param=self.norm_params,
-                             lbl=self.ids.modalities_lbl)
+                             lbl=self.ids.modalities_lbl, impute_method=self.imputation_settings.get_imputation())
         self.data_object.load_data()
         self.data_object.normalize_data()
         self.score_data = self.data_object.get_score_data()
@@ -255,7 +255,8 @@ class Main(Screen):
                             size=(600, 600))
         self.imputation_settings.set_pop(popup)
         popup.open()
-        self.imputation = self.imputation_settings.get_imputation()
+        # self.imputation = self.imputation_settings.get_imputation()
+
 
     def running_popup(self):
         self.running = thinking.RunningPopup()

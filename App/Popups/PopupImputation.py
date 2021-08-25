@@ -14,16 +14,19 @@ class Imputation(GridLayout):
 
     def set_imputation(self):
         if self.ids['chk_mean'].active:
-            self.imp = ['Mean']
+            self.imputation = 'Mean'
 
         elif self.ids['chk_median'].active:
-            self.imp = ['Median']
+            self.imputation = 'Median'
 
         elif self.ids['chk_Bayesian'].active:
-            self.imp = ['Bayesain']
+            self.imputation = 'Bayesain'
 
         elif self.ids['chk_DT'].active:
-            self.imp = ['DT']
+            self.imputation ='DT'
+
+        elif self.ids['chk_KNN'].active:
+            self.imputation = ['KNN', int(self.ids.k.text)]
 
         self.close()
 

@@ -129,6 +129,7 @@
 
                 FloatLayout:
                     TextInput:
+                        id: k
                         pos_hint: {'center_x': .1, 'center_y': .5}
                         size_hint: (.65, .3)
                         height: 30
@@ -143,5 +144,5 @@
 
     Button:
         size_hint_y: 0.1
-        text: 'Impute'
+        text: 'Set Imputation'
         on_press: root.set_imputation()

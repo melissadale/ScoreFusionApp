@@ -10,3 +10,4 @@ __pycache__/
 App/tests/
 App/face/
 App/finger/
+App/unit_t/

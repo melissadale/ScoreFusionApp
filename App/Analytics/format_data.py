@@ -7,6 +7,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.api as sm
+from sklearn.impute import SimpleImputer
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer
+from sklearn.linear_model import BayesianRidge
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -24,7 +30,32 @@ class Score_data:
         self.score_data_inactive = pd.DataFrame()
         self.modalities = []
         self.lbl = kwargs.get('lbl')
+        self.impute_method = kwargs.get('impute_method')
 
+    def impute(self):
+        if type(self.impute_method)==list:
+            k = self.impute_method[1]
+            self.impute_method = self.impute_method[0]
+
+        if self.impute_method == 'ignore':
+            return
+        elif self.impute_method == 'Mean':
+            imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+
+        elif self.impute_method == 'Median':
+            imp = SimpleImputer(missing_values=np.nan, strategy='median')
+
+        elif self.impute_method == 'Bayesain':
+            imp = IterativeImputer(random_state=0, estimator=BayesianRidge())
+
+        elif self.impute_method == 'DT':
+            imp = IterativeImputer(random_state=0, estimator=DecisionTreeRegressor())
+
+        elif self.impute_method == 'KNN':
+            imp = IterativeImputer(random_state=0, estimator=KNeighborsRegressor(n_neighbors=k))
+
+        imp.fit(self.score_data[self.score_data['Train_Test']=='TRAIN'][self.modalities])
+        self.score_data[self.modalities] = imp.transform(self.score_data[self.modalities])
 
     def make_density_plots(self, gen, imp, label='', norm_type='None', modality='', exp=''):
         if not os.path.exists('./generated/density/' + label + '/PDF/'):
@@ -160,6 +191,7 @@ class Score_data:
 
             if data.shape[0] == data.shape[1]: # TODO
                 ## take triangle and flatten into row - column - value format
+                data.fillna(-100, inplace=True)
                 tmp_scores = data.where(np.triu(np.ones(data.shape)).astype(np.bool))
                 tmp_scores = tmp_scores.stack().reset_index()
                 tmp_scores.columns = ['Probe_Ids', 'Gallery_ID', 'Value']
@@ -187,7 +219,7 @@ class Score_data:
 
             # Otherwise, data is in column format
             else:
-                # This is MITRE data
+                # This is Large Data Format
                 if all(x in data.columns for x in ['probe_file_id', 'probe_subject_id',
                                                    'candidate_file_id', 'candidate_subject_id', 'genuine_flag']):
 
@@ -203,6 +235,8 @@ class Score_data:
                     self.score_data[key] = data['score']
 
             file_data = file_data.merge(tmp_file_data, how='outer')
+            file_data[file_data == -100] = np.nan
+
         modality_list = [x for x in file_data if x not in ['Label', 'Probe_ID', 'Gallery_ID', 'Train_Test'] and
                          '_ORIGINAL' not in x]
 
@@ -219,6 +253,7 @@ class Score_data:
 
         self.score_data = file_data
         self.modalities = modality_list
+        self.impute()
         return
 
 
