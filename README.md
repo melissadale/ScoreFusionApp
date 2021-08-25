@@ -1,6 +1,5 @@
-# Status: *INPROGRESS* #
-This application is in active development. There are known bugs and additional 
-functionality in the works. 
+# Status: 1.0 release #
+The first version of this application is released. For a full description of this app, how to use it and how to adapt it, consult the user's manual or one of the wikis listed in the Documentation section below. 
 
 # USAGE #
 
@@ -25,36 +24,5 @@ More detailed installation directions can be read [here](https://github.com/meli
 1. [Input File Formats](https://github.com/melissadale/ScoreFusionApp/wiki/Input-File-Formats)
 This describes the formats and files allowed by the application. 
 2. [Errors, debugging, and feature requests](https://github.com/melissadale/ScoreFusionApp/issues/new)   
-
-
-# DEVELOPMENT NOTES # 
-This section is dedicated to developers who may be working on the development of the application. It describes how to set up the coding
-environment properly. A **user** of the application should follow the above 
-section: Setup to run on your machine. 
-
-At times, setting up Kivy for the first time can be challenging. For
-instance on Windows, the order that packages are installed matters. 
-
-When installing Kivy to python environment the first time, it is a good idea
-to follow:  [StackOverflow Post](https://stackoverflow.com/questions/49482753/sdl2-importerror-dll-load-failed-the-specified-module-could-not-be-found-and)
-
-**In summary**, run the following
-```
-python -m pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew --extra-index-url https://kivy.org/downloads/packages/simple/
-```
-
-**If updating requirements.txt**, generate with pipreqs, move kivy to the bottom and add the following before it
-```
-wheel==0.34.2
-setuptools==46.1.3.post20200325
-docutils==0.16
-pygments==2.6.1
-pypiwin32==223
-kivy.deps.sdl2==0.2.0
-kivy.deps.glew==0.2.0
---extra-index-url https://kivy.org/downloads/packages/simple/
-```
-
-Note on version numbers: these were taken from a currently working system. If needed to determine which version is installed, use `pip show package` to see information. 
 
 

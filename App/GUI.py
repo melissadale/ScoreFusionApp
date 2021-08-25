@@ -27,7 +27,7 @@ import Popups.PopupDSig as DSigPopup
 import Popups.PopupSelectiveFusion as SelectiveFusionPopup
 import Popups.PopupModalityEdit as PopupModalityEdit
 import Popups.PopupRunning as thinking
-# from Objects.ReportPDFs import generate_summary
+from Objects.ReportPDFs import generate_summary
 from Objects.DensitySlider import DensityPlots
 from Objects.ResultsPanel import Results
 from Objects.AppPaths import Loc, SaveLoc
@@ -461,20 +461,18 @@ class Main(Screen):
 
         things_to_save = self.save_settings.get_save_reports()
         if 'report' in things_to_save:
-            print('___________________________________________________')
-            print(os.path.dirname(os.path.realpath(__file__)))
-            # if self.eval_ROC is not None:
-            #     self.results_panel.change_setting(given='ROC')
-            #     generate_summary(results=self.eval_ROC,
-            #                      roc_plt=os.path.realpath(__file__).replace('GUI.py', '')+'generated/experiments/ROC/'+self.current_experiment+'/all.png',
-            #                      fmr_rate=float(self.fixed_FMR_val.text),
-            #                      save_to_path=save_location+ '/FusionReport/')
-            # if self.eval_CMC is not None:
-            #     self.results_panel.change_setting(given='CMC')
-            #     generate_summary(results=self.eval_CMC,
-            #                      roc_plt=os.path.realpath(__file__).replace('GUI.py', '')+'generated/experiments/CMC/'+self.current_experiment+'/CMC-all.png',
-            #                      fmr_rate='5',
-            #                      save_to_path=save_location+ '/FusionReport/')
+            if self.eval_ROC is not None:
+                self.results_panel.change_setting(given='ROC')
+                generate_summary(results=self.eval_ROC,
+                                 roc_plt=os.path.realpath(__file__).replace('GUI.py', '')+'generated/experiments/ROC/'+self.current_experiment+'/all.png',
+                                 fmr_rate=float(self.fixed_FMR_val.text),
+                                 save_to_path=save_location+ '/FusionReport/')
+            if self.eval_CMC is not None:
+                self.results_panel.change_setting(given='CMC')
+                generate_summary(results=self.eval_CMC,
+                                 roc_plt=os.path.realpath(__file__).replace('GUI.py', '')+'generated/experiments/CMC/'+self.current_experiment+'/CMC-all.png',
+                                 fmr_rate='5',
+                                 save_to_path=save_location+ '/FusionReport/')
 
         if 'estimates' in things_to_save:
             if not os.path.exists(save_location + '/FusionReport/DensityEstimates/'):
