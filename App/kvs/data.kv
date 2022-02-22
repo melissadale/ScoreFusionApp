@@ -1,0 +1,425 @@
+##########################################################
+## Colors:
+##   primary green: 24, 64, 70  -> 0.09, 0.25, 0.27 -> hex('#18453B')
+##   bright green: 13, 177, 75 -> 0.05, 0.69, 0.29 -> hex('#0DB14B')
+##   Lesser green:  0, 129, 131 -> 0.00, 0.51, 0.51 ->hex('#008183')
+##   orange: 240, 133, 33 -> 0.94, 0.52, 0.129 ->hex('#F08521')
+##   gold: 200, 154, 88 -> 0.78, 0.60, 0.35 ->hex('#C89A58')
+##########################################################
+#:import hex kivy.utils.get_color_from_hex
+
+<Data@GridLayout>
+    rows: 2
+    cols: 2
+
+    ############################################
+    ###                 Left-Top
+    ############################################
+    GridLayout:
+        size_hint_x: 0.7
+        size_hint_y: 0.9
+
+        rows: 5
+
+        # File Chooser
+        BoxLayout:
+            size_hint_y: 0.1
+            Button:
+                size: 150, 50
+                size_hint: None, None
+
+                text: 'Score Directory'
+                background_color: hex('#0DB14B')
+                color: 1, 1, 1, 1
+                on_release:
+                    app.root.current = "directory_screen"
+                    #root.manager.transition.direction = "left"
+                    #data_path.text = app.root.manager.get_screen("directory_screen").path
+
+            Label:
+                id: data_path
+                size: self.parent.size[0] - 160, 50
+                size_hint: None, None
+                text_size: self.size
+                color: hex('#008183')
+
+        # Imputation Settings
+        BoxLayout:
+            size_hint_y: 0.1
+
+            Label:
+                size_hint_x: 0.5
+                padding: [20, (self.height-self.line_height-10)/2]
+                text: 'How to handle [b] missing scores[b]: '
+                text_size: self.size
+                markup: True
+                color: hex('#C89A58')
+                font_size: self.width/17
+
+            BoxLayout:
+                size_hint_x: 0.25
+                CheckBox:
+                    id: missing_ignore_chk
+                    size_hint_x: 0.2
+                    n_active: root.ignore_click(self, self.active)
+                    active: True
+                    color: hex('#0DB14B')
+                    halign: 'right'
+                    text_size: self.size
+
+                Label:
+                    size_hint_x: 0.8
+                    halign: 'left'
+                    valign: 'top'
+                    text_size: self.width, None
+                    text: 'Ignore Probe'
+                    bold: True
+                    color: 0.0, 0.0, 0.0, 1
+
+            BoxLayout:
+                size_hint_x: 0.25
+                CheckBox:
+                    id: missing_impute_chk
+                    size_hint_x: 0.2
+                    n_active: root.impute_click(self, self.active)
+                    active: False
+                    color: hex('#0DB14B')
+                    halign: 'right'
+                    text_size: self.size
+
+                Label:
+                    size_hint_x: 0.8
+                    halign: 'left'
+                    valign: 'top'
+                    text_size: self.width, None
+                    text: 'Impute'
+                    bold: True
+                    color: 0.0, 0.0, 0.0, 1
+
+
+        # Train Test Divide - Previous
+        GridLayout:
+            size_hint_y: 0.3
+            rows: 4
+            cols: 2
+
+            CheckBox:
+                id: train_test_chk
+                n_active: root.train_split_checkbox(self, self.active)
+                size_hint_x: 0.10
+                active: True
+                color: hex('#0DB14B')
+
+            Label:
+                text: '[b] Divide the dataset into training and testing: [b]'
+                size_hint_x: 0.90
+                text_size: self.size
+                halign: "left"
+                valign: "middle"
+
+                markup: True
+                color: 0.0, 0.0, 0.0, 1
+
+            Widget:
+                size_hint_x: 0.10
+            BoxLayout:
+                id: divide_data
+                size_hint_x: 0.90
+                TextInput:
+                    id: test_input
+                    size_hint: (.1, None)
+                    height: 30
+                    text: '20'
+                    multiline: False
+                    on_text_validate: root.update_test((int(test_input.text)))
+
+                Label:
+                    id: test_label
+                    size_hint_x: 0.90
+                    text_size: self.size
+                    halign: "left"
+                    valign: "bottom"
+                    color: 0,0,0,1
+
+            CheckBox:
+                id: load_previous_chk
+                size_hint_x: 0.10
+                n_active: root.train_split_checkbox(self, self.active, 'previous')
+                color: hex('#0DB14B')
+
+            Label:
+                text: "[b] Load previous experiment's score settings [b]"
+                size_hint_x: 0.90
+                text_size: self.size
+                halign: "left"
+                valign: "middle"
+
+                markup: True
+                color: 0.0, 0.0, 0.0, 1
+
+            Widget:
+                size_hint_x: 0.10
+            BoxLayout:
+                id: load_previous
+                size_hint_x: 0.90
+                opacity: 0.0
+                Label:
+                    text_size: self.size
+                    halign: "left"
+                    valign: "middle"
+                    text: 'Feature not yet implemented.'
+                    color: 0,0,0,1
+
+
+        # Normalizations
+        GridLayout:
+            size_hint_y: 0.3
+            rows: 2
+
+            Label:
+                text: 'Normalization'
+                padding: [20, 0]
+                color: hex('#0DB14B')
+                halign: 'left'
+                text_size: self.size
+                bold: True
+
+            GridLayout:
+                rows: 2
+                cols: 8
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_MinMax
+                    active: True
+                    color: hex('#0DB14B')
+                    on_active:
+                        root.normalize = 'MinMax'
+
+
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'MinMax'
+                    color: 0,0,0,1
+
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_ZScore
+                    color: hex('#0DB14B')
+
+                    on_active:
+                        root.normalize = 'ZScore'
+
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'Z-Score'
+                    color: 0,0,0,1
+
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_Decimal
+                    color: hex('#0DB14B')
+                    on_active:
+                        root.normalize = 'Decimal'
+
+
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'Decimal'
+                    color: 0,0,0,1
+
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_Median
+                    color: hex('#0DB14B')
+                    on_active:
+                        root.normalize = 'Median'
+
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'Median&MAD'
+                    color: 0,0,0,1
+
+            ##### Second Row
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_DSigmoid
+                    color: hex('#0DB14B')
+                    on_active:
+                        root.DSig_popup()
+                        root.normalize = 'DSigmoid'
+
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'Double Sigmoid'
+                    color: 0,0,0,1
+
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_TanhEstimator
+                    color: hex('#0DB14B')
+                    on_active:
+                        root.Tanh_popup()
+                        root.normalize = 'TanhEstimator'
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'Tanh Estimator'
+                    color: 0,0,0,1
+
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_Biweight
+                    color: hex('#0DB14B')
+                    on_active:
+                        root.normalize = 'Biweight'
+
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'Biweight Estimator'
+                    color: 0,0,0,1
+
+                CheckBox:
+                    group: 'norm'
+                    halign: 'right'
+                    id : chk_None
+                    color: hex('#0DB14B')
+                    on_active:
+                        root.normalize = 'None'
+
+                Label:
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    text: 'None'
+                    color: 0,0,0,1
+
+
+        # Progress Bar
+        GridLayout:
+            rows: 2
+            size_hint_y: 0.2
+
+            GridLayout:
+                cols: 2
+
+                Label:
+                    text: 'Progress'
+                    size_hint_x: 0.2
+                    color: hex('#18453B')
+                    text_size: self.size
+                    bold: True
+
+                Label:
+                    id: pb_status_lbl
+                    size_hint_x: 0.8
+                    text: 'Progress '
+                    color: hex('#C89A58')
+                    text_size: self.size
+                    bold: True
+
+            ProgressBar:
+                id: load_pb
+                min: 0
+                max: 100
+                size_hint_x: 0.8
+
+    ############################################
+    ###                 Right-Top
+    ############################################
+    GridLayout:
+        size_hint_x: 0.3
+        size_hint_y: 0.9
+        rows: 3
+
+        canvas.before:
+            Color:
+                rgba: 0.88, 0.88, 0.88, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+
+        Image:
+            id: loading_animation_gif
+            size_hint_y: 0.1
+
+            source: './kvs/graphics/logo.png'
+            center_x: self.parent.center_x
+            center_y: self.parent.center_y
+
+            height: dp(60)  # The fixed height you want
+            anim_delay: 0.5
+            mipmap: True
+
+
+        Button:
+            id: detected_mods_btn
+            size_hint_y: 0.1
+            valign: 'top'
+            background_normal: ''
+            background_color: 0.87, 0.87, 0.87, 1
+            opacity: 1.0
+            on_press:
+                # root.modality_edit_popup()
+
+            canvas:
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                    #source: root.detected_button_image
+                    source: './kvs/graphics/detected_modalities_blank.png'
+
+
+        Label:
+            id: modalities_lbl
+            size_hint_y: 0.8
+            valign: 'top'
+            halign: 'center'
+            text_size: self.size
+            color: 0, 0, 0, 1
+
+
+
+
+    ############################################
+    ###                 Bottom
+    ############################################
+    Button:
+        size_hint_x: 0.7
+        size_hint_y: 0.1
+
+        text: 'Load Data'
+        background_color: hex('#0DB14B')
+        bold: True
+        on_press:
+            root.get_data_files()
+            # root.loading_animation(root.location)
+
+    Button:
+        size_hint_x: 0.3
+        size_hint_y: 0.1
+
+        text: 'Reset'
+        background_color: hex('#F08521')
+        on_press:
+            # root.reset_popup()

@@ -1,0 +1,83 @@
+##########################################################
+## Colors:
+##   primary green: 24, 64, 70  -> 0.09, 0.25, 0.27 -> hex('#18453B')
+##   bright green: 13, 177, 75 -> 0.05, 0.69, 0.29 -> hex('#0DB14B')
+##   Lesser green:  0, 129, 131 -> 0.00, 0.51, 0.51 ->hex('#008183')
+##   orange: 240, 133, 33 -> 0.94, 0.52, 0.129 ->hex('#F08521')
+##   gold: 200, 154, 88 -> 0.78, 0.60, 0.35 ->hex('#C89A58')
+##########################################################
+#:import hex kivy.utils.get_color_from_hex
+
+<ScreenManagement>:
+    PanelLayout:
+    DirectoryScreen:
+
+<DirectoryScreen>:
+    name: "directory_screen"
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    GridLayout:
+        rows: 2
+
+        FileChooserIconView:
+            id: filechooser
+            path: '.'
+
+        BoxLayout:
+            size_hint_y: 0.2
+
+            Button:
+                text: 'Select'
+                size_hint_x: .5
+                on_press:
+                    root.manager.transition.direction = 'right'
+                    root.manager.current = 'main_screen'
+                    root.manager.get_screen("main_screen").data_path(filechooser.path)
+
+            Button:
+                text: 'Cancel'
+                size_hint_x: .5
+                on_press:
+                    root.manager.transition.direction = 'right'
+                    root.manager.current = 'main_screen'
+
+<PanelLayout>:
+    name: 'main_screen'
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+    TabbedPanel:
+        size_hint: 1, 1
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        do_default_tab: False
+        tab_width: self.size[0]/len(self.tab_list)
+
+        background_color: (1, 1, 1, 1)
+        background_image: 'path/to/background/image'
+
+        color: hex('#18453B')
+
+        ##########################################################
+        # DATA
+        ##########################################################
+        TabbedPanelItem:
+            id: data_input_panel
+            text: 'Data'
+
+        TabbedPanelItem:
+            text: 'Estimate Densities'
+
+        TabbedPanelItem:
+            text: 'Fusion'
+
+        TabbedPanelItem:
+            text: 'Results'
