@@ -5,8 +5,6 @@ import math
 import statsmodels.api as sm
 import glob
 import os
-import sklearn.utils._typedefs
-import sklearn.neighbors._partition_nodes
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 from sklearn.experimental import enable_iterative_imputer  # noqa
@@ -37,7 +35,6 @@ class ScoreData():
 
             elif 'test' in file.lower():
                 split = 'TEST'
-
 
 
             # TODO check for cases where there are not identities included

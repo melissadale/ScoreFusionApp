@@ -1,11 +1,15 @@
 import kivy
 from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.lang import Builder
+
 kivy.require('2.0.0')
 from kvs.DataInputPanel import Data
-Builder.load_file('Fusion.kv')
+from kvs.DensityPanel import Densities
+from kvs.FusionPanel import FusionPanel
+from kvs.ResultsPanel import ResultsPanel
+
+Builder.load_file('SFA.kv')
 
 
 class ScreenManagement(ScreenManager):
@@ -34,6 +38,15 @@ class PanelLayout(Screen):
         # add Tab Panels
         self.dat = Data()
         self.ids['data_input_panel'].add_widget(self.dat)
+
+        self.density = Densities()
+        self.ids['density_panel'].add_widget(self.density)
+
+        self.fusion_tab = FusionPanel()
+        self.ids['fusion_panel'].add_widget(self.fusion_tab)
+
+        self.results_tab = ResultsPanel()
+        self.ids['results_panel'].add_widget(self.results_tab)
 
     def data_path(self, pth):
         self.dat.set_data_location(pth)

@@ -1,0 +1,53 @@
+##########################################################
+## Colors:
+##   primary green: 24, 64, 70  -> 0.09, 0.25, 0.27 -> hex('#18453B')
+##   bright green: 13, 177, 75 -> 0.05, 0.69, 0.29 -> hex('#0DB14B')
+##   Lesser green:  0, 129, 131 -> 0.00, 0.51, 0.51 ->hex('#008183')
+##   orange: 240, 133, 33 -> 0.94, 0.52, 0.129 ->hex('#F08521')
+##   gold: 200, 154, 88 -> 0.78, 0.60, 0.35 ->hex('#C89A58')
+##########################################################
+#:import hex kivy.utils.get_color_from_hex
+
+<Densities@GridLayout>
+    rows: 2
+    cols: 2
+
+    ############################################
+    ###                 Left-Top
+    ############################################
+    GridLayout:
+        size_hint_x: 0.7
+        size_hint_y: 0.9
+
+
+    ############################################
+    ###                 Right-Top
+    ############################################
+    GridLayout:
+        size_hint_x: 0.3
+        size_hint_y: 0.9
+        rows: 3
+
+
+    ############################################
+    ###                 Bottom
+    ############################################
+    Button:
+        size_hint_x: 0.7
+        size_hint_y: 0.1
+
+        text: 'Load Data'
+        background_color: hex('#0DB14B')
+        bold: True
+        on_press:
+            # root.get_data_files()
+            # root.loading_animation(root.location)
+
+    Button:
+        size_hint_x: 0.3
+        size_hint_y: 0.1
+
+        text: 'Reset'
+        background_color: hex('#F08521')
+        on_press:
+            # root.reset_popup()
