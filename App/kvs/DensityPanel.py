@@ -12,18 +12,9 @@ Builder.load_file('kvs/density.kv')
 class Densities(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.display_path_density = '../generated/density/overlap/Train/face-C.png'
 
-        self.imputation = None
-        # self.beans = None
-
-    def set_beans(self, counts, modalities):
-        print(counts.to_markdown())
-        # self.ids['num_training_subs'].text = '[b]{:,} Probe Subjects[/b]'.format(counts.at['Train-Set',
-        #                                                                                    'Genuine_Subjects'])
-        #
-        # self.ids['num_testing_subs'].text = '[b]{:,} Probe Subjects[/b]'.format(counts.at['Test-Set',
-        #                                                                                   'Genuine_Subjects'])
-
+    def set_beans(self, counts, sparcity, modalities):
         self.ids['num_training'].text = '[b]Probes: [/b] {:,} '.format(counts.at['Train-Set',
                                                                                  'Total_Probes'])
         self.ids['num_training_gens'].text = '[b]Genuine Probes: [/b] {:,} '.format(counts.at['Train-Set',
@@ -38,5 +29,9 @@ class Densities(GridLayout):
         self.ids['num_testing_imps'].text = '[b]Imposter Probes: [/b] {:,} '.format(counts.at['Test-Set',
                                                                                               'Imposter_Probes'])
 
-        self.ids['num_mods'].text = str(len(modalities))
+        self.ids['num_mods'].text = '[b]' + str(len(modalities)) + '[/b]'
         self.ids['num_probes'].text = '[b]{:,}[/b]'.format(counts.at['Dataset', 'Total_Probes'])
+        self.ids['num_subs'].text = '[b]{:,}[/b]'.format(counts.at['Dataset', 'Total_Subjects'])
+        self.ids['perc_full'].text = '[b]{:.0%}[/b]'.format(sparcity.at['Total', '% Full'])
+    def update_density_type(self):
+        print('Press')

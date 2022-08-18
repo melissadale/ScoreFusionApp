@@ -192,10 +192,11 @@ class ScoreData:
         describe = DataDescribe(train=train, test=test, df=self.data, modals=self.get_modalities())
 
         describe.count_beans()
+        describe.sparcenessness()
 
         describe.make_density_plots(subset='Train')
         describe.make_density_plots(subset='Test')
         describe.make_density_plots()
 
-        return describe.beans
+        return describe.beans, describe.sparcity
 

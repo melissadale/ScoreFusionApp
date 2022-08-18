@@ -20,9 +20,21 @@
 
         rows: 2
 
-        Label:
+        Button:
+            id: density_button
             size_hint_y: 0.8
-            text: ''
+            background_normal: ''
+            background_down: ''
+
+            on_press:
+                root.update_density_type()
+
+            canvas:
+                Rectangle:
+                    # size: density_button.height + 0.5*(density_button.width-density_button.height), density_button.height
+                    size: 1.3 * density_button.height, density_button.height
+                    pos:self.pos
+                    source: './generated/density/overlap/Train/face-C.png'
 
         BoxLayout:
             size_hint_y: 0.2
@@ -86,10 +98,32 @@
                 pos: self.pos
                 size: self.size
 
+        GridLayout:
+            cols: 2
+            size_hint_y: 0.08
+
+            Label:
+                text: 'Subjects: '
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#0DB14B')
+                bold: True
+                padding_x: 10
+
+            Label:
+                id: num_subs
+                text: '#'
+                color: hex('#000000')
+                markup: True
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+                padding_x: 20
 
         GridLayout:
             cols: 2
-            size_hint_y: 0.1
+            size_hint_y: 0.08
 
             Label:
                 text: 'Probes: '
@@ -108,14 +142,14 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                padding_x: 30
+                padding_x: 20
 
         GridLayout:
             cols: 2
-            size_hint_y: 0.1
+            size_hint_y: 0.08
 
             Label:
-                size_hint_x: 0.7
+                size_hint_x: 0.6
                 text: 'Complete Probes: '
                 halign: 'left'
                 valign: 'middle'
@@ -125,18 +159,18 @@
                 padding_x: 10
 
             Label:
-                size_hint_x: 0.3
-                text: '#'
+                id: perc_full
+                size_hint_x: 0.4
                 color: hex('#000000')
                 markup: True
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                padding_x: 30
+                padding_x: 20
 
         GridLayout:
             cols: 2
-            size_hint_y: 0.1
+            size_hint_y: 0.08
 
             Label:
                 size_hint_x: 0.7
@@ -156,7 +190,7 @@
                 halign: 'right'
                 valign: 'middle'
                 text_size: self.size
-                padding_x: 30
+                padding_x: 20
 
         GridLayout:
             size_hint_y: 0.1

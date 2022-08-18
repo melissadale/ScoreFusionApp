@@ -15,7 +15,7 @@ class DataDescribe:
                                   columns=['Total_Subjects', 'Genuine_Subjects', 'Imposter_Subjects',
                                            'Total_Probes', 'Genuine_Probes', 'Imposter_Probes'])
 
-        self.sparcity = pd.DataFrame(index=[m for m in self.modals],
+        self.sparcity = pd.DataFrame(index=[m for m in self.modals] + ['Total'],
                                      columns=['Probes', '% Full',
                                               'Probes_gen', '% Full_gen',
                                               'Probes_imp', '% Full_imp'])
@@ -54,40 +54,35 @@ class DataDescribe:
         self.beans.at['Test-Set', 'Genuine_Probes'] = len(self.test[self.test['LABEL'] == 1.0])
         self.beans.at['Test-Set', 'Imposter_Probes'] = len(self.test[self.test['LABEL'] == 0.0])
 
-    def modality_counts(self):
-        for m in self.modals:
-            tmp = self.data[[m, 'Label']]
-            tmp.dropna(inplace=True, axis=0)
-
-            print(len(tmp))
-            print(len(tmp[self.data['Label'] == 1.0]))
-            print(len(tmp[self.data['Label'] == 0.0]))
-
     def print_eval(self, style='markdown'):
         if style.lower() == 'markdown':
             print(self.beans.to_markdown())
         if style.lower() == 'csv':
             self.beans.to_csv('./Results/DataDescribe.csv')
 
-    # def sparcenessness(self):
-    #     t = self.data[self.modals].isnull().sum(axis=1).value_counts()
-    #
-    #     for m in self.modals:
-    #         # r = df[df[modality].notnull()].index.tolist()
-    #         self.sparcity.at[m, 'Total_Subjects']
-    #         tmp = self.data[m]
-    #         # missing = sum(tmp.apply(lambda x: sum(x.isnull().values), axis=1) > 0)
-    #         # print('Missing: ' + str(missing))
-    #         print('Not Missing: ' + str(len(tmp.dropna())))
-    #         print('prec : '+ str(len(tmp.dropna())/len(tmp)))
+    def sparcenessness(self):
+        self.sparcity.at['Total', '% Full'] = len(self.data.dropna()) / len(self.data)
+
+        for m in self.modals:
+            tmp = self.data[m]
+            self.sparcity.at[m, 'Probes'] = len(tmp.dropna())
+            self.sparcity.at[m, '% Full'] = len(tmp.dropna()) / len(tmp)
+
+            tmp_gen = self.data[self.data['LABEL'] == 1.0]
+            self.sparcity.at[m, 'Probes_gen'] = len(tmp_gen.dropna())
+            self.sparcity.at[m, '% Full_gen'] = len(tmp_gen.dropna()) / len(tmp_gen)
+
+            tmp_imp = self.data[self.data['LABEL'] == 0.0]
+            self.sparcity.at[m, 'Probes_imp'] = len(tmp_imp.dropna())
+            self.sparcity.at[m, '% Full_imp'] = len(tmp_imp.dropna()) / len(tmp_imp)
 
     def make_density_plots(self, subset='Test'):
-        if not os.path.exists('./generated/density/PDF/'):
-            os.makedirs('./generated/density/PDF/')
-        if not os.path.exists('./generated/density/hist/'):
-            os.makedirs('./generated/density/hist/')
-        if not os.path.exists('./generated/density/overlap/'):
-            os.makedirs('./generated/density/overlap/')
+        if not os.path.exists('./generated/density/PDF/'+subset+'/'):
+            os.makedirs('./generated/density/PDF/'+subset+'/')
+        if not os.path.exists('./generated/density/hist/'+subset+'/'):
+            os.makedirs('./generated/density/hist/'+subset+'/')
+        if not os.path.exists('./generated/density/overlap/'+subset+'/'):
+            os.makedirs('./generated/density/overlap/'+subset+'/')
 
         if subset.lower() == 'test':
             analysis_set = self.test
@@ -103,14 +98,13 @@ class DataDescribe:
             #################################################################
             # Overlaid
             #################################################################
+            fig = plt.figure(figsize=(6, 6))
             sns.kdeplot(imp, fill=True, label='Imposter', color='#C89A58')
             sns.kdeplot(gen, fill=True, label='Genuine', color='#0DB14B')
             ax = plt.gca()
             ax2 = plt.twinx()
             sns.histplot(imp, kde=False, label='Imposter', color='#FF1493')
             sns.histplot(gen, kde=False, label='Genuine', color='#7B68EE')
-
-            p = 'Density Estimates and Score Counts for ' + m + '\n' + str(len(gen)) + ' Subjects '
 
             ax2.legend(bbox_to_anchor=(1, 1), loc='upper center')
             plt.legend(bbox_to_anchor=(1, 1), loc=2)
@@ -119,10 +113,9 @@ class DataDescribe:
             ax.set_ylabel(r"Density Estimate")
             ax2.set_ylabel(r"Sample Counts")
 
-            ax.set_xlabel(m)
-            plt.title(p)
+            ax.set_xlabel(m, fontsize=20, fontweight='bold')
 
-            # plt.savefig('./generated/density/overlap/' + m + '-' + subset + '.png', bbox_inches='tight')
+            fig.savefig('./generated/density/overlap/' + subset + '/' + m + '.png', bbox_inches='tight')
             plt.clf()
 
             #################################################################
@@ -131,40 +124,35 @@ class DataDescribe:
             sns.kdeplot(imp, fill=True, label='Imposter', color='#C89A58')
             sns.kdeplot(gen, fill=True, label='Genuine', color='#0DB14B')
 
-            p = 'Density Estimates for ' + m + '\n ' + str(len(gen)) + ' Subjects '
             plt.legend(bbox_to_anchor=(1, 1), loc=2)
             plt.ylabel(r"Density Estimate")
-            plt.title(p)
             ax = plt.gca()
             ax.set_xlim(lims)
-            ax.set_xlabel(m)
-            # plt.savefig(
-            #     './generated/density/PDF/' + m + '-' + subset + '.png',
-            #     bbox_inches='tight')
+            ax.set_xlabel(m, fontsize=20, fontweight='bold')
+            fig.savefig(
+                './generated/density/PDF/' + subset + '/' + m + '.png',
+                bbox_inches='tight')
             plt.clf()
 
             #################################################################
             # histogram
             #################################################################
-
             sns.histplot(imp, kde=False, label='Imposter', color='#FF1493')
             sns.histplot(gen, kde=False, label='Genuine', color='#7B68EE')
             ax = plt.gca()
 
             plt.legend(bbox_to_anchor=(1, 1), loc=2)
-            p = 'Score counts for ' + m + '\n' + str(len(gen)) + ' Subjects '
 
             ax.set_xlim(lims)
             ax.set_yticks(y_ticks)
 
-            plt.title(p)
             ax.set_ylabel(r"Density Estimate")
             ax2.set_ylabel(r"Sample Counts")
 
             ax.yaxis.label.set_color('white')
             ax.tick_params(axis='y', colors='white')
 
-            ax.set_xlabel(m)
+            ax.set_xlabel(m, fontsize=20, fontweight='bold')
 
-            # plt.savefig('./generated/density/hist/' + m + '-' + subset + '.png', bbox_inches='tight')
+            fig.savefig('./generated/density/hist/' + subset + '/' + m + '.png', bbox_inches='tight')
             plt.clf()

@@ -14,15 +14,16 @@ from Objects.ScoreData import ScoreData
 # styles
 kivy.require('2.0.0')
 Builder.load_file('kvs/data.kv')
-# Builder.load_file('kvs/Impute.kv')
-# Builder.load_file('kvs/NormalizationPopups/DoubleSigmoid.kv')
-# Builder.load_file('kvs/NormalizationPopups/Tanh.kv')
+Builder.load_file('kvs/Impute.kv')
+Builder.load_file('kvs/NormalizationPopups/DoubleSigmoid.kv')
+Builder.load_file('kvs/NormalizationPopups/Tanh.kv')
 
 
 class Data(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.sparcity = None
         self.beans = None
         self.imputation = None
         self.score_data = ScoreData()
@@ -136,4 +137,4 @@ class Data(GridLayout):
             Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing Data ...']))
             self.ids['modalities_lbl'].text = self.ids['modalities_lbl'].text + '\n' + mod
 
-        self.beans = self.score_data.describe()
+        self.beans, self.sparcity = self.score_data.describe()
