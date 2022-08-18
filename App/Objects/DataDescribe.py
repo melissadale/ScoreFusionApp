@@ -143,16 +143,22 @@ class DataDescribe:
 
             plt.legend(bbox_to_anchor=(1, 1), loc=2)
 
-            ax.set_xlim(lims)
-            ax.set_yticks(y_ticks)
-
-            ax.set_ylabel(r"Density Estimate")
-            ax2.set_ylabel(r"Sample Counts")
-
-            ax.yaxis.label.set_color('white')
-            ax.tick_params(axis='y', colors='white')
+            # ax.set_xlim(lims)
+            # ax.set_yticks(y_ticks)
+            #
+            #
+            # ax.yaxis.label.set_color('white')
+            # ax.tick_params(axis='y', colors='white')
 
             ax.set_xlabel(m, fontsize=20, fontweight='bold')
+
+            # ax.yaxis.tick_right()
+            # ax.yaxis.set_ticks_position('both')
+            # ax.yaxis.set_label_position("right")
+            ax.set_ylabel("Sample Counts")
+
+            ax_c = ax.twinx()
+            ax_c.set_ylabel('')
 
             fig.savefig('./generated/density/hist/' + subset + '/' + m + '.png', bbox_inches='tight')
             plt.clf()

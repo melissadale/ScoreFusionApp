@@ -196,7 +196,7 @@ class ScoreData:
 
         describe.make_density_plots(subset='Train')
         describe.make_density_plots(subset='Test')
-        describe.make_density_plots()
+        describe.make_density_plots(subset='Entire')
 
         return describe.beans, describe.sparcity
 

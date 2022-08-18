@@ -53,6 +53,7 @@ class PanelLayout(Screen):
     def update_beans(self):
         self.dat.get_data_files()
         self.density.set_beans(self.dat.beans, self.dat.sparcity, self.dat.score_data.get_modalities())
+        self.density.set_paths()
 
 
 screen_manager = ScreenManager()

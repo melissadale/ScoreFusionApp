@@ -22,6 +22,7 @@
 
         Button:
             id: density_button
+            current_path: ''
             size_hint_y: 0.8
             background_normal: ''
             background_down: ''
@@ -31,10 +32,11 @@
 
             canvas:
                 Rectangle:
-                    # size: density_button.height + 0.5*(density_button.width-density_button.height), density_button.height
+                    id: current_density_plot
                     size: 1.3 * density_button.height, density_button.height
                     pos:self.pos
-                    source: './generated/density/overlap/Train/face-C.png'
+                    # source: './generated/density/overlap/Train/face-C.png'
+                    source: self.current_path
 
         BoxLayout:
             size_hint_y: 0.2
@@ -48,8 +50,7 @@
                 size_hint_x: 0.1
                 background_color: 0, 0, 0, 0
                 on_press:
-                    root.slider_button('left','density', int(density_slider_id.value))
-                    if density_slider_id.value > 0: density_slider_id.value = density_slider_id.value - 1
+                    root.slider_button('left', int(density_slider_id.value))
                 Image:
                     source: './kvs/graphics/left.png'
                     center_x: self.parent.center_x
@@ -71,8 +72,7 @@
                 size_hint_x: 0.1
                 background_color: 0, 0, 0, 0
                 on_press:
-                    root.slider_button('right','density', int(density_slider_id.value))
-                    if density_slider_id.value < root.num_mods-1: density_slider_id.value = density_slider_id.value + 1
+                    root.slider_button('right', int(density_slider_id.value))
                 Image:
                     source: './kvs/graphics/right.png'
                     center_x: self.parent.center_x
@@ -313,7 +313,7 @@
             size_hint_x: 0.08
             color: hex('#0DB14B')
             active:True
-            #on_active: root.set_density_set()
+            on_active: root.set_density_set()
 
         Label:
             halign: 'left'
@@ -330,7 +330,7 @@
             id : chk_Test
             size_hint_x: 0.08
             color: hex('#0DB14B')
-            #on_active: root.set_density_set()
+            on_active: root.set_density_set()
 
 
         Label:
@@ -348,7 +348,7 @@
             id : chk_Train
             size_hint_x: 0.08
             color: hex('#0DB14B')
-            #on_active: root.set_density_set()
+            on_active: root.set_density_set()
 
         Label:
             halign: 'left'
