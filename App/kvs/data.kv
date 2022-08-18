@@ -19,7 +19,7 @@
         size_hint_x: 0.7
         size_hint_y: 0.9
 
-        rows: 5
+        rows: 6
 
         # File Chooser
         BoxLayout:
@@ -42,6 +42,10 @@
                 size_hint: None, None
                 text_size: self.size
                 color: hex('#008183')
+
+        GridLayout:
+            size_hint_y: 0.05
+            rows: 1
 
         # Imputation Settings
         BoxLayout:
@@ -99,7 +103,7 @@
 
         # Train Test Divide - Previous
         GridLayout:
-            size_hint_y: 0.3
+            size_hint_y: 0.25
             rows: 4
             cols: 2
 
@@ -328,11 +332,12 @@
                     color: hex('#18453B')
                     text_size: self.size
                     bold: True
+                    padding_x: 10
 
                 Label:
                     id: pb_status_lbl
                     size_hint_x: 0.8
-                    text: 'Progress '
+                    text: ' '
                     color: hex('#C89A58')
                     text_size: self.size
                     bold: True
@@ -394,9 +399,10 @@
             id: modalities_lbl
             size_hint_y: 0.8
             valign: 'top'
-            halign: 'center'
+            halign: 'left'
             text_size: self.size
             color: 0, 0, 0, 1
+            padding_x: 50
 
 
 
@@ -412,8 +418,7 @@
         background_color: hex('#0DB14B')
         bold: True
         on_press:
-            root.get_data_files()
-            # root.loading_animation(root.location)
+            root.parent.parent.parent.update_beans()
 
     Button:
         size_hint_x: 0.3

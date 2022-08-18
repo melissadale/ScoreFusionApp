@@ -12,42 +12,327 @@
     rows: 2
     cols: 2
 
-    ############################################
-    ###                 Left-Top
-    ############################################
+    ##################
+    ################## left - top
     GridLayout:
         size_hint_x: 0.7
         size_hint_y: 0.9
 
+        rows: 2
 
-    ############################################
-    ###                 Right-Top
-    ############################################
+        Label:
+            size_hint_y: 0.8
+            text: ''
+
+        BoxLayout:
+            size_hint_y: 0.2
+            Label:
+                bold: True
+                size_hint_x: 0.2
+                text: 'Modalities: '
+                color: 0, 0, 0, 1
+
+            Button:
+                size_hint_x: 0.1
+                background_color: 0, 0, 0, 0
+                on_press:
+                    root.slider_button('left','density', int(density_slider_id.value))
+                    if density_slider_id.value > 0: density_slider_id.value = density_slider_id.value - 1
+                Image:
+                    source: './kvs/graphics/left.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    allow_stretch: True
+                    size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
+                    height: dp(30)  # The fixed height you want
+
+
+            Slider:
+                id: density_slider_id
+                step: 1
+
+                size_hint_x: 0.6
+                on_value: root.density_slider(int(density_slider_id.value))
+
+
+            Button:
+                size_hint_x: 0.1
+                background_color: 0, 0, 0, 0
+                on_press:
+                    root.slider_button('right','density', int(density_slider_id.value))
+                    if density_slider_id.value < root.num_mods-1: density_slider_id.value = density_slider_id.value + 1
+                Image:
+                    source: './kvs/graphics/right.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    allow_stretch: True
+                    size_hint_y: None  # Tells the layout to ignore the size_hint in y dir
+                    height: dp(30)  # The fixed height you want
+
+    ##################
+    ################## right - top
+
+
+
     GridLayout:
         size_hint_x: 0.3
-        size_hint_y: 0.9
-        rows: 3
+        size_hint_y: 0.7
+        rows: 9
+
+        canvas.before:
+            Color:
+                rgba: 0.88, 0.88, 0.88, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
 
 
-    ############################################
-    ###                 Bottom
-    ############################################
-    Button:
+        GridLayout:
+            cols: 2
+            size_hint_y: 0.1
+
+            Label:
+                text: 'Probes: '
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#0DB14B')
+                bold: True
+                padding_x: 10
+
+            Label:
+                id: num_probes
+                text: '#'
+                color: hex('#000000')
+                markup: True
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+                padding_x: 30
+
+        GridLayout:
+            cols: 2
+            size_hint_y: 0.1
+
+            Label:
+                size_hint_x: 0.7
+                text: 'Complete Probes: '
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#0DB14B')
+                bold: True
+                padding_x: 10
+
+            Label:
+                size_hint_x: 0.3
+                text: '#'
+                color: hex('#000000')
+                markup: True
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+                padding_x: 30
+
+        GridLayout:
+            cols: 2
+            size_hint_y: 0.1
+
+            Label:
+                size_hint_x: 0.7
+                text: 'Modalities Detected: '
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#0DB14B')
+                bold: True
+                padding_x: 10
+
+            Label:
+                size_hint_x: 0.3
+                id: num_mods
+                color: hex('#000000')
+                markup: True
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+                padding_x: 30
+
+        GridLayout:
+            size_hint_y: 0.1
+            rows: 1
+
+
+        GridLayout:
+            rows: 4
+            size_hint_y: 0.2
+
+            Label:
+                size_hint_x: 0.25
+                text: 'TRAIN:'
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#0DB14B')
+                bold: True
+                padding_x: 10
+
+            Label:
+                id: num_training
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#000000')
+                markup: True
+                padding_x: 20
+
+            Label:
+                id: num_training_gens
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#000000')
+                markup: True
+                padding_x: 20
+
+            Label:
+                id: num_training_imps
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#000000')
+                markup: True
+                padding_x: 20
+
+        GridLayout:
+            size_hint_y: 0.1
+            rows: 1
+
+        GridLayout:
+            rows: 4
+            size_hint_y: 0.2
+
+            Label:
+                size_hint_x: 0.25
+                text: 'TEST:'
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#0DB14B')
+                bold: True
+                padding_x: 10
+
+            Label:
+                id: num_testing
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#000000')
+                markup: True
+                padding_x: 20
+
+            Label:
+                id: num_testing_gens
+                text: 'Genuine Probes: '
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#000000')
+                markup: True
+                padding_x: 20
+
+            Label:
+                id: num_testing_imps
+                text: 'Imposter Probes: '
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                color: hex('#000000')
+                markup: True
+                padding_x: 20
+
+
+        GridLayout:
+            size_hint_y: 0.1
+            rows: 1
+
+
+    ##################
+    ################## left - bottom
+    GridLayout:
         size_hint_x: 0.7
         size_hint_y: 0.1
 
-        text: 'Load Data'
-        background_color: hex('#0DB14B')
-        bold: True
-        on_press:
-            # root.get_data_files()
-            # root.loading_animation(root.location)
+        cols: 6
 
+        canvas.before:
+            Color:
+                rgba: hex('#18453B')
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        CheckBox:
+            group: 'dens'
+            halign: 'right'
+            id : chk_Entire
+            size_hint_x: 0.08
+            color: hex('#0DB14B')
+            active:True
+            #on_active: root.set_density_set()
+
+        Label:
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+            text: 'Entire Set'
+            color: hex('#FFFFFF')
+            bold: True
+            size_hint_x: 0.25
+
+        CheckBox:
+            group: 'dens'
+            halign: 'left'
+            id : chk_Test
+            size_hint_x: 0.08
+            color: hex('#0DB14B')
+            #on_active: root.set_density_set()
+
+
+        Label:
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+            text: 'Test Set'
+            color: hex('#FFFFFF')
+            bold: True
+            size_hint_x: 0.25
+
+        CheckBox:
+            group: 'dens'
+            halign: 'right'
+            id : chk_Train
+            size_hint_x: 0.08
+            color: hex('#0DB14B')
+            #on_active: root.set_density_set()
+
+        Label:
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+            text: 'Train Set'
+            color: hex('#FFFFFF')
+            bold: True
+            size_hint_x: 0.26
+
+
+    ##################
+    ################## right - bottom
     Button:
         size_hint_x: 0.3
         size_hint_y: 0.1
 
-        text: 'Reset'
+        text: 'Details'
         background_color: hex('#F08521')
         on_press:
             # root.reset_popup()

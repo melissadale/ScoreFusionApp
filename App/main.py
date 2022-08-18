@@ -2,13 +2,12 @@ import kivy
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.lang import Builder
-
-kivy.require('2.0.0')
-from kvs.DataInputPanel import Data
+from kvs.Data import Data
 from kvs.DensityPanel import Densities
 from kvs.FusionPanel import FusionPanel
 from kvs.ResultsPanel import ResultsPanel
 
+kivy.require('2.0.0')
 Builder.load_file('SFA.kv')
 
 
@@ -50,6 +49,10 @@ class PanelLayout(Screen):
 
     def data_path(self, pth):
         self.dat.set_data_location(pth)
+
+    def update_beans(self):
+        self.dat.get_data_files()
+        self.density.set_beans(self.dat.beans, self.dat.score_data.get_modalities())
 
 
 screen_manager = ScreenManager()
