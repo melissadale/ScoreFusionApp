@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 class DataDescribe:
     def __init__(self, **kwargs):
         self.modals = kwargs.get('modals')
-        self.train = kwargs.get('train')
-        self.test = kwargs.get('test')
         self.data = kwargs.get('df')
+        self.train = self.data[self.data['TRAIN_TEST'] == 'TRAIN']
+        self.test = self.data[self.data['TRAIN_TEST'] == 'TEST']
 
         self.beans = pd.DataFrame(index=['Dataset', 'Train-Set', 'Test-Set'],
                                   columns=['Total_Subjects', 'Genuine_Subjects', 'Imposter_Subjects',
@@ -142,19 +142,7 @@ class DataDescribe:
             ax = plt.gca()
 
             plt.legend(bbox_to_anchor=(1, 1), loc=2)
-
-            # ax.set_xlim(lims)
-            # ax.set_yticks(y_ticks)
-            #
-            #
-            # ax.yaxis.label.set_color('white')
-            # ax.tick_params(axis='y', colors='white')
-
             ax.set_xlabel(m, fontsize=20, fontweight='bold')
-
-            # ax.yaxis.tick_right()
-            # ax.yaxis.set_ticks_position('both')
-            # ax.yaxis.set_label_position("right")
             ax.set_ylabel("Sample Counts")
 
             ax_c = ax.twinx()

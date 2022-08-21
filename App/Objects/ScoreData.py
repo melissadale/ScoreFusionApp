@@ -17,6 +17,7 @@ from Objects.DataDescribe import DataDescribe
 class ScoreData:
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.describe = None
         self.data = pd.DataFrame(columns=['PROBE_ID', 'GALLERY_ID', 'LABEL', 'TRAIN_TEST'])
 
     def load_data(self, path, training_split=None):
@@ -90,7 +91,9 @@ class ScoreData:
             self.data.iloc[idx_train, self.data.columns.get_loc("TRAIN_TEST")] = 'TRAIN'
             self.data.iloc[idx_test, self.data.columns.get_loc("TRAIN_TEST")] = 'TEST'
 
-        print('')
+        self.describe = DataDescribe(df=self.data, modals=self.get_modalities())
+        self.describe.count_beans()
+        self.describe.sparcenessness()
 
     def normalize_scores(self, norm_type, norm_params=None):
         for mod in self.get_modalities():
@@ -186,17 +189,9 @@ class ScoreData:
         imp.fit(self.data[self.data['TRAIN_TEST'] == 'TRAIN'][self.get_modalities()])
         self.data[self.get_modalities()] = imp.transform(self.data[self.get_modalities()])
 
-    def describe(self):
-        train = self.data[self.data.TRAIN_TEST == "TRAIN"]
-        test = self.data[self.data.TRAIN_TEST == "TEST"]
-        describe = DataDescribe(train=train, test=test, df=self.data, modals=self.get_modalities())
+    def get_descripts(self):
+        self.describe.make_density_plots(subset='Train')
+        self.describe.make_density_plots(subset='Test')
+        self.describe.make_density_plots(subset='Entire')
 
-        describe.count_beans()
-        describe.sparcenessness()
-
-        describe.make_density_plots(subset='Train')
-        describe.make_density_plots(subset='Test')
-        describe.make_density_plots(subset='Entire')
-
-        return describe.beans, describe.sparcity
-
+        return self.describe.beans, self.describe.sparcity

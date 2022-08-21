@@ -1,3 +1,5 @@
+import threading
+
 import kivy
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -54,6 +56,9 @@ class PanelLayout(Screen):
         self.dat.get_data_files()
         self.density.set_beans(self.dat.beans, self.dat.sparcity, self.dat.score_data.get_modalities())
         self.density.set_paths()
+
+    def start_progressbar(self):
+        threading.Thread(target=self.update_beans).start()
 
 
 screen_manager = ScreenManager()

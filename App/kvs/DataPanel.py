@@ -4,6 +4,7 @@ from kivy.lang import Builder
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
 import functools
+import threading
 
 # Custom Imports
 from kvs.ImputationPopup import Imputation as ImputationPop
@@ -48,11 +49,11 @@ class Data(GridLayout):
     def get_data_location(self):
         return self.data_path
 
-    ## Popups
+    # Popups
     def DSig_popup(self):
         show_dsig = DSigPopup()
         dsig_popup = Popup(title="Double Sigmoid Estimator ", content=show_dsig, size_hint=(None, None),
-                                size=(400, 400))
+                           size=(400, 400))
         dsig_popup.open()  # show the popup
         show_dsig.set_pop(dsig_popup)
         self.norm_params = show_dsig
@@ -60,7 +61,7 @@ class Data(GridLayout):
     def Tanh_popup(self):
         show_tanh = TanhPopup()
         tanh_popup = Popup(title="Tanh Estimator", content=show_tanh, size_hint=(None, None),
-                                size=(400, 400))
+                           size=(400, 400))
         tanh_popup.open()  # show the popup
         show_tanh.set_pop(tanh_popup)
         self.norm_params = show_tanh
@@ -73,9 +74,9 @@ class Data(GridLayout):
         popup.open()
         self.imputation = imputation_settings
 
-    ## Messages and GUI changes
+    # Messages and GUI changes
     def update_test(self, test_p):
-        self.train_perc = 100-test_p
+        self.train_perc = 100 - test_p
         self.ids['test_label'].text = '   % Testing - ' + str(self.train_perc) + '% Training \n'
 
     def train_split_checkbox(self, instance, value, category='train-test'):
@@ -97,13 +98,16 @@ class Data(GridLayout):
             else:
                 self.ids['load_previous'].opacity = 0.0
 
+    # def start_progressbar(self):
+    #     threading.Thread(target=self.get_data_files).start()
+        # self.detected_button_image = './graphics/detected_modalities_edit.png'
+
     def update_bar(self, params, dt):
         if self.ids['load_pb'].value <= 100:
             self.ids['load_pb'].value += params[0]
             self.ids['pb_status_lbl'].text = params[1]
 
-
-    ## Operations
+    # Operations
     def get_data_files(self):
         if self.ids['train_test_chk'].active:
             training = self.train_perc
@@ -132,9 +136,11 @@ class Data(GridLayout):
 
         # Visualize Data
         modalities = self.score_data.get_modalities()
-        remaining_pb = int(20/len(modalities))
+        remaining_pb = int(15 / len(modalities))
         for mod in modalities:
-            Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing Data ...']))
-            self.ids['modalities_lbl'].text = self.ids['modalities_lbl'].text + '\n' + mod
+            Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing Data and Collecting '
+                                                                                  'Metrics ...']))
+            self.ids['modalities_lbl'].text = self.ids['modalities_lbl'].text + '\n\n' + mod
 
-        self.beans, self.sparcity = self.score_data.describe()
+        self.beans, self.sparcity = self.score_data.get_descripts()
+        Clock.schedule_once(functools.partial(self.update_bar, [100 - self.ids['load_pb'].value, 'Done Processing Input']))
