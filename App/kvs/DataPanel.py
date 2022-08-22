@@ -135,7 +135,7 @@ class Data(GridLayout):
 
         # Visualize Data
         modalities = self.score_data.get_modalities()
-        remaining_pb = int(15 / len(modalities))
+        remaining_pb = int(10 / len(modalities))
         for mod in modalities:
             Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing and Collecting '
                                                                                   'Metrics ...']))
@@ -145,7 +145,8 @@ class Data(GridLayout):
         Clock.schedule_once(
             functools.partial(self.update_bar, [100 - self.ids['load_pb'].value, 'Done Processing Input']))
 
-        self.ids['detected_mods_btn_img'].source = './kvs/graphics/pencil.png'
+        self.ids['detected_mods_btn'].background_normal = './kvs/graphics/pencil.png'
+        self.ids['detected_mods_btn'].background_down = './kvs/graphics/pencil-grey.png'
 
     def update_test_msg(self):
         self.ids['test_label'].text = '% Testing, ' + str(100-int(self.ids['test_input'].text)) + "% Training"

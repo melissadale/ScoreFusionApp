@@ -394,21 +394,15 @@
                 font_size: 0.1 * self.width
 
             Button:
+                id: detected_mods_btn
                 size_hint_x: 0.2
-                background_normal: ''
-                background_color:  0.88, 0.88, 0.88, 1
+                height: self.width
+
+                background_normal: './kvs/graphics/pencil-grey.png'
+                background_down: './kvs/graphics/pencil.png'
 
                 on_press:
-                    # background_color:  0.88, 0.88, 0.88, 1
                     root.modality_edit_popup()
-
-                Image:
-                    id: detected_mods_btn_img
-                    source: './kvs/graphics/pencil-grey.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y - 4
-                    height: 0.75 * self.parent.height
-
 
         Label:
             id: modalities_lbl
