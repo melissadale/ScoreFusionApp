@@ -132,18 +132,24 @@
                 TextInput:
                     id: test_input
                     size_hint: (.1, None)
+                    halign: "right"
                     height: 30
                     text: '20'
                     multiline: False
-                    on_text_validate: root.update_test((int(test_input.text)))
+                    on_text_validate: root.update_test_msg()
+                    bold: True
 
                 Label:
                     id: test_label
                     size_hint_x: 0.90
+                    padding_x: 5
+                    text: '[b]%[/b] Testing,     [b]80%[/b] Training'
+
                     text_size: self.size
                     halign: "left"
-                    valign: "bottom"
-                    color: 0,0,0,1
+                    valign: "middle"
+                    color: hex('#000000')
+                    markup: True
 
             CheckBox:
                 id: load_previous_chk
@@ -376,23 +382,32 @@
             anim_delay: 0.5
             mipmap: True
 
-
-        Button:
-            id: detected_mods_btn
+        GridLayout:
+            cols: 2
             size_hint_y: 0.1
-            valign: 'top'
-            background_normal: ''
-            background_color: 0.87, 0.87, 0.87, 1
-            opacity: 1.0
-            on_press:
-                # root.modality_edit_popup()
+            Label:
+                id: detected
+                size_hint_x: 0.8
+                text: 'Detected Modalities'
+                color: hex('#18453B')
+                bold: True
+                font_size: 0.1 * self.width
 
-            canvas:
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-                    #source: root.detected_button_image
-                    source: './kvs/graphics/detected_modalities_blank.png'
+            Button:
+                size_hint_x: 0.2
+                background_normal: ''
+                background_color:  0.88, 0.88, 0.88, 1
+
+                on_press:
+                    # background_color:  0.88, 0.88, 0.88, 1
+                    root.modality_edit_popup()
+
+                Image:
+                    id: detected_mods_btn_img
+                    source: './kvs/graphics/pencil-grey.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y - 4
+                    height: 0.75 * self.parent.height
 
 
         Label:

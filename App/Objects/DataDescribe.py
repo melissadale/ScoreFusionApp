@@ -95,58 +95,52 @@ class DataDescribe:
             gen = analysis_set[analysis_set['LABEL'] == 1.0][m]
             imp = analysis_set[analysis_set['LABEL'] == 0.0][m]
 
+            fig = plt.figure(figsize=(7, 6))
+            #################################################################
+            # pdf
+            #################################################################
+            sns.kdeplot(imp, fill=True, label='Imposter (pdf) ', color='#C89A58')
+            sns.kdeplot(gen, fill=True, label='Genuine (pdf) ', color='#0DB14B')
+
+            leg = plt.legend(loc=2)
+            plt.ylabel(r"Density Estimate")
+            ax = plt.gca()
+            lims = ax.get_xlim()
+            ax.set_xlim(lims)
+            ax.set_xlabel(m, fontsize=20, fontweight='bold')
+            fig.savefig(
+                './generated/density/PDF/' + subset + '/' + m + '.png')
+            leg.remove()
+
             #################################################################
             # Overlaid
             #################################################################
-            fig = plt.figure(figsize=(6, 6))
-            sns.kdeplot(imp, fill=True, label='Imposter', color='#C89A58')
-            sns.kdeplot(gen, fill=True, label='Genuine', color='#0DB14B')
-            ax = plt.gca()
             ax2 = plt.twinx()
-            sns.histplot(imp, kde=False, label='Imposter', color='#FF1493')
-            sns.histplot(gen, kde=False, label='Genuine', color='#7B68EE')
+            sns.histplot(imp, kde=False, label='Imposter (hist)', color='#FF1493')
+            sns.histplot(gen, kde=False, label='Genuine (hist)', color='#7B68EE')
 
-            ax2.legend(bbox_to_anchor=(1, 1), loc='upper center')
-            plt.legend(bbox_to_anchor=(1, 1), loc=2)
-            lims = ax.get_xlim()
-            y_ticks = ax.get_yticks()
+            fig.legend(loc=2, borderaxespad=3)
             ax.set_ylabel(r"Density Estimate")
             ax2.set_ylabel(r"Sample Counts")
 
             ax.set_xlabel(m, fontsize=20, fontweight='bold')
 
-            fig.savefig('./generated/density/overlap/' + subset + '/' + m + '.png', bbox_inches='tight')
-            plt.clf()
-
-            #################################################################
-            # pdf
-            #################################################################
-            sns.kdeplot(imp, fill=True, label='Imposter', color='#C89A58')
-            sns.kdeplot(gen, fill=True, label='Genuine', color='#0DB14B')
-
-            plt.legend(bbox_to_anchor=(1, 1), loc=2)
-            plt.ylabel(r"Density Estimate")
-            ax = plt.gca()
-            ax.set_xlim(lims)
-            ax.set_xlabel(m, fontsize=20, fontweight='bold')
-            fig.savefig(
-                './generated/density/PDF/' + subset + '/' + m + '.png',
-                bbox_inches='tight')
+            fig.savefig('./generated/density/overlap/' + subset + '/' + m + '.png')
             plt.clf()
 
             #################################################################
             # histogram
             #################################################################
-            sns.histplot(imp, kde=False, label='Imposter', color='#FF1493')
-            sns.histplot(gen, kde=False, label='Genuine', color='#7B68EE')
+            sns.histplot(imp, kde=False, label='Imposter (hist)', color='#FF1493')
+            sns.histplot(gen, kde=False, label='Genuine (hist)', color='#7B68EE')
             ax = plt.gca()
 
-            plt.legend(bbox_to_anchor=(1, 1), loc=2)
+            plt.legend(loc=2)
             ax.set_xlabel(m, fontsize=20, fontweight='bold')
             ax.set_ylabel("Sample Counts")
 
             ax_c = ax.twinx()
             ax_c.set_ylabel('')
 
-            fig.savefig('./generated/density/hist/' + subset + '/' + m + '.png', bbox_inches='tight')
+            fig.savefig('./generated/density/hist/' + subset + '/' + m + '.png')
             plt.clf()

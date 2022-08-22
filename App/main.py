@@ -39,6 +39,7 @@ class PanelLayout(Screen):
         # add Tab Panels
         self.dat = Data()
         self.ids['data_input_panel'].add_widget(self.dat)
+        self.dat.update_test_msg()
 
         self.density = Densities()
         self.ids['density_panel'].add_widget(self.density)

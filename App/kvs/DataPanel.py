@@ -4,7 +4,6 @@ from kivy.lang import Builder
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
 import functools
-import threading
 
 # Custom Imports
 from kvs.ImputationPopup import Imputation as ImputationPop
@@ -100,7 +99,7 @@ class Data(GridLayout):
 
     # def start_progressbar(self):
     #     threading.Thread(target=self.get_data_files).start()
-        # self.detected_button_image = './graphics/detected_modalities_edit.png'
+    # self.detected_button_image = './graphics/detected_modalities_edit.png'
 
     def update_bar(self, params, dt):
         if self.ids['load_pb'].value <= 100:
@@ -138,9 +137,18 @@ class Data(GridLayout):
         modalities = self.score_data.get_modalities()
         remaining_pb = int(15 / len(modalities))
         for mod in modalities:
-            Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing Data and Collecting '
+            Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing and Collecting '
                                                                                   'Metrics ...']))
             self.ids['modalities_lbl'].text = self.ids['modalities_lbl'].text + '\n\n' + mod
 
         self.beans, self.sparcity = self.score_data.get_descripts()
-        Clock.schedule_once(functools.partial(self.update_bar, [100 - self.ids['load_pb'].value, 'Done Processing Input']))
+        Clock.schedule_once(
+            functools.partial(self.update_bar, [100 - self.ids['load_pb'].value, 'Done Processing Input']))
+
+        self.ids['detected_mods_btn_img'].source = './kvs/graphics/pencil.png'
+
+    def update_test_msg(self):
+        self.ids['test_label'].text = '% Testing, ' + str(100-int(self.ids['test_input'].text)) + "% Training"
+
+    def modality_edit_popup(self):
+        pass
