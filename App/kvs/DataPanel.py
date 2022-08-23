@@ -10,6 +10,7 @@ from kvs.ImputationPopup import Imputation as ImputationPop
 from kvs.NormalizationPopups.DoubleSigmoidPopup import DSigPopup
 from kvs.NormalizationPopups.TanhPopup import TanhPopup
 from Objects.ScoreData import ScoreData
+from kvs.EditModalityPopup import ModeEditPopup
 
 # styles
 kivy.require('2.0.0')
@@ -17,6 +18,7 @@ Builder.load_file('kvs/data.kv')
 Builder.load_file('kvs/Impute.kv')
 Builder.load_file('kvs/NormalizationPopups/DoubleSigmoid.kv')
 Builder.load_file('kvs/NormalizationPopups/Tanh.kv')
+Builder.load_file('kvs/ModalityEdit.kv')
 
 
 class Data(GridLayout):
@@ -97,10 +99,6 @@ class Data(GridLayout):
             else:
                 self.ids['load_previous'].opacity = 0.0
 
-    # def start_progressbar(self):
-    #     threading.Thread(target=self.get_data_files).start()
-    # self.detected_button_image = './graphics/detected_modalities_edit.png'
-
     def update_bar(self, params, dt):
         if self.ids['load_pb'].value <= 100:
             self.ids['load_pb'].value += params[0]
@@ -149,7 +147,11 @@ class Data(GridLayout):
         self.ids['detected_mods_btn'].background_down = './kvs/graphics/pencil-grey.png'
 
     def update_test_msg(self):
-        self.ids['test_label'].text = '% Testing, ' + str(100-int(self.ids['test_input'].text)) + "% Training"
+        self.ids['test_label'].text = '% Testing, ' + str(100 - int(self.ids['test_input'].text)) + "% Training"
 
     def modality_edit_popup(self):
-        pass
+        edit_mods = ModeEditPopup(modality_list=self.score_data.get_modalities())
+        popup = Popup(title="Edit Modalities", content=edit_mods, size_hint=(None, None),
+                      size=(600, 600))
+        edit_mods.set_pop(popup)
+        popup.open()

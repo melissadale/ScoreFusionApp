@@ -1,0 +1,37 @@
+<ModeEditPopup@GridLayout>:
+    rows: 3
+
+    GridLayout:
+        size_hint_y: 0.2
+        cols: 4
+        Label:
+            size_hint_x: 0.1
+            text: 'Fuse'
+            color: hex('#FFFFFF')
+
+        Label:
+            size_hint_x: 0.5
+            text: 'Modality'
+            color: hex('#0DB14B')
+            bold: True
+
+        Label:
+            size_hint_x: 0.2
+            text: 'Similarity'
+            color: hex('#FFFFFF')
+
+        Label:
+            size_hint_x: 0.2
+            text: 'Dissimilarity'
+            color: hex('#FFFFFF')
+
+    BoxLayout:
+        size_hint_y: 0.7
+        id: modalities
+        orientation: "vertical"
+    Button:
+        size_hint_y: 0.1
+        text: 'Update'
+        background_color: (0.05, 0.69, 0.29, 1.0)
+        bold: True
+
