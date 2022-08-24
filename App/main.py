@@ -58,7 +58,12 @@ class PanelLayout(Screen):
         self.density.set_beans(self.dat.beans, self.dat.sparcity, self.dat.score_data.get_modalities())
         self.density.set_paths()
 
+        # end gif
+        self.dat.ids.loading_animation_gif.source = './kvs/graphics/logo.png'
+
     def start_progressbar(self):
+        # start gif
+        self.dat.ids.loading_animation_gif.source = './kvs/graphics/SF_DARK_GIF.zip'
         threading.Thread(target=self.update_beans).start()
 
 
