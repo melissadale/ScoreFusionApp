@@ -48,7 +48,7 @@ class DensityPlots:
             return self.current_plot_path
 
     def move_right(self):
-        if self.current_plot_index < self.density_slider.max - 1:
+        if self.current_plot_index < self.density_slider.max:
             self.current_plot_index = self.current_plot_index + 1
             self.density_slider.value = self.density_slider.value + 1
             return self.update_plot(self.current_plot_index)
@@ -63,7 +63,7 @@ class DensityPlots:
         for filename in glob.glob(base + '/*.png'):
             plots.append(filename)
 
-        self.density_slider.max = len(plots)
+        self.density_slider.max = len(plots)-1
         self.plots_list = plots
         self.current_plot_path = plots[self.current_plot_index]
 

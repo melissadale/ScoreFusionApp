@@ -15,6 +15,7 @@ class ModeEditPopup(GridLayout):
         self.modality_list = kwargs.get('modality_list')
         self.fpop = None
         self.changes = {}
+        self.return_values = None
 
         if not self.modality_list:
             pass
@@ -66,9 +67,9 @@ class ModeEditPopup(GridLayout):
 
             if self.changes[mod][3].active:
                 tmp_message = tmp_message + mod_lbl + '\n\n'
-
-        self.msg.text = tmp_message
+        tmp['new_msg'] = tmp_message
+        self.return_values = tmp
         self.close()
 
     def get_updates(self):
-        return self.return_vals
+        return self.return_values

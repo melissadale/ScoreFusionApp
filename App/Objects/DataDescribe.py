@@ -76,6 +76,10 @@ class DataDescribe:
             self.sparcity.at[m, 'Probes_imp'] = len(tmp_imp.dropna())
             self.sparcity.at[m, '% Full_imp'] = len(tmp_imp.dropna()) / len(tmp_imp)
 
+    def update_test(self, train, test):
+        self.train = train
+        self.test = test
+
     def make_density_plots(self, subset='Test'):
         if not os.path.exists('./generated/density/PDF/'+subset+'/'):
             os.makedirs('./generated/density/PDF/'+subset+'/')
@@ -91,7 +95,15 @@ class DataDescribe:
         else:
             analysis_set = self.data
 
+        x_min = 0.0
+        x_max = 1.0
+
         for m in self.modals:
+            if x_min < analysis_set[m].min():
+                x_min = analysis_set[m].min()
+            if x_max > analysis_set[m].max():
+                x_max = analysis_set[m].max()
+
             gen = analysis_set[analysis_set['LABEL'] == 1.0][m]
             imp = analysis_set[analysis_set['LABEL'] == 0.0][m]
 
@@ -105,8 +117,10 @@ class DataDescribe:
             leg = plt.legend(loc=2)
             plt.ylabel(r"Density Estimate")
             ax = plt.gca()
-            lims = ax.get_xlim()
-            ax.set_xlim(lims)
+            # lims = ax.get_xlim()
+            # ax.set_xlim(lims)
+            plt.xlim([x_min, x_max])
+            # plt.xlim([0.0, 1.0])
             ax.set_xlabel(m, fontsize=20, fontweight='bold')
             fig.savefig(
                 './generated/density/PDF/' + subset + '/' + m + '.png')
@@ -124,6 +138,7 @@ class DataDescribe:
             ax2.set_ylabel(r"Sample Counts")
 
             ax.set_xlabel(m, fontsize=20, fontweight='bold')
+            plt.xlim([x_min, x_max])
 
             fig.savefig('./generated/density/overlap/' + subset + '/' + m + '.png')
             plt.clf()
@@ -138,9 +153,11 @@ class DataDescribe:
             plt.legend(loc=2)
             ax.set_xlabel(m, fontsize=20, fontweight='bold')
             ax.set_ylabel("Sample Counts")
+            plt.xlim([x_min, x_max])
 
             ax_c = ax.twinx()
             ax_c.set_ylabel('')
 
             fig.savefig('./generated/density/hist/' + subset + '/' + m + '.png')
             plt.clf()
+            plt.close('all')

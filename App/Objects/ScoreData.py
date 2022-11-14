@@ -155,6 +155,8 @@ class ScoreData:
             else:
                 print("ERROR: unrecognized normalization technique requested")
 
+            self.describe.update_test(train=self.data[self.data['TRAIN_TEST'] == 'TRAIN'],
+                                      test=self.data[self.data['TRAIN_TEST'] == 'TEST'])
     def get_modalities(self):
         not_mods = ['PROBE_ID', 'GALLERY_ID', 'LABEL', 'TRAIN_TEST']
         return [x for x in self.data.columns if x not in not_mods and ':' not in x]

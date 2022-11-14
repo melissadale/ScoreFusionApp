@@ -25,6 +25,7 @@ class Data(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.edit_mods = None
         self.sparcity = None
         self.beans = None
         self.imputation = None
@@ -150,8 +151,12 @@ class Data(GridLayout):
         self.ids['test_label'].text = '% Testing, ' + str(100 - int(self.ids['test_input'].text)) + "% Training"
 
     def modality_edit_popup(self):
-        edit_mods = ModeEditPopup(modality_list=self.score_data.get_modalities())
-        popup = Popup(title="Edit Modalities", content=edit_mods, size_hint=(None, None),
+        self.edit_mods = ModeEditPopup(modality_list=self.score_data.get_modalities())
+        popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
                       size=(600, 600))
-        edit_mods.set_pop(popup)
+        self.edit_mods.set_pop(popup)
         popup.open()
+
+    def edit_modalites(self):
+        tmp = self.edit_mods.get_updates()
+        print(tmp)

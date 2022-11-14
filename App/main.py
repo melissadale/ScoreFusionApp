@@ -64,7 +64,11 @@ class PanelLayout(Screen):
     def start_progressbar(self):
         # start gif
         self.dat.ids.loading_animation_gif.source = './kvs/graphics/SF_DARK_GIF.zip'
+
         threading.Thread(target=self.update_beans).start()
+
+    def edit_modalites(self, changes):
+        self.dat.update_mods(changes)
 
 
 screen_manager = ScreenManager()
