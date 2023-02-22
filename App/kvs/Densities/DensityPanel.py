@@ -1,11 +1,15 @@
 import glob
 import kivy
+import pandas as pd
 from kivy.uix.gridlayout import GridLayout
 from kivy.lang import Builder
+from kivy.uix.popup import Popup
 
+from kvs.Densities.DensityMissingPopup import DensityMissingPopup
 # styles
 kivy.require('2.0.0')
-Builder.load_file('kvs/density.kv')
+Builder.load_file('kvs/Densities/density.kv')
+Builder.load_file('kvs/Densities/DensityMissing.kv')
 
 
 class DensityPlots:
@@ -48,6 +52,7 @@ class DensityPlots:
             return self.current_plot_path
 
     def move_right(self):
+        self.build_plot_list()
         if self.current_plot_index < self.density_slider.max:
             self.current_plot_index = self.current_plot_index + 1
             self.density_slider.value = self.density_slider.value + 1
@@ -77,28 +82,32 @@ class DensityPlots:
 class Densities(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.modalities = None
         self.densities_plots = DensityPlots(slider=self.ids.density_slider_id)
         self.num_mods_slider = 0
 
-    def set_beans(self, counts, sparcity, modalities):
-        self.ids['num_training'].text = '[b]Probes: [/b] {:,} '.format(counts.at['Train-Set',
+    def set_beans(self, counts, modalities):
+        self.modalities = modalities
+        self.missing = pd.read_pickle('./generated/sparcity_beans.pk')
+
+        self.ids['num_training'].text = '[b]Vectors: [/b] {:,} '.format(counts.at['Train-Set',
                                                                                  'Total_Probes'])
-        self.ids['num_training_gens'].text = '[b]Genuine Probes: [/b] {:,} '.format(counts.at['Train-Set',
+        self.ids['num_training_gens'].text = '[b]Genuine Vectors: [/b] {:,} '.format(counts.at['Train-Set',
                                                                                               'Genuine_Probes'])
-        self.ids['num_training_imps'].text = '[b]Imposter Probes: [/b] {:,} '.format(counts.at['Train-Set',
+        self.ids['num_training_imps'].text = '[b]Imposter Vectors: [/b] {:,} '.format(counts.at['Train-Set',
                                                                                                'Imposter_Probes'])
 
-        self.ids['num_testing'].text = '[b]Probes: [/b] {:,} '.format(counts.at['Test-Set',
+        self.ids['num_testing'].text = '[b]Vectors: [/b] {:,} '.format(counts.at['Test-Set',
                                                                                 'Total_Probes'])
-        self.ids['num_testing_gens'].text = '[b]Genuine Probes: [/b] {:,} '.format(counts.at['Test-Set',
+        self.ids['num_testing_gens'].text = '[b]Genuine Vectors: [/b] {:,} '.format(counts.at['Test-Set',
                                                                                              'Genuine_Probes'])
-        self.ids['num_testing_imps'].text = '[b]Imposter Probes: [/b] {:,} '.format(counts.at['Test-Set',
+        self.ids['num_testing_imps'].text = '[b]Imposter Vectors: [/b] {:,} '.format(counts.at['Test-Set',
                                                                                               'Imposter_Probes'])
 
         self.ids['num_mods'].text = '[b]' + str(len(modalities)) + '[/b]'
         self.ids['num_probes'].text = '[b]{:,}[/b]'.format(counts.at['Dataset', 'Total_Probes'])
         self.ids['num_subs'].text = '[b]{:,}[/b]'.format(counts.at['Dataset', 'Total_Subjects'])
-        self.ids['perc_full'].text = '[b]{:.0%}[/b]'.format(sparcity.at['Total', '% Full'])
+        self.ids['perc_full'].text = '[b]{:.0%}[/b]'.format(self.missing.at['Total', '% Full'])
         self.num_mods_slider = len(modalities)
 
     def set_paths(self):
@@ -127,3 +136,9 @@ class Densities(GridLayout):
 
         if direction == 'right':
             self.ids['density_button'].current_path = self.densities_plots.move_right()
+
+    def report_popup(self):
+        show_dens = DensityMissingPopup(modality_list=self.modalities, sparcity = self.missing)
+        deats_popup = Popup(title="Detailed Data Report", content=show_dens, size_hint=(0.9, 0.9))
+        deats_popup.open()  # show the popup
+        show_dens.set_pop(deats_popup)

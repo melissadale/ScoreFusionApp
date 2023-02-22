@@ -5,7 +5,7 @@ from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.lang import Builder
 from kvs.DataPanel import Data
-from kvs.DensityPanel import Densities
+from kvs.Densities.DensityPanel import Densities
 from kvs.FusionPanel import FusionPanel
 from kvs.ResultsPanel import ResultsPanel
 
@@ -55,7 +55,7 @@ class PanelLayout(Screen):
 
     def update_beans(self):
         self.dat.get_data_files()
-        self.density.set_beans(self.dat.beans, self.dat.sparcity, self.dat.score_data.get_modalities())
+        self.density.set_beans(self.dat.beans, self.dat.score_data.get_modalities())
         self.density.set_paths()
 
         # end gif

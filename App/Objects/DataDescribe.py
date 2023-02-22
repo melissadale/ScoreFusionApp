@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 class DataDescribe:
     def __init__(self, **kwargs):
+        self.sparcity = None
         self.modals = kwargs.get('modals')
         self.data = kwargs.get('df')
         self.train = self.data[self.data['TRAIN_TEST'] == 'TRAIN']
@@ -14,11 +15,6 @@ class DataDescribe:
         self.beans = pd.DataFrame(index=['Dataset', 'Train-Set', 'Test-Set'],
                                   columns=['Total_Subjects', 'Genuine_Subjects', 'Imposter_Subjects',
                                            'Total_Probes', 'Genuine_Probes', 'Imposter_Probes'])
-
-        self.sparcity = pd.DataFrame(index=[m for m in self.modals] + ['Total'],
-                                     columns=['Probes', '% Full',
-                                              'Probes_gen', '% Full_gen',
-                                              'Probes_imp', '% Full_imp'])
 
         self.title_cleanup = {
             'Score_oc_right': 'Right Ocular',
@@ -61,32 +57,56 @@ class DataDescribe:
             self.beans.to_csv('./Results/DataDescribe.csv')
 
     def sparcenessness(self):
-        self.sparcity.at['Total', '% Full'] = len(self.data.dropna()) / len(self.data)
+        sparcity = pd.DataFrame(index=[m for m in self.modals] + ['Total'],
+                                columns=['Probes', '% Full',
+                                         'Probes_gen', '% Full_gen',
+                                         'Probes_imp', '% Full_imp'])
+
+        sparcity.at['Total', '% Full'] = len(self.data.dropna()) / len(self.data)
 
         for m in self.modals:
             tmp = self.data[m]
-            self.sparcity.at[m, 'Probes'] = len(tmp.dropna())
-            self.sparcity.at[m, '% Full'] = len(tmp.dropna()) / len(tmp)
+            sparcity.at[m, 'Probes'] = len(tmp.dropna())
+            sparcity.at[m, '% Full'] = len(tmp.dropna()) / len(tmp)
 
             tmp_gen = self.data[self.data['LABEL'] == 1.0]
-            self.sparcity.at[m, 'Probes_gen'] = len(tmp_gen.dropna())
-            self.sparcity.at[m, '% Full_gen'] = len(tmp_gen.dropna()) / len(tmp_gen)
+            sparcity.at[m, 'Probes_gen'] = len(tmp_gen.dropna())
+            sparcity.at[m, '% Full_gen'] = len(tmp_gen.dropna()) / len(tmp_gen)
 
             tmp_imp = self.data[self.data['LABEL'] == 0.0]
-            self.sparcity.at[m, 'Probes_imp'] = len(tmp_imp.dropna())
-            self.sparcity.at[m, '% Full_imp'] = len(tmp_imp.dropna()) / len(tmp_imp)
+            sparcity.at[m, 'Probes_imp'] = len(tmp_imp.dropna())
+            sparcity.at[m, '% Full_imp'] = len(tmp_imp.dropna()) / len(tmp_imp)
 
+        sparcity.to_pickle('./generated/sparcity_beans.pk')
+        self.sparcity = sparcity
+        
     def update_test(self, train, test):
         self.train = train
         self.test = test
 
+    @staticmethod
+    def reset_density_plots():
+        cats = ['overlap', 'PDF', 'hist']
+
+        for c in cats:
+            folder = './generated/density/' + c + '/'
+            for filename in os.listdir(folder):
+                file_path = os.path.join(folder, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+
     def make_density_plots(self, subset='Test'):
-        if not os.path.exists('./generated/density/PDF/'+subset+'/'):
-            os.makedirs('./generated/density/PDF/'+subset+'/')
-        if not os.path.exists('./generated/density/hist/'+subset+'/'):
-            os.makedirs('./generated/density/hist/'+subset+'/')
-        if not os.path.exists('./generated/density/overlap/'+subset+'/'):
-            os.makedirs('./generated/density/overlap/'+subset+'/')
+        if not os.path.exists('./generated/density/PDF/' + subset + '/'):
+            os.makedirs('./generated/density/PDF/' + subset + '/')
+        if not os.path.exists('./generated/density/hist/' + subset + '/'):
+            os.makedirs('./generated/density/hist/' + subset + '/')
+        if not os.path.exists('./generated/density/overlap/' + subset + '/'):
+            os.makedirs('./generated/density/overlap/' + subset + '/')
 
         if subset.lower() == 'test':
             analysis_set = self.test

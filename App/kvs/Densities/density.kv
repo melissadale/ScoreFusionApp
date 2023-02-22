@@ -121,7 +121,7 @@
             size_hint_y: 0.08
 
             Label:
-                text: 'Probes: '
+                text: 'Vectors: '
                 halign: 'left'
                 valign: 'middle'
                 text_size: self.size
@@ -145,7 +145,7 @@
 
             Label:
                 size_hint_x: 0.6
-                text: 'Complete Probes: '
+                text: 'Complete Vectors: '
                 halign: 'left'
                 valign: 'middle'
                 text_size: self.size
@@ -262,7 +262,7 @@
 
             Label:
                 id: num_testing_gens
-                text: 'Genuine Probes: '
+                text: 'Genuine Vectors: '
                 halign: 'left'
                 valign: 'middle'
                 text_size: self.size
@@ -272,7 +272,7 @@
 
             Label:
                 id: num_testing_imps
-                text: 'Imposter Probes: '
+                text: 'Imposter Vectors: '
                 halign: 'left'
                 valign: 'middle'
                 text_size: self.size
@@ -364,4 +364,4 @@
         text: 'Details'
         background_color: hex('#F08521')
         on_press:
-            # root.reset_popup()
+            root.report_popup()

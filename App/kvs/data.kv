@@ -76,7 +76,7 @@
                     halign: 'left'
                     valign: 'top'
                     text_size: self.width, None
-                    text: 'Ignore Probes'
+                    text: 'Ignore Vectors'
                     bold: True
                     color: 0.0, 0.0, 0.0, 1
 
@@ -360,7 +360,7 @@
     GridLayout:
         size_hint_x: 0.3
         size_hint_y: 0.9
-        rows: 3
+        rows: 4
 
         canvas.before:
             Color:
@@ -406,15 +406,26 @@
 
         Label:
             id: modalities_lbl
-            size_hint_y: 0.8
+            size_hint_y: 0.7
             valign: 'top'
             halign: 'left'
             text_size: self.size
             color: 0, 0, 0, 1
             padding_x: 50
 
+        Button:
+            id: refresh_btn
+            size_hint_y: 0.1
+            text: 'Refresh'
+            color: 0.88, 0.88, 0.88, 1
+            background_normal: ''
+            background_color: 0.88, 0.88, 0.88, 1
+            background_down: ''
 
-
+            bold: True
+            on_press:
+                # root.parent.parent.parent.start_progressbar()
+                root.refresh()
 
     ############################################
     ###                 Bottom

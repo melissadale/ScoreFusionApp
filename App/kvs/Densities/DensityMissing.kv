@@ -1,0 +1,44 @@
+<DensityMissingPopup>:
+    GridLayout:
+        rows: 5
+        Label:
+            # size_hint_y: 0.1
+            text: 'Missing Breakdown'
+            color: hex('#0DB14B')
+            bold: True
+        BoxLayout:
+            # size_hint_y: 0.1
+            Label:
+                size_hint_x: 0.5
+                text: 'Within Modalities'
+                color: hex('#ffffff')
+                bold: True
+
+            Label:
+                size_hint_x: 0.5
+                text: 'Across Modalities'
+                color: hex('#ffffff')
+                bold: True
+        BoxLayout:
+            id: modalities
+            orientation: "vertical"
+
+
+        Label:
+            # size_hint_y: 0.1
+            text: 'Modality Relationships: Correlation'
+            color: hex('#0DB14B')
+            bold: True
+        BoxLayout:
+            # size_hint_y: 0.1
+            Label:
+                size_hint_x: 0.5
+                text: 'Within Modalities'
+                color: hex('#ffffff')
+                bold: True
+
+            Label:
+                size_hint_x: 0.5
+                text: 'Across Modalities'
+                color: hex('#ffffff')
+                bold: True

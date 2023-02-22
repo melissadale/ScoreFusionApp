@@ -26,7 +26,6 @@ class Data(GridLayout):
         super().__init__(**kwargs)
 
         self.edit_mods = None
-        self.sparcity = None
         self.beans = None
         self.imputation = None
         self.score_data = ScoreData()
@@ -67,6 +66,14 @@ class Data(GridLayout):
         tanh_popup.open()  # show the popup
         show_tanh.set_pop(tanh_popup)
         self.norm_params = show_tanh
+
+    def modality_edit_popup(self):
+        emod = ModeEditPopup(modality_list=self.score_data.get_modalities())
+        popup = Popup(title="Edit Modalities", content=emod, size_hint=(None, None),
+                      size=(600, 600))
+        popup.open()
+        emod.set_pop(popup)
+        self.edit_mods = emod
 
     def impute_popup(self):
         imputation_settings = ImputationPop()
@@ -137,26 +144,48 @@ class Data(GridLayout):
         remaining_pb = int(10 / len(modalities))
         for mod in modalities:
             Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing and Collecting '
-                                                                                  'Metrics ...']))
+                                                                                  'Metrics for ' + mod + ' ...']))
             self.ids['modalities_lbl'].text = self.ids['modalities_lbl'].text + '\n\n' + mod
 
-        self.beans, self.sparcity = self.score_data.get_descripts()
+        self.beans = self.score_data.get_descripts() # todo: save sparcity to pickle
         Clock.schedule_once(
             functools.partial(self.update_bar, [100 - self.ids['load_pb'].value, 'Done Processing Input']))
 
         self.ids['detected_mods_btn'].background_normal = './kvs/graphics/pencil.png'
         self.ids['detected_mods_btn'].background_down = './kvs/graphics/pencil-grey.png'
+        # refresh_btn
+        self.ids['refresh_btn'].color = (0.05, 0.69, 0.29, 1)
 
     def update_test_msg(self):
         self.ids['test_label'].text = '% Testing, ' + str(100 - int(self.ids['test_input'].text)) + "% Training"
 
-    def modality_edit_popup(self):
-        self.edit_mods = ModeEditPopup(modality_list=self.score_data.get_modalities())
-        popup = Popup(title="Edit Modalities", content=self.edit_mods, size_hint=(None, None),
-                      size=(600, 600))
-        self.edit_mods.set_pop(popup)
-        popup.open()
+    def refresh(self):
+        try:
+            changes = self.edit_mods.get_updates()
 
-    def edit_modalites(self):
-        tmp = self.edit_mods.get_updates()
-        print(tmp)
+            self.ids['modalities_lbl'].text = changes['new_msg']
+
+            # reset loading bar
+            Clock.schedule_once(functools.partial(self.update_bar,
+                                                  [-50, 'ReVisualizing and ReCollecting ...']))
+
+            for key, item in changes.items():
+                if key == 'new_msg':
+                    continue
+
+                if not item[3]:  # Do Not Use this modality
+                    self.score_data.data.drop([key], axis=1, inplace=True)
+                    continue
+
+                if item[2]:  # Dissimilarity Score
+                    self.score_data.data[key] = 1 - self.score_data.data[key]
+
+                # rename
+                self.score_data.data.rename({key: item[0]}, inplace=True)
+
+            self.score_data.get_descripts(reset=True)
+            Clock.schedule_once(functools.partial(self.update_bar,
+                                                  [50, 'Done Updating Input']))
+
+        except:
+            pass

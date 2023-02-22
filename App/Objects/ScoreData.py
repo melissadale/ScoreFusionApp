@@ -19,6 +19,7 @@ class ScoreData:
         super().__init__(**kwargs)
         self.describe = None
         self.data = pd.DataFrame(columns=['PROBE_ID', 'GALLERY_ID', 'LABEL', 'TRAIN_TEST'])
+        self.data_orig = None
 
     def load_data(self, path, training_split=None):
         split = False
@@ -94,6 +95,7 @@ class ScoreData:
         self.describe = DataDescribe(df=self.data, modals=self.get_modalities())
         self.describe.count_beans()
         self.describe.sparcenessness()
+        self.data_orig = self.data.copy()
 
     def normalize_scores(self, norm_type, norm_params=None):
         for mod in self.get_modalities():
@@ -157,9 +159,13 @@ class ScoreData:
 
             self.describe.update_test(train=self.data[self.data['TRAIN_TEST'] == 'TRAIN'],
                                       test=self.data[self.data['TRAIN_TEST'] == 'TEST'])
+
     def get_modalities(self):
         not_mods = ['PROBE_ID', 'GALLERY_ID', 'LABEL', 'TRAIN_TEST']
         return [x for x in self.data.columns if x not in not_mods and ':' not in x]
+
+    def rename_modality(self, old, new_name):
+        self.data.rename({old: new_name}, inplace=True)
 
     def impute(self, impute_method):
         k = 5
@@ -191,9 +197,14 @@ class ScoreData:
         imp.fit(self.data[self.data['TRAIN_TEST'] == 'TRAIN'][self.get_modalities()])
         self.data[self.get_modalities()] = imp.transform(self.data[self.get_modalities()])
 
-    def get_descripts(self):
+    def get_descripts(self, reset=False):
+        self.describe.modals = self.get_modalities()
+
+        if reset:
+            self.describe.reset_density_plots()
+
         self.describe.make_density_plots(subset='Train')
         self.describe.make_density_plots(subset='Test')
         self.describe.make_density_plots(subset='Entire')
 
-        return self.describe.beans, self.describe.sparcity
+        return self.describe.beans
