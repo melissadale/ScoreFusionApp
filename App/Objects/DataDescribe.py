@@ -57,29 +57,38 @@ class DataDescribe:
             self.beans.to_csv('./Results/DataDescribe.csv')
 
     def sparcenessness(self):
-        sparcity = pd.DataFrame(index=[m for m in self.modals] + ['Total'],
-                                columns=['Probes', '% Full',
+        sparcity = pd.DataFrame(columns=['Probes', '% Full',
                                          'Probes_gen', '% Full_gen',
-                                         'Probes_imp', '% Full_imp'])
+                                         'Probes_imp', '% Full_imp', 'Split'])
 
+        splits = ['Entire', 'Train', 'Test']
         sparcity.at['Total', '% Full'] = len(self.data.dropna()) / len(self.data)
 
-        for m in self.modals:
-            tmp = self.data[m]
-            sparcity.at[m, 'Probes'] = len(tmp.dropna())
-            sparcity.at[m, '% Full'] = len(tmp.dropna()) / len(tmp)
+        for s in splits:
+            if s == 'Test':
+                df = self.test
+            elif s == 'Train':
+                df = self.train
+            else:
+                df = self.data
 
-            tmp_gen = self.data[self.data['LABEL'] == 1.0]
-            sparcity.at[m, 'Probes_gen'] = len(tmp_gen.dropna())
-            sparcity.at[m, '% Full_gen'] = len(tmp_gen.dropna()) / len(tmp_gen)
+            for m in self.modals:
+                tmp = df[m]
+                sparcity.at[m + '-' + s, 'Split'] = s
+                sparcity.at[m + '-' + s, 'Probes'] = len(tmp.dropna())
+                sparcity.at[m + '-' + s, '% Full'] = len(tmp.dropna()) / len(tmp)
 
-            tmp_imp = self.data[self.data['LABEL'] == 0.0]
-            sparcity.at[m, 'Probes_imp'] = len(tmp_imp.dropna())
-            sparcity.at[m, '% Full_imp'] = len(tmp_imp.dropna()) / len(tmp_imp)
+                tmp_gen = df[df['LABEL'] == 1.0]
+                sparcity.at[m + '-' + s, 'Probes_gen'] = len(tmp_gen.dropna())
+                sparcity.at[m + '-' + s, '% Full_gen'] = len(tmp_gen.dropna()) / len(tmp_gen)
+
+                tmp_imp = df[df['LABEL'] == 0.0]
+                sparcity.at[m + '-' + s, 'Probes_imp'] = len(tmp_imp.dropna())
+                sparcity.at[m + '-' + s, '% Full_imp'] = len(tmp_imp.dropna()) / len(tmp_imp)
 
         sparcity.to_pickle('./generated/sparcity_beans.pk')
         self.sparcity = sparcity
-        
+
     def update_test(self, train, test):
         self.train = train
         self.test = test

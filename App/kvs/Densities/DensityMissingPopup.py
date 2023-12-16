@@ -3,8 +3,11 @@ import pandas as pd
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
+from kivy.graphics import Color, Rectangle
+from kivy.uix.progressbar import ProgressBar
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
+
 kivy.require('1.11.1')
 
 
@@ -19,20 +22,22 @@ class DensityMissingPopup(ScrollView):
             num_mods = len(self.modality_list)
             inc = num_mods
 
+            print(self.missing.to_markdown())
+
             for mod in self.modality_list:
                 row = GridLayout(cols=7)
 
                 ModName = Label(text='[color=F08521]' + mod + '[/color]', size_hint_x=0.2, size_hint_y=None,
-                    markup = True)
+                                markup=True)
                 row.add_widget(ModName)
+                # self.missing.at[mod, 'Probes']
+                pb = ProgressBar(value=self.missing.at[mod+'-Entire', '% Full'], max=1.0, size_hint_x=0.2, size_hint_y=None)
+                row.add_widget(pb)
 
-                bars = BoxLayout(orientation='horizontal')
-                full = Label(text='[color=FFFFFF]' + str(round(self.missing.at[mod, '% Full']*100, 2)) + '%[/color]', size_hint_x=0.1, size_hint_y=None,
-                    markup = True)
-                row.add_widget(Widget(size_hint_x=0.2, size_hint_y=None))
+                full = Label(text='[color=FFFFFF]' + str(round(self.missing.at[mod+'-Entire', '% Full'] * 100, 2)) + '%[/color]',
+                             size_hint_x=0.1, size_hint_y=None,
+                             markup=True)
 
-                perc = Label(text='[color=FFFFFF]' + '' + '%[/color]', size_hint_x=0.1, size_hint_y=None,
-                    markup = True)
                 row.add_widget(full)
 
                 # Used for FORCED spacing and alignment
@@ -40,19 +45,19 @@ class DensityMissingPopup(ScrollView):
                 row.add_widget(Widget(size_hint_x=0.1, size_hint_y=None))
                 ## MID
 
-                MissingName = Label(text='[color=F08521]' + str(num_mods-inc) + ' Missing Modalities' + '[/color]', size_hint_x=0.2, size_hint_y=None,
-                    markup = True)
+                MissingName = Label(text='[color=F08521]' + str(num_mods - inc) + ' Missing Modalities' + '[/color]',
+                                    size_hint_x=0.2, size_hint_y=None,
+                                    markup=True)
                 row.add_widget(MissingName)
                 inc = inc - 1
 
                 row.add_widget(Widget(size_hint_x=0.2, size_hint_y=None))
 
                 perc = Label(text='[color=FFFFFF]' + '%' + '[/color]', size_hint_x=0.1, size_hint_y=None,
-                    markup = True)
+                             markup=True)
                 row.add_widget(perc)
 
                 self.ids['modalities'].add_widget(row)
-
 
     def set_pop(self, pwin):
         self.fpop = pwin

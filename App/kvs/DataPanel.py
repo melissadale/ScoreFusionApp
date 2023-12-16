@@ -144,7 +144,7 @@ class Data(GridLayout):
         remaining_pb = int(10 / len(modalities))
         for mod in modalities:
             Clock.schedule_once(functools.partial(self.update_bar, [remaining_pb, 'Visualizing and Collecting '
-                                                                                  'Metrics for ' + mod + ' ...']))
+                                                                                  'Metrics ...']))
             self.ids['modalities_lbl'].text = self.ids['modalities_lbl'].text + '\n\n' + mod
 
         self.beans = self.score_data.get_descripts() # todo: save sparcity to pickle
