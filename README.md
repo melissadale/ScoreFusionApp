@@ -1,3 +1,11 @@
+# Score Fusion App
+
+A modular framework for experimenting with score-level fusion across multiple data sources. This project supports flexible combinations of modalities, normalization strategies, and fusion rules, with built-in evaluation using ROC curves and verification metrics (e.g., TMR@FMR).
+
+The system is designed for reproducible experimentation across heterogeneous datasets, enabling analysis of how different data sources contribute to overall performance.
+
+> Note: A cleaner, more recent object orientated implementation is available in the V2022-MajorRefactor branch.
+
 # Status: 1.0 release #
 The first version of this application is released. For a full description of this app, how to use it and how to adapt it, consult the user's manual (https://github.com/melissadale/ScoreFusionApp/blob/master/Score_Fusion_App_Documentation.pdf) or one of the wikis listed in the Documentation section below. 
 
@@ -6,7 +14,9 @@ There are various ways to acquire the Score Fusion App. Exe executables are give
 * Executable: https://github.com/melissadale/ScoreFusionApp/tree/master/Releases. 
 * From Source: https://github.com/melissadale/ScoreFusionApp/blob/master/Utilities/ScoreFusion.sh
 
-# APPLICATION OVERVIEW #
+# SYSTEM OVERVIEW #
+
+The application provides an end-to-end pipeline for loading score data, applying fusion strategies, and analyzing performance across verification and identification tasks.
 
 ## Data and Data Grooming ##
 
